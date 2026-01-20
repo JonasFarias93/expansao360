@@ -1,0 +1,12 @@
+name: expansao360
+channels:
+  - conda-forge
+dependencies:
+  - python=3.11
+  - pip
+  - pytest
+  - ruff
+  - black
+  - pre-commit
+  - pip:
+      - pytest-cov
