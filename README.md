@@ -30,3 +30,22 @@ O sistema é baseado em uma separação clara de camadas:
   Registra *o que foi executado*, *quando*, *por quem* e *com quais evidências*.
 
 Essa separação garante rastreabilidade, auditoria e evolução segura do sistema.
+
+
+---
+
+## Como rodar o projeto localmente
+
+### Pré-requisitos
+- Git
+- Conda (Miniforge / Miniconda)
+- GNU Make
+
+### Setup do ambiente
+
+```bash
+# criar o ambiente
+conda env create -f environment.yml
+
+# ativar
+conda activate expansao360
