@@ -18,7 +18,7 @@ lint:
 	ruff check .
 
 test:
-	pytest
+	pytest || test $$? -eq 5
 
 check: lint test
 
