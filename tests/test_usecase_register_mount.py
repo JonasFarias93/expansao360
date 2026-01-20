@@ -4,8 +4,10 @@ import pytest
 
 from expansao360.domain.registry import Location
 from expansao360.domain.value_objects import LocationId
-from expansao360.infrastructure.location_repository import InMemoryLocationRepository
-from expansao360.infrastructure.repositories import InMemoryOperationRepository
+from expansao360.infrastructure.repositories import (
+    InMemoryLocationRepository,
+    InMemoryOperationRepository,
+)
 
 
 def test_register_mount_creates_operationmount():
