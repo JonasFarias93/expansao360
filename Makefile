@@ -24,3 +24,14 @@ check: lint test
 
 hooks:
 	pre-commit install
+
+
+cli:
+	python -m expansao360 --help
+
+demo:
+	rm -f .expansao360-state.json
+	python -m expansao360 location add LOC-001 "Loja A"
+	python -m expansao360 mount register LOC-001 jonas
+	python -m expansao360 location list
+	python -m expansao360 mount list
