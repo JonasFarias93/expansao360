@@ -9,4 +9,6 @@ dependencies:
   - black
   - pre-commit
   - pip:
-      - pytest-cov
+  - pytest-cov
+  - typer
+  - rich
