@@ -3,6 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime
 
+from .value_objects import ActorId, LocationId
+
 
 @dataclass(frozen=True)
 class OperationMount:
@@ -13,6 +15,9 @@ class OperationMount:
     - Deve referenciar um item do Registry (registry_location_id).
     - Deve registrar quem executou (performed_by).
     - Deve registrar quando ocorreu (performed_at).
+
+    Observação:
+    - A API recebe strings por simplicidade, mas converte internamente para Value Objects.
     """
 
     registry_location_id: str
@@ -20,11 +25,12 @@ class OperationMount:
     performed_at: datetime
 
     def __post_init__(self) -> None:
-        if not self.registry_location_id or not self.registry_location_id.strip():
-            raise ValueError("registry_location_id is required")
+        # Normaliza e valida via Value Objects
+        loc = LocationId(self.registry_location_id)
+        actor = ActorId(self.performed_by)
 
-        if not self.performed_by or not self.performed_by.strip():
-            raise ValueError("performed_by is required")
+        object.__setattr__(self, "registry_location_id", str(loc))
+        object.__setattr__(self, "performed_by", str(actor))
 
         if not isinstance(self.performed_at, datetime):
             raise ValueError("performed_at must be a datetime")
