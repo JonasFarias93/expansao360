@@ -35,7 +35,12 @@ app.add_typer(mount_app, name="mount")
 @location_app.command("add")
 def location_add(location_id: str, name: str) -> None:
     loc_repo, _ = _repos()
-    loc = register_location(location_id=location_id, name=name, repository=loc_repo)
+    try:
+        loc = register_location(location_id=location_id, name=name, repository=loc_repo)
+    except ValueError as e:
+        print(f"[red]ERRO[/red] {e}")
+        raise typer.Exit(code=1) from None
+
     print(f"[green]OK[/green] location criada: {loc.id} — {loc.name}")
 
 
@@ -54,13 +59,18 @@ def location_list() -> None:
 @mount_app.command("register")
 def mount_register(registry_location_id: str, performed_by: str) -> None:
     loc_repo, op_repo = _repos()
-    op = register_mount(
-        registry_location_id=registry_location_id,
-        performed_by=performed_by,
-        performed_at=datetime.now(UTC),
-        repository=op_repo,
-        location_repository=loc_repo,
-    )
+    try:
+        op = register_mount(
+            registry_location_id=registry_location_id,
+            performed_by=performed_by,
+            performed_at=datetime.now(UTC),
+            repository=op_repo,
+            location_repository=loc_repo,
+        )
+    except ValueError as e:
+        print(f"[red]ERRO[/red] {e}")
+        raise typer.Exit(code=1) from None
+
     print(
         f"[green]OK[/green] mount registrado: "
         f"location={op.registry_location_id} by={op.performed_by}"
