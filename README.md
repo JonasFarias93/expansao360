@@ -11,13 +11,14 @@ com histórico, evidências e governança.
 
 ## Status do Projeto
 
-🚧 **Sprint 0 — Fundação do Repositório**
+🚧 **Sprint 2 — CLI funcional (modo apresentação)**
 
-Neste momento, o projeto está em fase de estruturação técnica:
-- Definição de arquitetura
-- Padrões de versionamento
-- Documentação base
-- Ambiente de desenvolvimento
+O projeto já possui:
+- Arquitetura limpa (Domain / Application / Infrastructure)
+- Casos de uso testados
+- CLI funcional sem API
+- Persistência local (arquivo JSON)
+- Testes automatizados e pre-commit hooks
 
 ## Conceito Central
 
@@ -30,7 +31,6 @@ O sistema é baseado em uma separação clara de camadas:
   Registra *o que foi executado*, *quando*, *por quem* e *com quais evidências*.
 
 Essa separação garante rastreabilidade, auditoria e evolução segura do sistema.
-
 
 ---
 
@@ -49,3 +49,38 @@ conda env create -f environment.yml
 
 # ativar
 conda activate expansao360
+```
+
+---
+
+## CLI (modo apresentação)
+
+A CLI permite cadastrar Locations (Registry) e registrar operações (Operation) **sem API**.
+
+
+### Ajuda
+
+
+```bash
+python -m expansao360 --help
+python -m expansao360 location --help
+python -m expansao360 mount --help
+```
+
+---
+### Fluxo completo (exemplo)
+
+```
+# (opcional) limpar estado local
+rm -f .expansao360-state.json
+
+# 1) cadastrar Location no Registry
+python -m expansao360 location add LOC-001 "Loja A"
+
+# 2) registrar uma operação (somente se a Location existir)
+python -m expansao360 mount register LOC-001 jonas
+
+# 3) listar
+python -m expansao360 location list
+python -m expansao360 mount list
+```

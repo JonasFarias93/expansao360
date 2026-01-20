@@ -59,3 +59,6 @@ temp/
 # =========================
 .env.*
 !.env.example
+
+# Local state (CLI)
+.expansao360-state.json
