@@ -57,3 +57,20 @@ Separar o que está pronto para release do que está em desenvolvimento reduz ri
 - Mudanças entram via branches derivadas e são integradas em `develop`.
 - `main` recebe apenas conteúdo estável e controlado.
 
+
+---
+
+## 2026-01-20 — Repositório stack-agnostic (sem framework definido)
+
+**Decisão**  
+O projeto permanecerá intencionalmente neutro quanto a stack e framework neste estágio inicial.
+
+**Contexto**  
+Durante a preparação do ambiente (Sprint 1), optou-se por evitar acoplamento prematuro a tecnologias
+específicas (ex: Django, FastAPI, Node, etc.), permitindo que decisões sejam tomadas com base
+em requisitos reais e não por conveniência inicial.
+
+**Consequências**  
+- `.gitignore` permanece genérico (Python / Node / OS).
+- Nenhuma estrutura de framework é criada antecipadamente.
+- A definição de stack será registrada explicitamente em decisão futura.
