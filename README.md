@@ -11,14 +11,18 @@ com histórico, evidências e governança.
 
 ## Status do Projeto
 
-🚧 **Sprint 2 — CLI funcional (modo apresentação)**
+🚧 **Sprint 2 — Cadastro e Execução Base (Web + CLI)**
 
 O projeto já possui:
 - Arquitetura limpa (Domain / Application / Infrastructure)
-- Casos de uso testados
-- CLI funcional sem API
-- Persistência local (arquivo JSON)
+- Core de domínio independente de framework
+- Casos de uso testados (TDD)
+- CLI funcional
+- Camada Web (Django) em evolução
+- Execução via Chamados (UI inicial)
+- Persistência local e ORM
 - Testes automatizados e pre-commit hooks
+
 
 ## Conceito Central
 
