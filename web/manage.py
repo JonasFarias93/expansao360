@@ -1,8 +1,10 @@
 #!/usr/bin/env python
-"""Django's command-line utility for administrative tasks."""
 
 import os
+from pathlib import Path
 import sys
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 
 def main():
