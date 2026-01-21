@@ -68,3 +68,6 @@ db.sqlite3
 
 # Python package metadata (editable installs)
 *.egg-info/
+
+# Django local database
+web/db.sqlite3
