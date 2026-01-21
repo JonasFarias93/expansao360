@@ -71,3 +71,6 @@ db.sqlite3
 
 # Django local database
 web/db.sqlite3
+
+# Django local database
+web/db.sqlite3
