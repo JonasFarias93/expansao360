@@ -1,3 +1,5 @@
+import secrets
+
 from cadastro.models import Equipamento, Kit, Loja, Projeto, Subprojeto
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -18,6 +20,11 @@ class Chamado(models.Model):
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.ABERTO)
     criado_em = models.DateTimeField(auto_now_add=True)
     finalizado_em = models.DateTimeField(null=True, blank=True)
+    protocolo = models.CharField(max_length=32, unique=True, editable=False)
+
+    servicenow_numero = models.CharField(max_length=40, unique=True, null=True, blank=True)
+    contabilidade_numero = models.CharField(max_length=40, unique=True, null=True, blank=True)
+    nf_saida_numero = models.CharField(max_length=40, unique=True, null=True, blank=True)
 
     def gerar_itens_de_instalacao(self) -> None:
         if self.itens.exists():
@@ -57,6 +64,14 @@ class Chamado(models.Model):
         self.status = self.Status.FINALIZADO
         self.finalizado_em = timezone.now()
         self.save(update_fields=["status", "finalizado_em"])
+
+    def save(self, *args, **kwargs):  # type: ignore[override]
+        if not self.protocolo:
+            # Ex: EX360-20260121-8F3K2M
+            data = timezone.now().strftime("%Y%m%d")
+            sufixo = secrets.token_hex(3).upper()  # 6 chars hex
+            self.protocolo = f"EX360-{data}-{sufixo}"
+        super().save(*args, **kwargs)
 
 
 class InstalacaoItem(models.Model):

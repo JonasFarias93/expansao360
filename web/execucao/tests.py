@@ -1,6 +1,7 @@
 # Create your tests here.
 from cadastro.models import Categoria, Equipamento, ItemKit, Kit, Loja, Projeto, Subprojeto
 from django.core.exceptions import ValidationError
+from django.db import IntegrityError
 from django.test import TestCase
 from django.utils import timezone
 
@@ -159,3 +160,66 @@ def test_finalizar_define_finalizado_em(self) -> None:
     self.chamado.refresh_from_db()
     self.assertIsNotNone(self.chamado.finalizado_em)
     self.assertLessEqual(self.chamado.finalizado_em, timezone.now())
+
+
+class ChamadoProtocoloEReferenciasTest(TestCase):
+    def setUp(self) -> None:
+        self.loja = Loja.objects.create(codigo="L1", nome="Loja 1")
+        self.projeto = Projeto.objects.create(codigo="P1", nome="Projeto 1")
+        self.sub = Subprojeto.objects.create(projeto=self.projeto, codigo="S1", nome="Sub 1")
+        self.kit = Kit.objects.create(nome="Kit PDV")
+
+    def test_protocolo_e_gerado_automaticamente(self) -> None:
+        chamado = Chamado.objects.create(
+            loja=self.loja,
+            projeto=self.projeto,
+            subprojeto=self.sub,
+            kit=self.kit,
+            servicenow_numero="SN-1001",
+            contabilidade_numero="CONT-2001",
+            nf_saida_numero="NF-3001",
+        )
+        self.assertTrue(chamado.protocolo)
+        self.assertTrue(chamado.protocolo.startswith("EX360-"))
+
+    def test_servicenow_numero_nao_repete(self) -> None:
+        Chamado.objects.create(
+            loja=self.loja,
+            projeto=self.projeto,
+            subprojeto=self.sub,
+            kit=self.kit,
+            servicenow_numero="SN-1002",
+            contabilidade_numero="CONT-2002",
+            nf_saida_numero="NF-3002",
+        )
+        with self.assertRaises(IntegrityError):
+            Chamado.objects.create(
+                loja=self.loja,
+                projeto=self.projeto,
+                subprojeto=self.sub,
+                kit=self.kit,
+                servicenow_numero="SN-1002",  # repetido
+                contabilidade_numero="CONT-2003",
+                nf_saida_numero="NF-3003",
+            )
+
+    def test_contabilidade_numero_nao_repete(self) -> None:
+        Chamado.objects.create(
+            loja=self.loja,
+            projeto=self.projeto,
+            subprojeto=self.sub,
+            kit=self.kit,
+            servicenow_numero="SN-1004",
+            contabilidade_numero="CONT-2004",
+            nf_saida_numero="NF-3004",
+        )
+        with self.assertRaises(IntegrityError):
+            Chamado.objects.create(
+                loja=self.loja,
+                projeto=self.projeto,
+                subprojeto=self.sub,
+                kit=self.kit,
+                servicenow_numero="SN-1005",
+                contabilidade_numero="CONT-2004",  # repetido
+                nf_saida_numero="NF-3005",
+            )
