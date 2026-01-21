@@ -63,14 +63,32 @@ Características:
 - Estrutura de pastas definitiva antes do primeiro esqueleto do app
 - Regras de autorização e perfis (será definido após o fluxo base)
 
+## Implementação Atual (Core + Adapters)
 
-```md
-## Implementação Web (Django)
+O EXPANSÃO360 adota uma arquitetura em camadas, onde o **core de domínio**
+permanece independente de frameworks e interfaces. As interfaces (CLI/Web)
+atuam como **adapters**, responsáveis por entrada, apresentação e orquestração,
+sem concentrar regras de negócio.
 
+### Core
+- Regras de negócio puras (Domain / Application)
+- Entidades como Chamado, Equipamento e Kit
+- Casos de uso validados via testes (TDD)
+
+### Adapters / Interfaces
+
+#### CLI
+- Interface de linha de comando para operações do sistema
+- Não depende da camada Web
+
+#### Web (Django)
 A camada Web é implementada com Django, organizada em apps:
 
 - `cadastro`: Registry (Cadastro Mestre)
 - `execucao`: Operation (Chamados e execução)
 - `iam`: Identidade, autenticação e permissões (em evolução)
 
-Esses apps atuam como adapters, sem conter regras de negócio do core.
+Diretrizes:
+- A Web atua como camada de entrega e persistência.
+- Models Django **não** contêm regras de negócio do core.
+- A UI Web é tratada como adapter: entrada, apresentação e orquestração.
