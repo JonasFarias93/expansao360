@@ -65,3 +65,6 @@ temp/
 
 # Django
 db.sqlite3
+
+# Python package metadata (editable installs)
+*.egg-info/
