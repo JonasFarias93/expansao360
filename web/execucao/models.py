@@ -1,5 +1,5 @@
-# Create your models here.
 from cadastro.models import Equipamento, Kit, Loja, Projeto, Subprojeto
+from django.core.exceptions import ValidationError
 from django.db import models
 
 
@@ -30,6 +30,31 @@ class Chamado(models.Model):
                 tem_ativo=item_kit.equipamento.tem_ativo,
             )
 
+    def finalizar(self) -> None:
+        erros: list[str] = []
+
+        for item in self.itens.all():
+            if item.tem_ativo:
+                if not item.ativo.strip() or not item.numero_serie.strip():
+                    erros.append(
+                        "Item rastreável "
+                        f"'{item.equipamento.nome} {item.tipo}' "
+                        "exige Ativo e Número de Série."
+                    )
+            else:
+                if not item.confirmado:
+                    erros.append(
+                        "Item contável "
+                        f"'{item.equipamento.nome} {item.tipo}' "
+                        "precisa ser confirmado."
+                    )
+
+        if erros:
+            raise ValidationError(erros)
+
+        self.status = self.Status.FINALIZADO
+        self.save(update_fields=["status"])
+
 
 class InstalacaoItem(models.Model):
     chamado = models.ForeignKey(Chamado, on_delete=models.CASCADE, related_name="itens")
@@ -43,3 +68,6 @@ class InstalacaoItem(models.Model):
 
     ativo = models.CharField(max_length=80, blank=True, default="")
     numero_serie = models.CharField(max_length=120, blank=True, default="")
+
+    def __str__(self) -> str:
+        return f"{self.equipamento.nome} {self.tipo} ({self.quantidade})"
