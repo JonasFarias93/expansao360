@@ -1,1 +1,42 @@
-# Register your models here.
+from django.contrib import admin
+
+from .models import Chamado, InstalacaoItem
+
+
+class InstalacaoItemInline(admin.TabularInline):
+    model = InstalacaoItem
+    extra = 0
+    fields = (
+        "equipamento",
+        "tipo",
+        "quantidade",
+        "tem_ativo",
+        "confirmado",
+        "ativo",
+        "numero_serie",
+    )
+    readonly_fields = ("equipamento", "tipo", "quantidade", "tem_ativo")
+
+
+@admin.register(Chamado)
+class ChamadoAdmin(admin.ModelAdmin):
+    list_display = (
+        "id",
+        "loja",
+        "projeto",
+        "subprojeto",
+        "kit",
+        "status",
+        "criado_em",
+        "finalizado_em",
+    )
+    list_filter = ("status", "projeto")
+    search_fields = ("loja__codigo", "loja__nome", "projeto__codigo", "projeto__nome")
+    inlines = [InstalacaoItemInline]
+
+
+@admin.register(InstalacaoItem)
+class InstalacaoItemAdmin(admin.ModelAdmin):
+    list_display = ("id", "chamado", "equipamento", "tipo", "quantidade", "tem_ativo", "confirmado")
+    list_filter = ("tem_ativo", "confirmado")
+    search_fields = ("equipamento__codigo", "equipamento__nome", "tipo")
