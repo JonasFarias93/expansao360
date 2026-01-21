@@ -1,14 +1,15 @@
 # STATUS — EXPANSÃO360
 
 ## Sprint Atual
-**Sprint 0 — Fundação do Repositório**
+**Sprint 2 — Cadastro e Execução Base (Web + CLI)**
 
 Objetivo desta sprint:
-Estabelecer a base técnica, arquitetural e documental do projeto antes de qualquer código de aplicação.
+Consolidar o cadastro mestre (Registry) e a execução base (Chamado),
+com testes automatizados e separação clara entre core, CLI e Web.
 
 ---
 
-## Microtarefas Concluídas
+## Histórico (Sprint 0)
 
 ### Fundação do Git
 - [x] Criação do repositório remoto
@@ -25,20 +26,55 @@ Estabelecer a base técnica, arquitetural e documental do projeto antes de qualq
 ---
 
 ## Em Andamento
-- [ ] STATUS.md — Documento de status do projeto (este arquivo)
+- [ ] Validações de execução no Chamado (ativo+série / confirmado)
+- [ ] Controle de status do Chamado
+- [ ] Permissões (IAM)
+- [ ] UI básica de Chamado
+
 
 ---
 
-## Próximos Passos (Sprint 0)
+## Progresso Atual
 
-- Versionar documentação base
-- Integrar documentação em `develop`
-- Definir stack tecnológica
-- Preparar ambiente de desenvolvimento (conda / WSL)
-- Criar esqueleto inicial do projeto
+### Core + CLI
+- [x] Core de domínio implementado
+- [x] Casos de uso testados (TDD)
+- [x] CLI funcional para Location e Mount
+- [x] Persistência local (arquivo JSON)
+
+### Web (Django)
+
+#### Cadastro (Registry)
+- [x] Categoria
+- [x] Equipamento (com regra `tem_ativo`)
+- [x] Loja
+- [x] Projeto / Subprojeto
+- [x] Kit / ItemKit (equipamento + tipo + quantidade)
+- [x] Admin configurado
+- [x] Migrations aplicadas
+- [x] Testes de integridade do cadastro
+
+#### Execução (Operation)
+- [x] Entidade Chamado
+- [x] Geração de itens de execução a partir do Kit
+- [x] Snapshot de `tem_ativo` por item
+- [x] Testes do app execucao
+
+---
+
+## Próximos Passos
+- [ ] Validar execução:
+  - exigir Ativo + Série quando `tem_ativo=True`
+  - exigir confirmação quando `tem_ativo=False`
+- [ ] Iniciar controle de status do Chamado
+- [ ] Definir permissões (IAM)
+- [ ] Primeira UI básica de Chamado
 
 ---
 
 ## Observações
-Nenhum código de aplicação foi criado até o momento.
-Toda a estrutura atual é voltada à fundação e governança do projeto.
+- O core permanece independente de framework.
+- Django atua como camada de entrega e persistência.
+- Toda regra de negócio é validada via testes.
+---
+
