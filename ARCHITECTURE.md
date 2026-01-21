@@ -63,3 +63,14 @@ Características:
 - Estrutura de pastas definitiva antes do primeiro esqueleto do app
 - Regras de autorização e perfis (será definido após o fluxo base)
 
+
+```md
+## Implementação Web (Django)
+
+A camada Web é implementada com Django, organizada em apps:
+
+- `cadastro`: Registry (Cadastro Mestre)
+- `execucao`: Operation (Chamados e execução)
+- `iam`: Identidade, autenticação e permissões (em evolução)
+
+Esses apps atuam como adapters, sem conter regras de negócio do core.

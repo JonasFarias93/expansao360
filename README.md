@@ -84,3 +84,23 @@ python -m expansao360 mount register LOC-001 jonas
 python -m expansao360 location list
 python -m expansao360 mount list
 ```
+
+
+## Web (Django)
+
+A camada Web fornece:
+- Cadastro administrativo (Registry)
+- Execução operacional via Chamados
+- Interface administrativa (Django Admin)
+
+### Comandos principais
+
+```bash
+# aplicar migrations
+python web/manage.py migrate
+
+# rodar servidor
+python web/manage.py runserver
+
+# rodar testes
+python web/manage.py test

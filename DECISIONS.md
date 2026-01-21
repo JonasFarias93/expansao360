@@ -129,3 +129,21 @@ unidade de trabalho com status, histórico e rastreabilidade.
 - O domínio e os casos de uso passam a utilizar o termo “Chamado”.
 - A CLI e a Web expõem o conceito como “Chamado”.
 - Caso necessário, aliases temporários podem ser mantidos para compatibilidade.
+
+
+## 2026-01-21 — Equipamentos rastreáveis vs contáveis (`tem_ativo`)
+
+**Decisão**  
+Equipamentos passam a ser classificados como:
+- **Rastreáveis** (`tem_ativo=True`): exigem Ativo e Número de Série na execução.
+- **Contáveis** (`tem_ativo=False`): não possuem Ativo/Série, apenas confirmação e contagem.
+
+**Contexto**  
+Alguns itens (ex.: micro, monitor) exigem rastreabilidade individual,
+enquanto outros (ex.: hub USB, cabos) precisam apenas ser contabilizados
+para controle de consumo e estatísticas.
+
+**Consequências**  
+- O cadastro do Equipamento define se ele é rastreável ou contável.
+- A execução (Chamado) valida campos obrigatórios conforme `tem_ativo`.
+- Relatórios podem diferenciar ativos físicos de consumíveis.
