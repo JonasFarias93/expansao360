@@ -25,15 +25,6 @@ com testes automatizados e separação clara entre core, CLI e Web.
 
 ---
 
-## Em Andamento
-- [ ] Validações de execução no Chamado (ativo+série / confirmado)
-- [ ] Controle de status do Chamado
-- [ ] Permissões (IAM)
-- [ ] UI básica de Chamado
-
-
----
-
 ## Progresso Atual
 
 ### Core + CLI
@@ -56,19 +47,30 @@ com testes automatizados e separação clara entre core, CLI e Web.
 
 #### Execução (Operation)
 - [x] Entidade Chamado
+- [x] Protocolo único automático (`EX360-YYYYMMDD-XXXXXX`)
+- [x] Referências externas únicas (ServiceNow, Contabilidade, NF)
+- [x] Campo de auditoria `finalizado_em`
+- [x] Validação de finalização do Chamado
 - [x] Geração de itens de execução a partir do Kit
 - [x] Snapshot de `tem_ativo` por item
-- [x] Testes do app execucao
+- [x] Admin com busca e filtros aprimorados
+- [x] Testes automatizados do app `execucao`
+
+#### UI / Layout Web
+- [x] Layout base (`base.html`)
+- [x] Estrutura de templates (`partials/`, `components/`)
+- [x] Tailwind CSS via CDN
+- [x] Página de histórico de Chamados (Histórico v1)
 
 ---
 
-## Próximos Passos
-- [ ] Validar execução:
+## Em Andamento
+- [ ] Validações finais da execução:
   - exigir Ativo + Série quando `tem_ativo=True`
   - exigir confirmação quando `tem_ativo=False`
-- [ ] Iniciar controle de status do Chamado
-- [ ] Definir permissões (IAM)
-- [ ] Primeira UI básica de Chamado
+- [ ] Controle de status do Chamado (workflow)
+- [ ] Permissões e perfis (IAM)
+- [ ] Evolução da UI do Chamado (detalhe / ações)
 
 ---
 
@@ -77,4 +79,3 @@ com testes automatizados e separação clara entre core, CLI e Web.
 - Django atua como camada de entrega e persistência.
 - Toda regra de negócio é validada via testes.
 ---
-
