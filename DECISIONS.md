@@ -160,16 +160,33 @@ Com a estabilização do core e da CLI, iniciou-se a implementação da camada w
 Era necessário definir uma estrutura de layout consistente desde o início para evitar duplicação de HTML, decisões visuais ad-hoc e divergência entre apps (cadastro, execucao, iam).
 Além disso, optou-se por uma solução de baixo custo inicial para estilização, permitindo foco no fluxo e nas regras antes de investir em pipeline de build de frontend.
 
-**Consequências**  
+**Consequências**
+- Todas as páginas web herdam de `base.html`.
+- Fragmentos reutilizáveis ficam concentrados em `partials/`.
+- Elementos de UI mais semânticos e reutilizáveis ficam em `components/`.
+- Tailwind via CDN reduz o custo inicial de setup.
+- O layout passa a ser tratado como decisão arquitetural explícita, evitando reavaliações constantes.
 
-Todas as páginas web herdam de base.html.
 
-Fragmentos reutilizáveis ficam concentrados em partials/.
-
-Elementos de UI mais semânticos e reutilizáveis ficam em components/.
-
-Tailwind via CDN reduz setup inicial, com possibilidade de migração futura para build dedicado.
-
-O layout passa a ser tratado como decisão arquitetural explícita, evitando reavaliações constantes.
 
 ---
+
+
+## 2026-01-21 — Camada Web como adapter (UI e persistência)
+
+**Decisão**  
+A camada Web do EXPANSÃO360 será tratada exclusivamente como um adapter,
+responsável por interface de usuário, orquestração de casos de uso e persistência,
+sem conter regras de negócio do domínio.
+
+**Contexto**  
+Com a evolução do projeto, passaram a coexistir múltiplas interfaces
+(CLI e Web). Era necessário registrar explicitamente que o core de domínio
+permanece independente de frameworks, evitando que regras de negócio
+migrem para a camada web por conveniência.
+
+**Consequências**  
+- Regras de negócio permanecem no core.
+- A Web (Django) atua apenas como camada de entrega.
+- CLI e Web compartilham o mesmo domínio e casos de uso.
+- Facilita testes, manutenção e evolução futura (API, mobile, etc.).
