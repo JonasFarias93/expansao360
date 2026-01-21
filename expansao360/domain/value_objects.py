@@ -1,6 +1,8 @@
+# expansao360/domain/value_objects.py
 from __future__ import annotations
 
 from dataclasses import dataclass
+from enum import Enum
 
 
 def _require_non_empty(value: str, field_name: str) -> str:
@@ -32,3 +34,21 @@ class ActorId:
 
     def __str__(self) -> str:
         return self.value
+
+
+class MountStatus(str, Enum):
+    EM_SEPARACAO = "em_separacao"
+    EM_PROCESSO = "em_processo"
+    CONCLUIDO = "concluido"
+
+    @property
+    def label(self) -> str:
+        return {
+            MountStatus.EM_SEPARACAO: "Em Separação",
+            MountStatus.EM_PROCESSO: "Em Execução",
+            MountStatus.CONCLUIDO: "Concluído",
+        }[self]
+
+    @property
+    def can_execute(self) -> bool:
+        return self in (MountStatus.EM_SEPARACAO, MountStatus.EM_PROCESSO)
