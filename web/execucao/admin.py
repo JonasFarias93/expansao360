@@ -22,6 +22,10 @@ class InstalacaoItemInline(admin.TabularInline):
 class ChamadoAdmin(admin.ModelAdmin):
     list_display = (
         "id",
+        "protocolo",
+        "servicenow_numero",
+        "contabilidade_numero",
+        "nf_saida_numero",
         "loja",
         "projeto",
         "subprojeto",
@@ -31,8 +35,16 @@ class ChamadoAdmin(admin.ModelAdmin):
         "finalizado_em",
     )
     list_filter = ("status", "projeto")
-    search_fields = ("loja__codigo", "loja__nome", "projeto__codigo", "projeto__nome")
-    inlines = [InstalacaoItemInline]
+    search_fields = (
+        "protocolo",
+        "servicenow_numero",
+        "contabilidade_numero",
+        "nf_saida_numero",
+        "loja__codigo",
+        "loja__nome",
+        "projeto__codigo",
+        "projeto__nome",
+    )
 
 
 @admin.register(InstalacaoItem)
