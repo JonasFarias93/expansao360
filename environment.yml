@@ -12,3 +12,8 @@ dependencies:
   - pytest-cov
   - typer
   - rich
+  - django
+
+          
+
+
