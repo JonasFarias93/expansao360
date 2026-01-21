@@ -74,3 +74,58 @@ em requisitos reais e não por conveniência inicial.
 - `.gitignore` permanece genérico (Python / Node / OS).
 - Nenhuma estrutura de framework é criada antecipadamente.
 - A definição de stack será registrada explicitamente em decisão futura.
+
+
+---
+
+## 2026-01-21 — Stack web definida: Django
+
+**Decisão**  
+A camada web do EXPANSÃO360 será implementada utilizando Django.
+
+**Contexto**  
+Após a estabilização do core e da CLI, foi necessário definir um framework web
+para fornecer interface de usuário, autenticação, persistência e administração.
+Django foi escolhido pela maturidade, ecossistema, ORM integrado e velocidade
+de entrega para CRUDs e RBAC.
+
+**Consequências**  
+- O core permanece independente de framework.
+- Django atua apenas como camada de entrega (web/adapters).
+- Models Django não contêm regras de negócio.
+
+---
+
+## 2026-01-21 — Nomenclatura em PT-BR no domínio
+
+**Decisão**  
+O domínio (core) e os casos de uso utilizarão nomenclatura em português (PT-BR).
+A camada web seguirá as convenções do framework (Django).
+
+**Contexto**  
+Para reduzir carga cognitiva e facilitar entendimento das regras de negócio,
+optou-se por usar português no domínio, mantendo inglês apenas onde imposto
+por frameworks, bibliotecas ou padrões consolidados.
+
+**Consequências**  
+- Entidades, casos de uso e mensagens do core usam PT-BR.
+- Infraestrutura e framework mantêm convenções originais.
+- Um glossário será mantido para garantir consistência terminológica.
+
+
+---
+
+## 2026-01-21 — Entidade operacional “Chamado” substitui “Card”
+
+**Decisão**  
+A entidade anteriormente referida como “Card” passa a se chamar **Chamado** no domínio do sistema.
+
+**Contexto**  
+O termo “Card” é genérico e pode causar ambiguidade com elementos visuais da interface.
+“Chamado” é um termo consolidado em contextos operacionais e de TI, representando uma
+unidade de trabalho com status, histórico e rastreabilidade.
+
+**Consequências**  
+- O domínio e os casos de uso passam a utilizar o termo “Chamado”.
+- A CLI e a Web expõem o conceito como “Chamado”.
+- Caso necessário, aliases temporários podem ser mantidos para compatibilidade.
