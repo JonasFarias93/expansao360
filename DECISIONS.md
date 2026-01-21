@@ -130,7 +130,7 @@ unidade de trabalho com status, histórico e rastreabilidade.
 - A CLI e a Web expõem o conceito como “Chamado”.
 - Caso necessário, aliases temporários podem ser mantidos para compatibilidade.
 
-
+---
 ## 2026-01-21 — Equipamentos rastreáveis vs contáveis (`tem_ativo`)
 
 **Decisão**  
@@ -147,3 +147,29 @@ para controle de consumo e estatísticas.
 - O cadastro do Equipamento define se ele é rastreável ou contável.
 - A execução (Chamado) valida campos obrigatórios conforme `tem_ativo`.
 - Relatórios podem diferenciar ativos físicos de consumíveis.
+
+---
+
+## 2026-01-21 — Layout base web com Tailwind e estrutura de templates
+
+**Decisão**  
+A camada web do EXPANSÃO360 adotará um layout base padronizado utilizando Tailwind CSS via CDN, com uma estrutura fixa de templates composta por base.html, partials/ e components/.
+
+**Contexto**  
+Com a estabilização do core e da CLI, iniciou-se a implementação da camada web em Django.
+Era necessário definir uma estrutura de layout consistente desde o início para evitar duplicação de HTML, decisões visuais ad-hoc e divergência entre apps (cadastro, execucao, iam).
+Além disso, optou-se por uma solução de baixo custo inicial para estilização, permitindo foco no fluxo e nas regras antes de investir em pipeline de build de frontend.
+
+**Consequências**  
+
+Todas as páginas web herdam de base.html.
+
+Fragmentos reutilizáveis ficam concentrados em partials/.
+
+Elementos de UI mais semânticos e reutilizáveis ficam em components/.
+
+Tailwind via CDN reduz setup inicial, com possibilidade de migração futura para build dedicado.
+
+O layout passa a ser tratado como decisão arquitetural explícita, evitando reavaliações constantes.
+
+---

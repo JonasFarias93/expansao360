@@ -1,0 +1,16 @@
+<header class="bg-white border-b border-slate-200">
+  <div class="px-6 py-4 flex items-center justify-between">
+    <div>
+      <div class="text-sm text-slate-500">Bem-vindo</div>
+      <div class="font-semibold">Painel</div>
+    </div>
+
+    <div class="text-sm text-slate-500">
+      {% if request.user.is_authenticated %}
+        {{ request.user.username }}
+      {% else %}
+        Visitante
+      {% endif %}
+    </div>
+  </div>
+</header>

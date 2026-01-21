@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block title %}Histórico — EXPANSÃO360{% endblock %}
+
+{% block content %}
+  {% include "components/_card.html" with title="Histórico de Chamados" subtitle="Busque por Protocolo EX360, ServiceNow, Contabilidade, NF, Ativo, Série, Loja ou Projeto." content="" %}
+  <div class="mt-4"></div>
+
+  <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
+    <form method="get" class="flex gap-3 items-end">
+      <div class="flex-1">
+        <label class="block text-sm font-medium text-slate-700 mb-1">Busca</label>
+        <input
+          name="q"
+          value="{{ q }}"
+          placeholder="EX360-..., SN-..., CONT-..., NF-..., ATV-..., Série..."
+          class="w-full rounded-lg border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-slate-900"
+        />
+      </div>
+
+      <button
+        type="submit"
+        class="rounded-lg bg-slate-900 text-white px-4 py-2 hover:bg-slate-800"
+      >
+        Buscar
+      </button>
+
+      {% if q %}
+        <a href="?" class="text-sm text-slate-600 hover:underline pb-2">Limpar</a>
+      {% endif %}
+    </form>
+
+    <div class="mt-6 text-sm text-slate-600">
+      Exibindo: <span class="font-medium text-slate-900">{{ chamados|length }}</span>
+    </div>
+
+    <div class="mt-3 overflow-x-auto">
+      <table class="min-w-full text-sm">
+        <thead>
+          <tr class="text-left text-slate-600 border-b border-slate-200">
+            <th class="py-3 pr-4">Protocolo</th>
+            <th class="py-3 pr-4">ServiceNow</th>
+            <th class="py-3 pr-4">Contábil</th>
+            <th class="py-3 pr-4">NF</th>
+            <th class="py-3 pr-4">Loja</th>
+            <th class="py-3 pr-4">Projeto</th>
+            <th class="py-3 pr-4">Status</th>
+            <th class="py-3 pr-4">Criado</th>
+            <th class="py-3 pr-4">Finalizado</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          {% for c in chamados %}
+            <tr class="hover:bg-slate-50">
+              <td class="py-3 pr-4 font-medium">{{ c.protocolo }}</td>
+              <td class="py-3 pr-4">{{ c.servicenow_numero|default:"-" }}</td>
+              <td class="py-3 pr-4">{{ c.contabilidade_numero|default:"-" }}</td>
+              <td class="py-3 pr-4">{{ c.nf_saida_numero|default:"-" }}</td>
+              <td class="py-3 pr-4">{{ c.loja }}</td>
+              <td class="py-3 pr-4">{{ c.projeto }}</td>
+              <td class="py-3 pr-4">{{ c.status }}</td>
+              <td class="py-3 pr-4">{{ c.criado_em }}</td>
+              <td class="py-3 pr-4">{{ c.finalizado_em|default:"-" }}</td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td class="py-6 text-slate-500" colspan="9">Nenhum chamado encontrado.</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+{% endblock %}

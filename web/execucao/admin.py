@@ -51,4 +51,4 @@ class ChamadoAdmin(admin.ModelAdmin):
 class InstalacaoItemAdmin(admin.ModelAdmin):
     list_display = ("id", "chamado", "equipamento", "tipo", "quantidade", "tem_ativo", "confirmado")
     list_filter = ("tem_ativo", "confirmado")
-    search_fields = ("equipamento__codigo", "equipamento__nome", "tipo")
+    search_fields = ("ativo", "numero_serie", "equipamento__codigo", "equipamento__nome", "tipo")

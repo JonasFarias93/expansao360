@@ -1,0 +1,14 @@
+<div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+  {% if title %}
+    <div class="bg-slate-900 text-white px-5 py-4">
+      <div class="font-semibold">{{ title }}</div>
+      {% if subtitle %}
+        <div class="text-sm text-slate-300 mt-1">{{ subtitle }}</div>
+      {% endif %}
+    </div>
+  {% endif %}
+
+  <div class="p-5">
+    {{ content }}
+  </div>
+</div>
