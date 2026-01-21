@@ -1,7 +1,27 @@
-# Register your models here.
 from django.contrib import admin
 
-from .models import ItemKit, Kit, Loja
+from .models import (
+    Categoria,
+    Equipamento,
+    ItemKit,
+    Kit,
+    Loja,
+    Projeto,
+    Subprojeto,
+)
+
+
+@admin.register(Categoria)
+class CategoriaAdmin(admin.ModelAdmin):
+    search_fields = ("nome",)
+
+
+@admin.register(Equipamento)
+class EquipamentoAdmin(admin.ModelAdmin):
+    list_display = ("codigo", "nome", "categoria", "tem_ativo", "configuravel")
+    list_filter = ("categoria", "tem_ativo", "configuravel")
+
+    search_fields = ("codigo", "nome")
 
 
 @admin.register(Loja)
@@ -10,9 +30,22 @@ class LojaAdmin(admin.ModelAdmin):
     search_fields = ("codigo", "nome")
 
 
+class SubprojetoInline(admin.TabularInline):
+    model = Subprojeto
+    extra = 1
+
+
+@admin.register(Projeto)
+class ProjetoAdmin(admin.ModelAdmin):
+    list_display = ("codigo", "nome")
+    search_fields = ("codigo", "nome")
+    inlines = [SubprojetoInline]
+
+
 class ItemKitInline(admin.TabularInline):
     model = ItemKit
     extra = 1
+    autocomplete_fields = ("equipamento",)
 
 
 @admin.register(Kit)
