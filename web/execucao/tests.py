@@ -2,6 +2,7 @@
 from cadastro.models import Categoria, Equipamento, ItemKit, Kit, Loja, Projeto, Subprojeto
 from django.core.exceptions import ValidationError
 from django.test import TestCase
+from django.utils import timezone
 
 from .models import Chamado, InstalacaoItem
 
@@ -142,3 +143,19 @@ class ValidacaoExecucaoChamadoTest(TestCase):
         self.chamado.finalizar()
         self.chamado.refresh_from_db()
         self.assertEqual(self.chamado.status, Chamado.Status.FINALIZADO)
+
+
+def test_finalizar_define_finalizado_em(self) -> None:
+    micro_item = InstalacaoItem.objects.get(chamado=self.chamado, equipamento__codigo="MICRO")
+    micro_item.ativo = "ATV-123"
+    micro_item.numero_serie = "SER-999"
+    micro_item.save()
+
+    hub_item = InstalacaoItem.objects.get(chamado=self.chamado, equipamento__codigo="HUB_USB")
+    hub_item.confirmado = True
+    hub_item.save()
+
+    self.chamado.finalizar()
+    self.chamado.refresh_from_db()
+    self.assertIsNotNone(self.chamado.finalizado_em)
+    self.assertLessEqual(self.chamado.finalizado_em, timezone.now())

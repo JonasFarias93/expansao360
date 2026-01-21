@@ -1,6 +1,7 @@
 from cadastro.models import Equipamento, Kit, Loja, Projeto, Subprojeto
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.utils import timezone
 
 
 class Chamado(models.Model):
@@ -16,6 +17,7 @@ class Chamado(models.Model):
 
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.ABERTO)
     criado_em = models.DateTimeField(auto_now_add=True)
+    finalizado_em = models.DateTimeField(null=True, blank=True)
 
     def gerar_itens_de_instalacao(self) -> None:
         if self.itens.exists():
@@ -53,7 +55,8 @@ class Chamado(models.Model):
             raise ValidationError(erros)
 
         self.status = self.Status.FINALIZADO
-        self.save(update_fields=["status"])
+        self.finalizado_em = timezone.now()
+        self.save(update_fields=["status", "finalizado_em"])
 
 
 class InstalacaoItem(models.Model):
