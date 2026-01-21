@@ -6,4 +6,10 @@ app_name = "execucao"
 
 urlpatterns = [
     path("historico/", views.historico, name="historico"),
+    path("chamado/<int:chamado_id>/", views.chamado_detalhe, name="chamado_detalhe"),
+    path(
+        "chamado/<int:chamado_id>/finalizar/",
+        views.chamado_finalizar,
+        name="chamado_finalizar",
+    ),
 ]

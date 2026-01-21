@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="space-y-6">
+  <div class="flex justify-between items-center">
+    <div>
+      <h1 class="text-xl font-semibold">
+        Chamado {{ chamado.protocolo }}
+      </h1>
+      <p class="text-sm text-gray-500">
+        {% if chamado.finalizado_em %}
+          Finalizado em {{ chamado.finalizado_em }}
+        {% else %}
+          Em aberto
+        {% endif %}
+      </p>
+    </div>
+
+    {% if not chamado.finalizado_em %}
+      <form method="post" action="{% url 'execucao:chamado_finalizar' chamado.id %}">
+        {% csrf_token %}
+        <button class="px-4 py-2 bg-green-600 text-white rounded">
+          Finalizar Chamado
+        </button>
+      </form>
+    {% endif %}
+  </div>
+
+  <div class="bg-white shadow rounded p-4">
+    <h2 class="font-semibold mb-2">Itens de Execução</h2>
+    <ul class="space-y-2">
+      {% for item in itens %}
+        <li class="border rounded p-2">
+          {{ item.equipamento.nome }}
+          {% if item.tem_ativo %}
+            — Ativo: {{ item.ativo }} / Série: {{ item.numero_serie }}
+          {% else %}
+            — Item contável
+          {% endif %}
+        </li>
+      {% endfor %}
+    </ul>
+  </div>
+</div>
+{% endblock %}
