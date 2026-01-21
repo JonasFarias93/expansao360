@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="pt-br">
+  <head>
+    <meta charset="utf-8" />
+    <title>EXPANSÃO360 — Cadastrar Location</title>
+  </head>
+  <body>
+    <h1>Cadastrar Location</h1>
+
+    {% if message %}
+      <p style="color: green;"><strong>OK</strong> {{ message }}</p>
+    {% endif %}
+
+    {% if error %}
+      <p style="color: red;"><strong>ERRO</strong> {{ error }}</p>
+    {% endif %}
+
+    <form method="post">
+      {% csrf_token %}
+      {{ form.as_p }}
+      <button type="submit">Salvar</button>
+    </form>
+  </body>
+</html>
