@@ -1,4 +1,4 @@
-# web/execucao/views.py# Create your views here.
+# web/execucao/views.py
 from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.db import transaction
@@ -6,9 +6,17 @@ from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
-from .models import Chamado, EvidenciaChamado
+from .models import (
+    Chamado,
+    EvidenciaChamado,
+    InstalacaoItem,
+    StatusConfiguracao,
+)
 
 
+# ==================
+# HISTÓRICO
+# ==================
 def historico(request):
     q = (request.GET.get("q") or "").strip()
 
@@ -38,12 +46,29 @@ def historico(request):
     )
 
 
+# ==================
+# CHAMADO
+# ==================
 def chamado_detalhe(request, chamado_id):
     chamado = get_object_or_404(
         Chamado.objects.select_related("loja", "projeto", "subprojeto", "kit"),
         pk=chamado_id,
     )
-    itens = list(chamado.itens.select_related("equipamento").all().order_by("id"))
+
+    # Itens (QuerySet) — mantemos como QuerySet para poder fazer .filter/.count
+    itens_qs = chamado.itens.select_related("equipamento").all().order_by("id")
+
+    # 3.3 Progresso (na view do detalhe)
+    config_total = itens_qs.filter(requer_configuracao=True).count()
+    config_done = itens_qs.filter(
+        requer_configuracao=True,
+        status_configuracao=StatusConfiguracao.CONFIGURADO,
+    ).count()
+    config_pct = int((config_done * 100) / config_total) if config_total else 0
+
+    # Itens (lista) — se o template já estava consumindo como lista
+    itens = list(itens_qs)
+
     evidencias = EvidenciaChamado.objects.filter(chamado=chamado).order_by("-criado_em", "-id")
     evidencia_tipos = list(EvidenciaChamado.Tipo.choices)
 
@@ -55,6 +80,10 @@ def chamado_detalhe(request, chamado_id):
             "itens": itens,
             "evidencias": evidencias,
             "evidencia_tipos": evidencia_tipos,
+            # progresso
+            "config_total": config_total,
+            "config_done": config_done,
+            "config_pct": config_pct,
         },
     )
 
@@ -109,6 +138,9 @@ def chamado_finalizar(request, chamado_id):
     return redirect("execucao:chamado_detalhe", chamado_id=chamado.id)
 
 
+# ==================
+# EVIDÊNCIAS
+# ==================
 @require_POST
 def chamado_adicionar_evidencia(request, chamado_id):
     chamado = get_object_or_404(Chamado, pk=chamado_id)
@@ -149,4 +181,37 @@ def evidencia_remover(request, chamado_id, evidencia_id):
     ev.delete()
 
     messages.success(request, "Evidência removida com sucesso.")
+    return redirect("execucao:chamado_detalhe", chamado_id=chamado.id)
+
+
+# ==================
+# ITENS / CONFIGURAÇÃO
+# ==================
+@require_POST
+def item_set_status_configuracao(request, chamado_id: int, item_id: int):
+    chamado = get_object_or_404(Chamado, pk=chamado_id)
+
+    if chamado.finalizado_em:
+        messages.error(
+            request, "Chamado finalizado. Não é possível alterar status de configuração."
+        )
+        return redirect("execucao:chamado_detalhe", chamado_id=chamado.id)
+
+    item = get_object_or_404(InstalacaoItem, pk=item_id, chamado_id=chamado.id)
+
+    if not item.requer_configuracao:
+        messages.error(request, "Este item não requer configuração.")
+        return redirect("execucao:chamado_detalhe", chamado_id=chamado.id)
+
+    status = (request.POST.get("status") or "").strip()
+    validos = {v for v, _ in StatusConfiguracao.choices}
+    if status not in validos:
+        messages.error(request, "Status de configuração inválido.")
+        return redirect("execucao:chamado_detalhe", chamado_id=chamado.id)
+
+    if item.status_configuracao != status:
+        item.status_configuracao = status
+        item.save(update_fields=["status_configuracao"])
+        messages.success(request, "Status de configuração atualizado.")
+
     return redirect("execucao:chamado_detalhe", chamado_id=chamado.id)

@@ -27,4 +27,9 @@ urlpatterns = [
         views.evidencia_remover,
         name="evidencia_remover",
     ),
+    path(
+        "chamado/<int:chamado_id>/itens/<int:item_id>/configuracao/",
+        views.item_set_status_configuracao,
+        name="item_set_status_configuracao",
+    ),
 ]
