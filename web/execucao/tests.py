@@ -1,11 +1,12 @@
 from cadastro.models import Categoria, Equipamento, ItemKit, Kit, Loja, Projeto, Subprojeto
 from django.core.exceptions import ValidationError
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db import IntegrityError
 from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
-from .models import Chamado, InstalacaoItem
+from .models import Chamado, EvidenciaChamado, InstalacaoItem
 
 
 class ChamadoBaseTestCase(TestCase):
@@ -250,3 +251,30 @@ class ChamadoStatusFlowWebTest(ChamadoBaseTestCase):
 
         self.assertEqual(chamado.status, Chamado.Status.EM_EXECUCAO)
         self.assertTrue(item.confirmado)
+
+
+class EvidenciaChamadoModelTest(ChamadoBaseTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+        self.chamado = Chamado.objects.create(
+            loja=self.loja,
+            projeto=self.projeto,
+            subprojeto=self.sub,
+            kit=self.kit,
+        )
+
+    def test_criar_evidencia_vinculada_ao_chamado(self) -> None:
+        arquivo = SimpleUploadedFile(
+            "nf_saida.pdf",
+            b"%PDF-1.4 dummy",
+            content_type="application/pdf",
+        )
+
+        evidencia = EvidenciaChamado.objects.create(
+            chamado=self.chamado,
+            tipo=EvidenciaChamado.Tipo.NF_SAIDA,
+            arquivo=arquivo,
+        )
+
+        self.assertEqual(evidencia.chamado_id, self.chamado.id)
+        self.assertTrue(evidencia.arquivo.name)

@@ -96,3 +96,22 @@ class InstalacaoItem(models.Model):
 
     def __str__(self) -> str:
         return f"{self.equipamento.nome} {self.tipo} ({self.quantidade})"
+
+
+class EvidenciaChamado(models.Model):
+    class Tipo(models.TextChoices):
+        NF_SAIDA = "NF_SAIDA", "NF Saída"
+        NF_RETORNO = "NF_RETORNO", "NF Retorno"
+        CARTA_CONTEUDO = "CARTA_CONTEUDO", "Carta de Conteúdo"
+        EXCECAO = "EXCECAO", "Exceção"
+        OUTRO = "OUTRO", "Outro"
+
+    chamado = models.ForeignKey(Chamado, on_delete=models.CASCADE, related_name="evidencias")
+    tipo = models.CharField(max_length=30, choices=Tipo.choices)
+    arquivo = models.FileField(upload_to="execucao/evidencias/")
+    descricao = models.CharField(max_length=255, blank=True, default="")
+
+    criado_em = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self) -> str:
+        return f"{self.get_tipo_display()} - {self.chamado.protocolo}"
