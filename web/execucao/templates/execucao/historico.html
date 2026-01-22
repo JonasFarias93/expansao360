@@ -50,24 +50,34 @@
           </tr>
         </thead>
         <tbody class="divide-y divide-slate-100">
-          {% for c in chamados %}
-            <tr class="hover:bg-slate-50">
-              <td class="py-3 pr-4 font-medium">{{ c.protocolo }}</td>
-              <td class="py-3 pr-4">{{ c.servicenow_numero|default:"-" }}</td>
-              <td class="py-3 pr-4">{{ c.contabilidade_numero|default:"-" }}</td>
-              <td class="py-3 pr-4">{{ c.nf_saida_numero|default:"-" }}</td>
-              <td class="py-3 pr-4">{{ c.loja }}</td>
-              <td class="py-3 pr-4">{{ c.projeto }}</td>
-              <td class="py-3 pr-4">{{ c.status }}</td>
-              <td class="py-3 pr-4">{{ c.criado_em }}</td>
-              <td class="py-3 pr-4">{{ c.finalizado_em|default:"-" }}</td>
-            </tr>
-          {% empty %}
-            <tr>
-              <td class="py-6 text-slate-500" colspan="9">Nenhum chamado encontrado.</td>
-            </tr>
-          {% endfor %}
-        </tbody>
+            {% for c in chamados %}
+              <tr class="hover:bg-slate-50">
+                <td class="py-3 pr-4 font-medium">
+                  <a
+                    href="{% url 'execucao:chamado_detalhe' c.id %}"
+                    class="text-indigo-600 hover:underline"
+                  >
+                    {{ c.protocolo }}
+                  </a>
+                </td>
+                <td class="py-3 pr-4">{{ c.servicenow_numero|default:"-" }}</td>
+                <td class="py-3 pr-4">{{ c.contabilidade_numero|default:"-" }}</td>
+                <td class="py-3 pr-4">{{ c.nf_saida_numero|default:"-" }}</td>
+                <td class="py-3 pr-4">{{ c.loja }}</td>
+                <td class="py-3 pr-4">{{ c.projeto }}</td>
+                <td class="py-3 pr-4">{{ c.status }}</td>
+                <td class="py-3 pr-4">{{ c.criado_em }}</td>
+                <td class="py-3 pr-4">{{ c.finalizado_em|default:"-" }}</td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td class="py-6 text-slate-500 text-center" colspan="9">
+                  Nenhum chamado encontrado.
+                </td>
+              </tr>
+            {% endfor %}
+      </tbody>
+
       </table>
     </div>
   </div>
