@@ -3,6 +3,8 @@
 Plataforma para gestão de expansão, padronização e operação de campo, separando claramente
 cadastro administrativo (mestre) da execução operacional, com rastreabilidade completa.
 
+> **Última versão estável:** `v0.2.0` — Web v1 (Registry + Chamado)
+
 ## Objetivo
 
 O EXPANSÃO360 tem como objetivo estruturar e padronizar a expansão de operações físicas,
