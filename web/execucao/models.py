@@ -1,5 +1,3 @@
-import secrets
-
 from cadastro.models import Equipamento, Kit, Loja, Projeto, Subprojeto
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -39,46 +37,43 @@ class Chamado(models.Model):
                 tem_ativo=item_kit.equipamento.tem_ativo,
             )
 
-    def finalizar(self) -> None:
-        if self.status == self.Status.FINALIZADO:
-            raise ValidationError("Chamado já está finalizado.")
 
-        itens = list(self.itens.all())
-        if not itens:
-            raise ValidationError("Não é possível finalizar um chamado sem itens.")
+def finalizar(self) -> None:
+    if self.status == self.Status.FINALIZADO:
+        raise ValidationError("Chamado já está finalizado.")
 
-        erros: list[str] = []
+    itens = list(self.itens.all())
+    if not itens:
+        raise ValidationError("Não é possível finalizar um chamado sem itens.")
 
-        for item in itens:
-            if item.tem_ativo:
-                if not item.ativo.strip() or not item.numero_serie.strip():
-                    erros.append(
-                        "Item rastreável "
-                        f"'{item.equipamento.nome} {item.tipo}' "
-                        "exige Ativo e Número de Série."
-                    )
-            else:
-                if not item.confirmado:
-                    erros.append(
-                        "Item contável "
-                        f"'{item.equipamento.nome} {item.tipo}' "
-                        "precisa ser confirmado."
-                    )
+    erros: list[str] = []
 
-        if erros:
-            raise ValidationError(erros)
+    for item in itens:
+        if item.requer_configuracao and item.status_configuracao != StatusConfiguracao.CONFIGURADO:
+            erros.append(
+                "Não é possível finalizar: "
+                f"'{item.equipamento.nome} {item.tipo}' ainda não foi marcado como CONFIGURADO."
+            )
 
-        self.status = self.Status.FINALIZADO
-        self.finalizado_em = timezone.now()
-        self.save(update_fields=["status", "finalizado_em"])
+        if item.tem_ativo:
+            if not item.ativo.strip() or not item.numero_serie.strip():
+                erros.append(
+                    "Item rastreável "
+                    f"'{item.equipamento.nome} {item.tipo}' "
+                    "exige Ativo e Número de Série."
+                )
+        else:
+            if not item.confirmado:
+                erros.append(
+                    f"Item contável '{item.equipamento.nome} {item.tipo}' precisa ser confirmado."
+                )
 
-    def save(self, *args, **kwargs):  # type: ignore[override]
-        if not self.protocolo:
-            # Ex: EX360-20260121-8F3K2M (6 hex)
-            data = timezone.now().strftime("%Y%m%d")
-            sufixo = secrets.token_hex(3).upper()
-            self.protocolo = f"EX360-{data}-{sufixo}"
-        super().save(*args, **kwargs)
+    if erros:
+        raise ValidationError(erros)
+
+    self.status = self.Status.FINALIZADO
+    self.finalizado_em = timezone.now()
+    self.save(update_fields=["status", "finalizado_em"])
 
 
 class StatusConfiguracao(models.TextChoices):
