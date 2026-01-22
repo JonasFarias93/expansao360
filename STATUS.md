@@ -158,3 +158,30 @@ com testes automatizados e separação clara entre core, CLI e Web.
 
 Commit: `bed1c61`
 
+---
+
+## Próximo Marco (Planejado)
+
+### v0.3.0 — Evidências e Regras de Finalização
+
+Objetivo:
+Adicionar suporte a evidências (anexos) por Chamado e formalizar
+as regras operacionais de finalização, mantendo rastreabilidade e governança.
+
+Escopo previsto:
+- Model de Evidência associado ao Chamado
+- Upload, listagem e download de anexos
+- Validações de tipo e tamanho de arquivo
+- Exigência de evidência para finalização do Chamado
+- Suporte a exceções operacionais (extravio / não retornado)
+- Integração das regras com o workflow de status
+- Testes automatizados cobrindo cenários operacionais
+
+Fora de escopo deste release:
+- IAM completo (perfis e permissões avançadas)
+- Fluxo inverso de execução (Loja → Matriz)
+
+📌 A criação da tag `v0.3.0` ocorrerá somente após a entrega completa
+do escopo definido acima.
+
+
