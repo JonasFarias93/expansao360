@@ -72,6 +72,10 @@ def chamado_atualizar_itens(request, chamado_id):
 
         item.save(update_fields=["ativo", "numero_serie", "confirmado"])
 
+    if chamado.status == Chamado.Status.ABERTO:
+        chamado.status = Chamado.Status.EM_EXECUCAO
+        chamado.save(update_fields=["status"])
+
     messages.success(request, "Itens atualizados com sucesso.")
     return redirect("execucao:chamado_detalhe", chamado_id=chamado.id)
 
