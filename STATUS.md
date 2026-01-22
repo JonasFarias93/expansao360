@@ -69,17 +69,61 @@ com testes automatizados e separação clara entre core, CLI e Web.
 
 ---
 
-## Marcos
+## Marcos e Planejamento
 
-- **Dia 8 — Execução Web v1 concluída**
-  - Histórico de Chamados
-  - Detalhe do Chamado
-  - Edição de itens
-  - Validações de finalização (TDD)
-  - Workflow de status (Aberto → Em execução → Finalizado)
-  - Badges de status na UI
-  - ADR do fluxo inverso Loja → Matriz
+### Concluído
+- **Dia 1–8 — Execução Web v1**
+  - Core e CLI estáveis (TDD)
+  - Chamado com:
+    - protocolo automático
+    - itens de execução
+    - validações de finalização
+    - workflow de status
+  - UI Web:
+    - histórico de chamados
+    - detalhe do chamado
+    - edição de itens
+    - badges de status
+  - ADRs fundamentais definidos
+  - Documentação alinhada ao código
 
+
+---
+
+### Planejamento (Dias Restantes)
+
+- **Dia 9 — Planejamento técnico**
+  - ADR de evidências/anexos por Chamado
+  - Atualização de STATUS e REQUIREMENTS
+
+- **Dia 10 — Feature: Anexos (backend)**
+  - Model de evidências por Chamado
+  - Upload e persistência de arquivos
+  - Listagem e download
+  - Testes (TDD)
+
+- **Dia 11 — Feature: Anexos (UI)**
+  - Upload de NF e Carta de Conteúdo
+  - Visualização de evidências no Chamado
+  - Validações básicas (tipo e tamanho)
+
+- **Dia 12 — Regras de evidência**
+  - Exigência de evidência na finalização
+  - Suporte a exceções (extravio / não retornado)
+  - Testes de cenários operacionais
+
+- **Dia 13 — Fluxo inverso (Loja → Matriz)**
+  - Chamado de retorno vinculado ao original
+  - Regras específicas de finalização
+  - Integração com evidências
+
+- **Dia 14 — IAM mínimo**
+  - Permissões para ações sensíveis
+  - UI condicionada por permissão
+
+- **Dias 15–16 — Buffer**
+  - UX, robustez, revisão final e documentação
+  
 ---
 
 ## Em Andamento

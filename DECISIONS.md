@@ -190,3 +190,163 @@ migrem para a camada web por conveniência.
 - A Web (Django) atua apenas como camada de entrega.
 - CLI e Web compartilham o mesmo domínio e casos de uso.
 - Facilita testes, manutenção e evolução futura (API, mobile, etc.).
+
+
+
+---
+
+## 2026-01-21 — Fluxo inverso de execução (Loja → Matriz) via novo Chamado
+
+**Decisão**  
+Quando um Chamado finalizado precisar de correção operacional ou retorno de itens
+para a matriz, o sistema **não permitirá edição destrutiva do histórico**.
+Em vez disso, será criado **um novo Chamado**, representando o fluxo inverso
+(**Loja → Matriz**), vinculado ao Chamado original.
+
+Além disso, Chamados de retorno possuirão **regras específicas de finalização**,
+exigindo confirmação explícita do destino dos itens (retorno efetivo ou exceção).
+
+---
+
+**Contexto**  
+Chamados representam eventos operacionais e contábeis com impacto real
+(rastreabilidade, ativos, NF, contabilidade).
+Permitir reabertura ou edição direta de um Chamado finalizado quebraria:
+- rastreabilidade histórica
+- consistência contábil
+- auditoria de processos
+
+Na prática, quando um item apresenta problema após a execução
+(ex.: defeito, devolução, erro de envio),
+o processo correto é um **retorno físico e contábil** do item,
+que precisa ser registrado como **uma nova operação**.
+
+Adicionalmente, retornos podem:
+- demorar para acontecer
+- não acontecer (extravio, perda, descarte)
+- ficar esquecidos em status intermediário
+
+Era necessário garantir que o sistema:
+- evidencie retornos pendentes
+- force uma decisão explícita
+- evite chamados “abertos para sempre” sem resolução clara
+
+---
+
+**Consequências**  
+
+### 1) Criação de novo Chamado
+- Chamados finalizados permanecem imutáveis.
+- Correções geram um **novo Chamado**.
+- O novo Chamado:
+  - representa o fluxo **Loja → Matriz**
+  - referencia explicitamente o Chamado de origem
+
+---
+
+### 2) Regra de finalização para Chamado de retorno
+Chamados do tipo **Loja → Matriz** **não podem ser finalizados automaticamente**.
+
+Para finalizar, será obrigatório indicar **o desfecho dos itens**, com uma das opções:
+
+- **Retorno confirmado para a matriz**
+- **Não retornado (extravio / perda / descarte / exceção)**
+
+Essa decisão:
+- é explícita
+- é registrada
+- não pode ser omitida
+
+---
+
+### 3) Auditoria e governança
+- Chamados de retorno pendentes ficam visíveis no sistema
+- Evita esquecimento de retornos abertos
+- Permite relatórios claros:
+  - itens retornados
+  - itens não retornados
+  - perdas / exceções operacionais
+
+---
+
+### 4) Contabilidade e rastreabilidade
+- A contabilidade passa a ter dois registros claros:
+  - envio (Matriz → Loja)
+  - retorno ou baixa (Loja → Matriz)
+- O sistema mantém histórico completo, sem reprocessamento destrutivo.
+- A UI poderá exibir, no Chamado original, um atalho para o Chamado de retorno.
+
+
+---
+
+## 2026-01-22 — Evidências (anexos) por Chamado
+
+**Decisão**  
+O sistema permitirá o upload e a gestão de **evidências (anexos)** vinculadas a um Chamado,
+como forma de comprovação operacional e contábil.
+Essas evidências serão utilizadas tanto no fluxo normal
+(**Matriz → Loja**) quanto no fluxo inverso (**Loja → Matriz**).
+
+---
+
+**Contexto**  
+Durante a execução e o retorno de itens, é comum a existência de documentos físicos,
+como:
+- Nota Fiscal (NF)
+- Carta de Conteúdo assinada na coleta
+- Outros documentos de exceção (extravio, perda, descarte)
+
+Nem toda operação gera NF, especialmente quando envolve itens contáveis
+(sem ativo), como teclados, mouses e suportes.
+Nesses casos, a **Carta de Conteúdo** é a evidência válida da movimentação.
+
+Era necessário que o sistema:
+- armazenasse essas evidências
+- mantivesse vínculo com o Chamado
+- evitasse esquecimento de operações pendentes
+- suportasse exceções sem perder rastreabilidade
+
+---
+
+**Consequências**  
+
+### 1) Evidências como entidade própria
+- Evidências serão registradas como entidades próprias,
+  vinculadas a um Chamado.
+- Cada evidência terá:
+  - tipo (ex.: NF, Carta de Conteúdo, Exceção)
+  - arquivo anexado
+  - data de registro
+
+---
+
+### 2) Tipos de evidência suportados
+Inicialmente, o sistema suportará:
+- NF de saída
+- NF de retorno
+- Carta de Conteúdo
+- Documento de exceção (extravio, perda, descarte)
+
+---
+
+### 3) Regra de finalização com evidências
+- A finalização de um Chamado poderá exigir pelo menos uma evidência,
+  conforme o tipo de fluxo.
+- Para Chamados de retorno (Loja → Matriz),
+  será obrigatória a indicação explícita do desfecho:
+  - retorno confirmado
+  - não retornado (extravio / exceção)
+
+---
+
+### 4) Governança e auditoria
+- Evidências ficam visíveis no detalhe do Chamado.
+- Evita Chamados finalizados sem comprovação.
+- Mantém histórico completo para auditoria e contabilidade.
+
+---
+
+### 5) Evolução futura
+- O mecanismo de evidências poderá ser reutilizado
+  para fotos, assinaturas, termos ou outros documentos,
+  sem alteração do modelo conceitual.
