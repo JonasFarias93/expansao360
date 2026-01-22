@@ -54,6 +54,7 @@ def chamado_detalhe(request, chamado_id):
         Chamado.objects.select_related("loja", "projeto", "subprojeto", "kit"),
         pk=chamado_id,
     )
+    chamado.gerar_itens_de_instalacao()
 
     # Itens (QuerySet) — mantemos como QuerySet para poder fazer .filter/.count
     itens_qs = chamado.itens.select_related("equipamento").all().order_by("id")
@@ -188,30 +189,23 @@ def evidencia_remover(request, chamado_id, evidencia_id):
 # ITENS / CONFIGURAÇÃO
 # ==================
 @require_POST
-def item_set_status_configuracao(request, chamado_id: int, item_id: int):
+def item_set_status_configuracao(request, chamado_id, item_id):
     chamado = get_object_or_404(Chamado, pk=chamado_id)
 
     if chamado.finalizado_em:
-        messages.error(
-            request, "Chamado finalizado. Não é possível alterar status de configuração."
-        )
+        messages.error(request, "Chamado finalizado. Não é possível alterar status.")
         return redirect("execucao:chamado_detalhe", chamado_id=chamado.id)
 
-    item = get_object_or_404(InstalacaoItem, pk=item_id, chamado_id=chamado.id)
+    item = get_object_or_404(InstalacaoItem, pk=item_id, chamado=chamado)
 
-    if not item.requer_configuracao:
-        messages.error(request, "Este item não requer configuração.")
-        return redirect("execucao:chamado_detalhe", chamado_id=chamado.id)
-
-    status = (request.POST.get("status") or "").strip()
-    validos = {v for v, _ in StatusConfiguracao.choices}
+    status = request.POST.get("status", "")
+    validos = {c[0] for c in StatusConfiguracao.choices}
     if status not in validos:
-        messages.error(request, "Status de configuração inválido.")
+        messages.error(request, "Status inválido.")
         return redirect("execucao:chamado_detalhe", chamado_id=chamado.id)
 
-    if item.status_configuracao != status:
-        item.status_configuracao = status
-        item.save(update_fields=["status_configuracao"])
-        messages.success(request, "Status de configuração atualizado.")
+    item.status_configuracao = status
+    item.save(update_fields=["status_configuracao"])
 
+    messages.success(request, "Status de configuração atualizado.")
     return redirect("execucao:chamado_detalhe", chamado_id=chamado.id)
