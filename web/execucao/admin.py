@@ -11,6 +11,8 @@ class InstalacaoItemInline(admin.TabularInline):
         "tipo",
         "quantidade",
         "tem_ativo",
+        "requer_configuracao",
+        "status_configuracao",
         "confirmado",
         "ativo",
         "numero_serie",
@@ -46,9 +48,23 @@ class ChamadoAdmin(admin.ModelAdmin):
         "projeto__nome",
     )
 
+    def save_model(self, request, obj, form, change):
+        super().save_model(request, obj, form, change)
+        obj.gerar_itens_de_instalacao()
+
 
 @admin.register(InstalacaoItem)
 class InstalacaoItemAdmin(admin.ModelAdmin):
-    list_display = ("id", "chamado", "equipamento", "tipo", "quantidade", "tem_ativo", "confirmado")
-    list_filter = ("tem_ativo", "confirmado")
+    list_display = (
+        "id",
+        "chamado",
+        "equipamento",
+        "tipo",
+        "quantidade",
+        "tem_ativo",
+        "requer_configuracao",
+        "status_configuracao",
+        "confirmado",
+    )
+    list_filter = ("tem_ativo", "confirmado", "requer_configuracao", "status_configuracao")
     search_fields = ("ativo", "numero_serie", "equipamento__codigo", "equipamento__nome", "tipo")

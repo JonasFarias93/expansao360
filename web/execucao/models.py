@@ -1,9 +1,26 @@
+# =========
+# imports
+# =========
+import secrets
+
 from cadastro.models import Equipamento, Kit, Loja, Projeto, Subprojeto
 from django.core.exceptions import ValidationError
-from django.db import models
+from django.db import IntegrityError, models, transaction
 from django.utils import timezone
 
 
+# ==================
+# status configuração
+# ==================
+class StatusConfiguracao(models.TextChoices):
+    AGUARDANDO = "AGUARDANDO", "Aguardando"
+    EM_CONFIGURACAO = "EM_CONFIGURACAO", "Em configuração"
+    CONFIGURADO = "CONFIGURADO", "Configurado"
+
+
+# =======
+# chamado
+# =======
 class Chamado(models.Model):
     class Status(models.TextChoices):
         ABERTO = "ABERTO", "Aberto"
@@ -24,6 +41,9 @@ class Chamado(models.Model):
     contabilidade_numero = models.CharField(max_length=40, unique=True, null=True, blank=True)
     nf_saida_numero = models.CharField(max_length=40, unique=True, null=True, blank=True)
 
+    # -------------------------
+    # geração de itens do chamado
+    # -------------------------
     def gerar_itens_de_instalacao(self) -> None:
         if self.itens.exists():
             return
@@ -35,53 +55,84 @@ class Chamado(models.Model):
                 tipo=item_kit.tipo,
                 quantidade=item_kit.quantidade,
                 tem_ativo=item_kit.equipamento.tem_ativo,
+                requer_configuracao=item_kit.requer_configuracao,
             )
 
+    # ----------
+    # finalizar
+    # ----------
+    def finalizar(self) -> None:
+        if self.status == self.Status.FINALIZADO:
+            raise ValidationError("Chamado já está finalizado.")
 
-def finalizar(self) -> None:
-    if self.status == self.Status.FINALIZADO:
-        raise ValidationError("Chamado já está finalizado.")
+        itens = list(self.itens.all())
+        if not itens:
+            raise ValidationError("Não é possível finalizar um chamado sem itens.")
 
-    itens = list(self.itens.all())
-    if not itens:
-        raise ValidationError("Não é possível finalizar um chamado sem itens.")
+        erros: list[str] = []
 
-    erros: list[str] = []
-
-    for item in itens:
-        if item.requer_configuracao and item.status_configuracao != StatusConfiguracao.CONFIGURADO:
-            erros.append(
-                "Não é possível finalizar: "
-                f"'{item.equipamento.nome} {item.tipo}' ainda não foi marcado como CONFIGURADO."
-            )
-
-        if item.tem_ativo:
-            if not item.ativo.strip() or not item.numero_serie.strip():
+        for item in itens:
+            # regra: se requer configuração, precisa estar CONFIGURADO
+            if (
+                item.requer_configuracao
+                and item.status_configuracao != StatusConfiguracao.CONFIGURADO
+            ):
                 erros.append(
-                    "Item rastreável "
-                    f"'{item.equipamento.nome} {item.tipo}' "
-                    "exige Ativo e Número de Série."
-                )
-        else:
-            if not item.confirmado:
-                erros.append(
-                    f"Item contável '{item.equipamento.nome} {item.tipo}' precisa ser confirmado."
+                    "Não é possível finalizar: "
+                    f"'{item.equipamento.nome} {item.tipo}' ainda não foi marcado como CONFIGURADO."
                 )
 
-    if erros:
-        raise ValidationError(erros)
+            # regra: se rastreável, exige ativo e número de série
+            if item.tem_ativo:
+                if not item.ativo.strip() or not item.numero_serie.strip():
+                    erros.append(
+                        "Item rastreável "
+                        f"'{item.equipamento.nome} {item.tipo}' "
+                        "exige Ativo e Número de Série."
+                    )
+            # regra: se contável, exige confirmação
+            else:
+                if not item.confirmado:
+                    erros.append(
+                        f"Item contável '{item.equipamento.nome} {item.tipo}' "
+                        "precisa ser confirmado."
+                    )
 
-    self.status = self.Status.FINALIZADO
-    self.finalizado_em = timezone.now()
-    self.save(update_fields=["status", "finalizado_em"])
+        if erros:
+            raise ValidationError(erros)
+
+        # se passou por todas as validações, finaliza
+        self.status = self.Status.FINALIZADO
+        self.finalizado_em = timezone.now()
+        self.save(update_fields=["status", "finalizado_em"])
+
+    # -----------------------
+    # salvar / gerar protocolo
+    # -----------------------
+    def save(self, *args, **kwargs):  # type: ignore[override]
+        # se já tem protocolo, salva normal
+        if self.protocolo:
+            return super().save(*args, **kwargs)
+
+        data = timezone.now().strftime("%Y%m%d")
+
+        # tenta algumas vezes evitar colisão do unique
+        for _ in range(5):
+            self.protocolo = f"EX360-{data}-{secrets.token_hex(3).upper()}"
+            try:
+                with transaction.atomic():
+                    return super().save(*args, **kwargs)
+            except IntegrityError:
+                # colisão do unique, tenta de novo
+                self.protocolo = ""
+
+        # se falhar várias vezes, deixa o erro subir (melhor do que salvar inconsistente)
+        return super().save(*args, **kwargs)
 
 
-class StatusConfiguracao(models.TextChoices):
-    AGUARDANDO = "AGUARDANDO", "Aguardando"
-    EM_CONFIGURACAO = "EM_CONFIGURACAO", "Em configuração"
-    CONFIGURADO = "CONFIGURADO", "Configurado"
-
-
+# ================
+# item da instalação
+# ================
 class InstalacaoItem(models.Model):
     chamado = models.ForeignKey(Chamado, on_delete=models.CASCADE, related_name="itens")
     equipamento = models.ForeignKey(Equipamento, on_delete=models.PROTECT)
@@ -115,6 +166,9 @@ class InstalacaoItem(models.Model):
         return f"{self.equipamento.nome} {self.tipo} ({self.quantidade})"
 
 
+# ==================
+# evidências do chamado
+# ==================
 class EvidenciaChamado(models.Model):
     class Tipo(models.TextChoices):
         NF_SAIDA = "NF_SAIDA", "NF Saída"

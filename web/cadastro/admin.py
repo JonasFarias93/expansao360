@@ -44,8 +44,13 @@ class ProjetoAdmin(admin.ModelAdmin):
 
 class ItemKitInline(admin.TabularInline):
     model = ItemKit
-    extra = 1
-    autocomplete_fields = ("equipamento",)
+    extra = 0
+    fields = (
+        "equipamento",
+        "tipo",
+        "quantidade",
+        "requer_configuracao",
+    )
 
 
 @admin.register(Kit)
