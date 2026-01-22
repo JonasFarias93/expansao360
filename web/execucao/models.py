@@ -110,7 +110,6 @@ class EvidenciaChamado(models.Model):
     tipo = models.CharField(max_length=30, choices=Tipo.choices)
     arquivo = models.FileField(upload_to="execucao/evidencias/")
     descricao = models.CharField(max_length=255, blank=True, default="")
-
     criado_em = models.DateTimeField(auto_now_add=True)
 
     def __str__(self) -> str:
