@@ -6,7 +6,7 @@ from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
-from .models import Chamado
+from .models import Chamado, EvidenciaChamado
 
 
 def historico(request):
@@ -99,4 +99,32 @@ def chamado_finalizar(request, chamado_id):
         return redirect("execucao:chamado_detalhe", chamado_id=chamado.id)
 
     messages.success(request, "Chamado finalizado com sucesso.")
+    return redirect("execucao:chamado_detalhe", chamado_id=chamado.id)
+
+
+@require_POST
+def chamado_adicionar_evidencia(request, chamado_id):
+    chamado = get_object_or_404(Chamado, pk=chamado_id)
+
+    tipo = (request.POST.get("tipo") or "").strip()
+    descricao = (request.POST.get("descricao") or "").strip()
+    arquivo = request.FILES.get("arquivo")
+
+    if not arquivo:
+        messages.error(request, "Selecione um arquivo para anexar.")
+        return redirect("execucao:chamado_detalhe", chamado_id=chamado.id)
+
+    tipos_validos = {t for t, _ in EvidenciaChamado.Tipo.choices}
+    if tipo not in tipos_validos:
+        messages.error(request, "Tipo de evidência inválido.")
+        return redirect("execucao:chamado_detalhe", chamado_id=chamado.id)
+
+    EvidenciaChamado.objects.create(
+        chamado=chamado,
+        tipo=tipo,
+        descricao=descricao,
+        arquivo=arquivo,
+    )
+
+    messages.success(request, "Evidência anexada com sucesso.")
     return redirect("execucao:chamado_detalhe", chamado_id=chamado.id)

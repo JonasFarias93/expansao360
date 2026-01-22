@@ -17,4 +17,9 @@ urlpatterns = [
         views.chamado_finalizar,
         name="chamado_finalizar",
     ),
+    path(
+        "chamado/<int:chamado_id>/evidencias/",
+        views.chamado_adicionar_evidencia,
+        name="chamado_adicionar_evidencia",
+    ),
 ]
