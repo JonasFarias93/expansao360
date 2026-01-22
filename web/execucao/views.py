@@ -44,11 +44,18 @@ def chamado_detalhe(request, chamado_id):
         pk=chamado_id,
     )
     itens = list(chamado.itens.select_related("equipamento").all().order_by("id"))
+    evidencias = EvidenciaChamado.objects.filter(chamado=chamado).order_by("-criado_em", "-id")
+    evidencia_tipos = list(EvidenciaChamado.Tipo.choices)
 
     return render(
         request,
         "execucao/chamado_detalhe.html",
-        {"chamado": chamado, "itens": itens},
+        {
+            "chamado": chamado,
+            "itens": itens,
+            "evidencias": evidencias,
+            "evidencia_tipos": evidencia_tipos,
+        },
     )
 
 
@@ -127,4 +134,19 @@ def chamado_adicionar_evidencia(request, chamado_id):
     )
 
     messages.success(request, "Evidência anexada com sucesso.")
+    return redirect("execucao:chamado_detalhe", chamado_id=chamado.id)
+
+
+@require_POST
+def evidencia_remover(request, chamado_id, evidencia_id):
+    chamado = get_object_or_404(Chamado, pk=chamado_id)
+
+    if chamado.finalizado_em:
+        messages.error(request, "Chamado finalizado. Não é possível remover evidências.")
+        return redirect("execucao:chamado_detalhe", chamado_id=chamado.id)
+
+    ev = get_object_or_404(EvidenciaChamado, pk=evidencia_id, chamado_id=chamado.id)
+    ev.delete()
+
+    messages.success(request, "Evidência removida com sucesso.")
     return redirect("execucao:chamado_detalhe", chamado_id=chamado.id)

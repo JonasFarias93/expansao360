@@ -22,4 +22,9 @@ urlpatterns = [
         views.chamado_adicionar_evidencia,
         name="chamado_adicionar_evidencia",
     ),
+    path(
+        "chamado/<int:chamado_id>/evidencias/<int:evidencia_id>/remover/",
+        views.evidencia_remover,
+        name="evidencia_remover",
+    ),
 ]
