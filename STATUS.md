@@ -142,3 +142,19 @@ com testes automatizados e separação clara entre core, CLI e Web.
 - Toda regra de negócio é validada via testes.
 - Fluxos operacionais críticos são registrados via ADR.
 ---
+
+
+## Marcos (Releases)
+
+### v0.2.0 — Web v1 (Registry + Chamado)
+📅 2026-01-22
+
+- Primeira versão utilizável end-to-end
+- Core + CLI estáveis
+- Cadastro completo (Registry)
+- Execução operacional com Chamado, workflow e validações
+- UI Web funcional para histórico, detalhe e edição
+- Base arquitetural e ADRs consolidados
+
+Commit: `bed1c61`
+
