@@ -19,29 +19,27 @@
             / {{ chamado.subprojeto.codigo }} — {{ chamado.subprojeto.nome }}
           {% endif %}
         </div>
-        <div>
-          <td class="py-3 pr-4">
-          {% if c.status == "ABERTO" %}
-            <span class="inline-flex items-center rounded-full bg-slate-100 px-2 py-1 text-xs font-medium text-slate-700">
-              Aberto
-            </span>
-          {% elif c.status == "EM_EXECUCAO" %}
-            <span class="inline-flex items-center rounded-full bg-blue-100 px-2 py-1 text-xs font-medium text-blue-700">
-              Em execução
-            </span>
-          {% elif c.status == "FINALIZADO" %}
-            <span class="inline-flex items-center rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-700">
-              Finalizado
-            </span>
-          {% else %}
-            <span class="inline-flex items-center rounded-full bg-amber-100 px-2 py-1 text-xs font-medium text-amber-700">
-              {{ c.status }}
-            </span>
-          {% endif %}
-        </td>
+          <div class="flex items-center gap-2">
+              <span class="font-medium">Status:</span>
 
-        </div>
-
+              {% if chamado.status == "ABERTO" %}
+                <span class="inline-flex items-center rounded-full bg-slate-100 px-2 py-1 text-xs font-medium text-slate-700">
+                  Aberto
+                </span>
+              {% elif chamado.status == "EM_EXECUCAO" %}
+                <span class="inline-flex items-center rounded-full bg-blue-100 px-2 py-1 text-xs font-medium text-blue-700">
+                  Em execução
+                </span>
+              {% elif chamado.status == "FINALIZADO" %}
+                <span class="inline-flex items-center rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-700">
+                  Finalizado
+                </span>
+              {% else %}
+                <span class="inline-flex items-center rounded-full bg-amber-100 px-2 py-1 text-xs font-medium text-amber-700">
+                  {{ chamado.status }}
+                </span>
+              {% endif %}
+            </div>
         <div class="pt-2 grid grid-cols-1 md:grid-cols-3 gap-2">
           <div class="bg-gray-50 border rounded p-2">
             <div class="text-xs text-gray-500">ServiceNow</div>
