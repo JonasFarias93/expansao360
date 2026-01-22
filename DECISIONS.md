@@ -350,3 +350,29 @@ Inicialmente, o sistema suportará:
 - O mecanismo de evidências poderá ser reutilizado
   para fotos, assinaturas, termos ou outros documentos,
   sem alteração do modelo conceitual.
+
+
+  ---
+
+## 2026-01-22 — Estratégia de Branches e Releases (Git)
+
+**Decisão**  
+Adotar duas branches principais com papéis bem definidos:
+- `develop`: branch de integração contínua
+- `main`: branch estável, utilizada exclusivamente para releases e tags
+
+As versões oficiais do projeto serão marcadas por **tags semânticas (SemVer)**,
+criadas apenas a partir da branch `main`.
+
+**Contexto**  
+Até o momento, o projeto utilizava apenas a branch `develop`.
+Com a estabilização do core, da CLI e da Web (v0.2.0),
+tornou-se necessário formalizar um fluxo de versionamento e releases.
+
+**Consequências**
+- Toda feature ou correção deve ser integrada primeiro em `develop`
+- A branch `main` representa sempre um estado estável e utilizável
+- Releases e tags são criados exclusivamente a partir da `main`
+- O histórico de versões passa a ser rastreável via GitHub Releases
+- O `STATUS.md` passa a registrar explicitamente os marcos versionados
+
