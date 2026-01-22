@@ -65,7 +65,26 @@
                 <td class="py-3 pr-4">{{ c.nf_saida_numero|default:"-" }}</td>
                 <td class="py-3 pr-4">{{ c.loja }}</td>
                 <td class="py-3 pr-4">{{ c.projeto }}</td>
-                <td class="py-3 pr-4">{{ c.status }}</td>
+                <td class="py-3 pr-4">
+                  {% if c.status == "ABERTO" %}
+                    <span class="inline-flex items-center rounded-full bg-slate-100 px-2 py-1 text-xs font-medium text-slate-700">
+                      Aberto
+                   </span>
+                  {% elif c.status == "EM_EXECUCAO" %}
+                  <span class="inline-flex items-center rounded-full bg-blue-100 px-2 py-1 text-xs font-medium text-blue-700">
+                      Em execução
+                  </span>
+                  {% elif c.status == "FINALIZADO" %}
+                  <span class="inline-flex items-center rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-700">
+                      Finalizado
+                  </span>
+                    {% else %}
+                  <span class="inline-flex items-center rounded-full bg-amber-100 px-2 py-1 text-xs font-medium text-amber-700">
+                    {{ c.status }}
+                  </span>
+                  {% endif %}
+                </td>
+
                 <td class="py-3 pr-4">{{ c.criado_em }}</td>
                 <td class="py-3 pr-4">{{ c.finalizado_em|default:"-" }}</td>
               </tr>
