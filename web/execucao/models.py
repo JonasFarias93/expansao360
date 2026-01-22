@@ -40,9 +40,16 @@ class Chamado(models.Model):
             )
 
     def finalizar(self) -> None:
+        if self.status == self.Status.FINALIZADO:
+            raise ValidationError("Chamado já está finalizado.")
+
+        itens = list(self.itens.all())
+        if not itens:
+            raise ValidationError("Não é possível finalizar um chamado sem itens.")
+
         erros: list[str] = []
 
-        for item in self.itens.all():
+        for item in itens:
             if item.tem_ativo:
                 if not item.ativo.strip() or not item.numero_serie.strip():
                     erros.append(
@@ -67,9 +74,9 @@ class Chamado(models.Model):
 
     def save(self, *args, **kwargs):  # type: ignore[override]
         if not self.protocolo:
-            # Ex: EX360-20260121-8F3K2M
+            # Ex: EX360-20260121-8F3K2M (6 hex)
             data = timezone.now().strftime("%Y%m%d")
-            sufixo = secrets.token_hex(3).upper()  # 6 chars hex
+            sufixo = secrets.token_hex(3).upper()
             self.protocolo = f"EX360-{data}-{sufixo}"
         super().save(*args, **kwargs)
 
