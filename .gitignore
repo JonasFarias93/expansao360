@@ -74,3 +74,10 @@ web/db.sqlite3
 
 # Django local database
 web/db.sqlite3
+
+
+# Django media uploads (local dev)
+web/media/
+media/
+**/media/
+**/evidencias/
