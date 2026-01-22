@@ -1,42 +1,61 @@
 # EXPANSÃO360
 
 Plataforma para gestão de expansão, padronização e operação de campo, separando claramente
-cadastro administrativo (mestre) da execução operacional, com rastreabilidade completa.
+o cadastro administrativo (mestre) da execução operacional, com rastreabilidade completa.
 
 > **Última versão estável:** `v0.2.0` — Web v1 (Registry + Chamado)
 
+---
+
 ## Objetivo
 
-O EXPANSÃO360 tem como objetivo estruturar e padronizar a expansão de operações físicas,
+O EXPANSÃO360 tem como objetivo estruturar e governar a expansão de operações físicas,
 garantindo que o que foi definido no planejamento seja corretamente executado em campo,
-com histórico, evidências e governança.
+com histórico, evidências e controle operacional.
 
-## Status do Projeto
+O foco do sistema é **rastreabilidade, consistência e evolução segura** dos processos.
 
-🚧 **Sprint 2 — Cadastro e Execução Base (Web + CLI)**
+---
 
-O projeto já possui:
-- Arquitetura limpa (Domain / Application / Infrastructure)
-- Core de domínio independente de framework
-- Casos de uso testados (TDD)
-- CLI funcional
-- Camada Web (Django) em evolução
-- Execução via Chamados (UI inicial)
-- Persistência local e ORM
+## Estado do Projeto
+
+- Core de domínio estável e independente de framework
+- Arquitetura em camadas (Domain / Application / Infrastructure)
+- Casos de uso implementados com TDD
+- CLI funcional como interface de referência
+- Camada Web implementada com Django
+- Execução operacional via Chamados (workflow básico)
+- Persistência via arquivo local (CLI) e ORM (Web)
 - Testes automatizados e pre-commit hooks
 
+---
 
 ## Conceito Central
 
-O sistema é baseado em uma separação clara de camadas:
+O sistema é baseado em uma separação clara de responsabilidades:
 
-- **Registry (Cadastro Mestre)**  
-  Define *o que existe* e *como deve ser* (ex: lojas, projetos, layouts, padrões).
+### Registry (Cadastro Mestre)
+Define **o que existe** e **como deve ser**.
+Exemplos:
+- Lojas
+- Projetos / Subprojetos
+- Equipamentos
+- Kits e padrões
 
-- **Operation (Execução de Campo)**  
-  Registra *o que foi executado*, *quando*, *por quem* e *com quais evidências*.
+Características:
+- Governança
+- Dados estáveis
+- Versionamento e auditoria
 
-Essa separação garante rastreabilidade, auditoria e evolução segura do sistema.
+### Operation (Execução de Campo)
+Registra **o que foi executado**, **quando**, **por quem** e **com quais evidências**.
+
+Características:
+- Alto volume transacional
+- Histórico imutável
+- Suporte a auditoria e reprocessamento
+
+Essa separação reduz ambiguidade e permite evolução do sistema com segurança.
 
 ---
 
@@ -50,18 +69,16 @@ Essa separação garante rastreabilidade, auditoria e evolução segura do siste
 ### Setup do ambiente
 
 ```bash
-# criar o ambiente
 conda env create -f environment.yml
-
-# ativar
 conda activate expansao360
 ```
 
 ---
 
-## CLI (modo apresentação)
+## CLI (interface de referência / demonstração)
 
-A CLI permite cadastrar Locations (Registry) e registrar operações (Operation) **sem API**.
+A CLI permite cadastrar entidades do Registry e registrar operações do Operation
+sem depender de API ou camada Web.
 
 
 ### Ajuda
@@ -94,10 +111,15 @@ python -m expansao360 mount list
 
 ## Web (Django)
 
-A camada Web fornece:
-- Cadastro administrativo (Registry)
-- Execução operacional via Chamados
-- Interface administrativa (Django Admin)
+### A camada Web fornece:
+
+ - Cadastro administrativo (Registry)
+
+ - Execução operacional via Chamados
+
+ - Interface administrativa (Django Admin)
+
+ - UI Web para histórico, detalhe e edição de Chamados
 
 ### Comandos principais
 
