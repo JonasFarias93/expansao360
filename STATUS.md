@@ -61,21 +61,40 @@ com testes automatizados e separação clara entre core, CLI e Web.
 - [x] Estrutura de templates (`partials/`, `components/`)
 - [x] Tailwind CSS via CDN
 - [x] Página de histórico de Chamados (Histórico v1)
+- [x] Página de detalhe do Chamado
+- [x] Edição de itens do Chamado
+- [x] Badges de status (Aberto / Em execução / Finalizado)
+
+
+
+---
+
+## Marcos
+
+- **Dia 8 — Execução Web v1 concluída**
+  - Histórico de Chamados
+  - Detalhe do Chamado
+  - Edição de itens
+  - Validações de finalização (TDD)
+  - Workflow de status (Aberto → Em execução → Finalizado)
+  - Badges de status na UI
+  - ADR do fluxo inverso Loja → Matriz
 
 ---
 
 ## Em Andamento
-- [ ] Validações finais da execução:
+- [x] Validações finais da execução:
   - exigir Ativo + Série quando `tem_ativo=True`
   - exigir confirmação quando `tem_ativo=False`
-- [ ] Controle de status do Chamado (workflow)
+- [x] Controle de status do Chamado (ABERTO → EM_EXECUCAO → FINALIZADO)
 - [ ] Permissões e perfis (IAM)
-- [ ] Evolução da UI do Chamado (detalhe / ações)
+- [ ] Fluxo inverso de execução (Loja → Matriz)
+- [ ] Regras de finalização para retorno (retornado / não retornado)
 
----
 
 ## Observações
 - O core permanece independente de framework.
 - Django atua como camada de entrega e persistência.
 - Toda regra de negócio é validada via testes.
+- Fluxos operacionais críticos são registrados via ADR.
 ---
