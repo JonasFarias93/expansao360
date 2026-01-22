@@ -81,18 +81,40 @@ class Chamado(models.Model):
         super().save(*args, **kwargs)
 
 
+class StatusConfiguracao(models.TextChoices):
+    AGUARDANDO = "AGUARDANDO", "Aguardando"
+    EM_CONFIGURACAO = "EM_CONFIGURACAO", "Em configuração"
+    CONFIGURADO = "CONFIGURADO", "Configurado"
+
+
 class InstalacaoItem(models.Model):
     chamado = models.ForeignKey(Chamado, on_delete=models.CASCADE, related_name="itens")
     equipamento = models.ForeignKey(Equipamento, on_delete=models.PROTECT)
+
     tipo = models.CharField(max_length=80)
     quantidade = models.PositiveIntegerField()
 
     tem_ativo = models.BooleanField()
-
     confirmado = models.BooleanField(default=False)
+
+    requer_configuracao = models.BooleanField(
+        default=False,
+        help_text="Define se o item necessita de configuração técnica após instalação.",
+    )
+
+    status_configuracao = models.CharField(
+        max_length=20,
+        choices=StatusConfiguracao.choices,
+        default=StatusConfiguracao.AGUARDANDO,
+        help_text="Estado atual do processo de configuração do item.",
+    )
 
     ativo = models.CharField(max_length=80, blank=True, default="")
     numero_serie = models.CharField(max_length=120, blank=True, default="")
+
+    class Meta:
+        verbose_name = "Item de Instalação"
+        verbose_name_plural = "Itens de Instalação"
 
     def __str__(self) -> str:
         return f"{self.equipamento.nome} {self.tipo} ({self.quantidade})"
