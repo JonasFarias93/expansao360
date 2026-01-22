@@ -62,15 +62,18 @@ def chamado_atualizar_itens(request, chamado_id):
         return redirect("execucao:chamado_detalhe", chamado_id=chamado.id)
 
     itens = list(chamado.itens.select_related("equipamento").all())
+    if not itens:
+        messages.warning(request, "Este chamado não possui itens para atualizar.")
+        return redirect("execucao:chamado_detalhe", chamado_id=chamado.id)
 
     for item in itens:
         if item.tem_ativo:
             item.ativo = (request.POST.get(f"ativo_{item.id}") or "").strip()
             item.numero_serie = (request.POST.get(f"serie_{item.id}") or "").strip()
+            item.save(update_fields=["ativo", "numero_serie"])
         else:
             item.confirmado = request.POST.get(f"confirmado_{item.id}") == "on"
-
-        item.save(update_fields=["ativo", "numero_serie", "confirmado"])
+            item.save(update_fields=["confirmado"])
 
     if chamado.status == Chamado.Status.ABERTO:
         chamado.status = Chamado.Status.EM_EXECUCAO
