@@ -350,3 +350,42 @@ Inicialmente, o sistema suportará:
 - O mecanismo de evidências poderá ser reutilizado
   para fotos, assinaturas, termos ou outros documentos,
   sem alteração do modelo conceitual.
+
+
+---
+## 2026-01-22 — IAM mínimo por capacidades (Capability-Based Access Control)
+
+**Decisão**  
+O sistema adotará um IAM mínimo baseado em **capacidades** (capabilities) para controlar ações sensíveis na camada Web.
+Cada ação relevante do fluxo operacional (ex.: finalizar chamado, editar itens, enviar/remover evidência) exigirá uma capacidade explícita.
+A verificação de autorização ocorrerá nos **adapters Web (views/templates)**, sem introduzir regra de permissão dentro do **core de domínio**.
+
+**Contexto**  
+Na Sprint 2, consolidamos a execução operacional via Web (Django) com governança de finalização e rastreabilidade por item.
+O próximo passo exige restringir ações críticas por perfil/usuário, com um modelo simples e auditável, que evolua depois para papéis, grupos,
+integrações corporativas e políticas mais sofisticadas.
+
+Precisamos:
+- negar por padrão ações sensíveis;
+- refletir permissões na UI (ocultar/desabilitar ações) sem depender apenas do frontend;
+- manter o domínio independente de framework e de IAM.
+
+**Consequências**  
+- Será introduzido um conjunto explícito de **capabilities** (strings) para as ações do sistema, por exemplo:
+  - `execucao.chamado.finalizar`
+  - `execucao.chamado.editar_itens`
+  - `execucao.evidencia.upload`
+  - `execucao.evidencia.remover`
+  - `execucao.item_configuracao.alterar_status`
+- A camada Web (Django) fará enforcement de permissões:
+  - **Views** devem bloquear a ação quando a capability não existir (nega por padrão).
+  - **Templates** podem ocultar/desabilitar botões, mas não substituem a validação no backend.
+- O core de domínio permanece “permission-agnostic”:
+  - regras de negócio (ex.: validações de finalização) continuam no domínio;
+  - autorização é responsabilidade do adapter (Web).
+- Testes automatizados serão adicionados para cobrir cenários:
+  - usuário sem capability não executa ação (ex.: 403/redirect + mensagem);
+  - usuário com capability executa ação com sucesso.
+- Este modelo é deliberadamente mínimo e evolutivo:
+  - futuras evoluções podem incluir papéis, grupos, hierarquias, escopo por projeto/loja e integração com provedores corporativos,
+    mantendo o contrato de capabilities como base estável.
