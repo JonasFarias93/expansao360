@@ -1,4 +1,8 @@
 {% extends "base.html" %}
+{% load static %}
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'execucao/css/execucao.css' %}">
+{% endblock %}
 
 {% block content %}
 <div class="space-y-6">
@@ -166,12 +170,13 @@
 
                 <div class="flex gap-1">
                   <button
-                    type="submit"
-                    form="form-status-{{ item.id }}-AGUARDANDO"
-                    class="px-3 py-1.5 rounded border text-xs font-medium transition-colors
-                           {% if item.status_configuracao == 'AGUARDANDO' %}bg-gray-200 border-gray-400 text-gray-900 shadow-sm{% else %}bg-white border-gray-200 text-gray-600 hover:bg-gray-50{% endif %}"
+                    type="button"
+                    class="js-status-btn px-3 py-1.5 rounded border text-xs font-medium transition-colors
+                          {% if item.status_configuracao == 'AGUARDANDO' %}bg-gray-200 border-gray-400 text-gray-900 shadow-sm{% else %}bg-white border-gray-200 text-gray-600 hover:bg-gray-50{% endif %}"
+                    data-form-id="form-status-{{ item.id }}-AGUARDANDO"
+                    data-requires-reason="{% if item.status_configuracao == 'CONFIGURADO' %}1{% else %}0{% endif %}"
                     {% if chamado.finalizado_em %}disabled{% endif %}
-                  >
+                              >
                     Aguardando
                   </button>
 
@@ -219,6 +224,7 @@
         >
           {% csrf_token %}
           <input type="hidden" name="status" value="AGUARDANDO">
+          <input type="hidden" name="motivo" value="">
         </form>
 
         <form
@@ -329,4 +335,6 @@
   </div>
 
 </div>
+{% block extra_js %}
+<script src="{% static 'execucao/js/chamado_detalhe.js' %}"></script>
 {% endblock %}

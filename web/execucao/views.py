@@ -10,6 +10,7 @@ from .models import (
     Chamado,
     EvidenciaChamado,
     InstalacaoItem,
+    ItemConfiguracaoLog,
     StatusConfiguracao,
 )
 
@@ -97,6 +98,7 @@ def chamado_atualizar_itens(request, chamado_id):
     if chamado.status == Chamado.Status.FINALIZADO:
         messages.warning(request, "Chamado já está finalizado. Não é possível editar itens.")
         return redirect("execucao:chamado_detalhe", chamado_id=chamado.id)
+    chamado.gerar_itens_de_instalacao()
 
     itens = list(chamado.itens.select_related("equipamento").all())
     if not itens:
@@ -123,6 +125,7 @@ def chamado_atualizar_itens(request, chamado_id):
 @require_POST
 def chamado_finalizar(request, chamado_id):
     chamado = get_object_or_404(Chamado, pk=chamado_id)
+    chamado.gerar_itens_de_instalacao()
 
     try:
         chamado.finalizar()
@@ -188,6 +191,8 @@ def evidencia_remover(request, chamado_id, evidencia_id):
 # ==================
 # ITENS / CONFIGURAÇÃO
 # ==================
+
+
 @require_POST
 def item_set_status_configuracao(request, chamado_id, item_id):
     chamado = get_object_or_404(Chamado, pk=chamado_id)
@@ -198,14 +203,35 @@ def item_set_status_configuracao(request, chamado_id, item_id):
 
     item = get_object_or_404(InstalacaoItem, pk=item_id, chamado=chamado)
 
-    status = request.POST.get("status", "")
+    status = (request.POST.get("status") or "").strip()
+    motivo = (request.POST.get("motivo") or "").strip()
+
     validos = {c[0] for c in StatusConfiguracao.choices}
     if status not in validos:
         messages.error(request, "Status inválido.")
         return redirect("execucao:chamado_detalhe", chamado_id=chamado.id)
 
+    status_atual = item.status_configuracao
+
+    if status_atual == StatusConfiguracao.CONFIGURADO and status != StatusConfiguracao.CONFIGURADO:
+        if not motivo:
+            messages.error(request, "Informe um motivo para voltar um item já configurado.")
+            return redirect("execucao:chamado_detalhe", chamado_id=chamado.id)
+
+    if status == status_atual:
+        messages.info(request, "Este item já está nesse status.")
+        return redirect("execucao:chamado_detalhe", chamado_id=chamado.id)
+
     item.status_configuracao = status
     item.save(update_fields=["status_configuracao"])
+
+    ItemConfiguracaoLog.objects.create(
+        item=item,
+        de_status=status_atual,
+        para_status=status,
+        motivo=motivo,
+        criado_por=request.user if request.user.is_authenticated else None,
+    )
 
     messages.success(request, "Status de configuração atualizado.")
     return redirect("execucao:chamado_detalhe", chamado_id=chamado.id)

@@ -4,6 +4,7 @@
 import secrets
 
 from cadastro.models import Equipamento, Kit, Loja, Projeto, Subprojeto
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, models, transaction
 from django.utils import timezone
@@ -164,6 +165,31 @@ class InstalacaoItem(models.Model):
 
     def __str__(self) -> str:
         return f"{self.equipamento.nome} {self.tipo} ({self.quantidade})"
+
+
+class ItemConfiguracaoLog(models.Model):
+    item = models.ForeignKey(
+        "InstalacaoItem", on_delete=models.CASCADE, related_name="logs_configuracao"
+    )
+    de_status = models.CharField(max_length=20, choices=StatusConfiguracao.choices)
+    para_status = models.CharField(max_length=20, choices=StatusConfiguracao.choices)
+
+    motivo = models.CharField(max_length=255, blank=True, default="")
+    criado_em = models.DateTimeField(auto_now_add=True)
+
+    criado_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="logs_configuracao_criados",
+    )
+
+    class Meta:
+        ordering = ["-criado_em", "-id"]
+
+    def __str__(self) -> str:
+        return f"{self.item_id}: {self.de_status} -> {self.para_status}"
 
 
 # ==================
