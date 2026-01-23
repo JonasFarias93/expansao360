@@ -350,3 +350,145 @@ Inicialmente, o sistema suportará:
 - O mecanismo de evidências poderá ser reutilizado
   para fotos, assinaturas, termos ou outros documentos,
   sem alteração do modelo conceitual.
+
+---
+
+---
+
+## 2026-01-22 — Controle de Configuração por Item na Execução
+
+**Decisão**  
+Cada item utilizado durante a Execução (Operation) terá seu **estado de configuração técnica**
+registrado individualmente no momento da execução, formando um **snapshot operacional imutável**.
+A finalização de um Chamado será bloqueada enquanto houver itens configuráveis não concluídos.
+
+---
+
+**Contexto**  
+No EXPANSÃO360, o Cadastro Mestre (Registry) define equipamentos, kits e padrões,
+enquanto a Execução de Campo (Operation) registra o que foi efetivamente realizado.
+
+Alguns itens exigem configuração técnica (ex.: PDV, automação, rede),
+e outros não. Essa exigência **não é intrínseca ao equipamento**,
+mas sim **decidida no contexto do kit e do projeto**.
+
+Era necessário garantir que:
+- cada item configurável tivesse seu progresso acompanhado individualmente;
+- o sistema refletisse o estado real da execução em campo;
+- não fosse possível finalizar um Chamado com configurações pendentes;
+- execuções passadas não fossem impactadas por mudanças futuras no cadastro.
+
+---
+
+**Consequências**
+
+- Itens de execução passam a registrar:
+  - se requerem configuração técnica;
+  - o estado atual da configuração (Aguardando / Em execução / Configurado).
+- O estado de configuração pertence exclusivamente à camada de Operation.
+- O progresso do Chamado é calculado dinamicamente com base nos itens configuráveis.
+- Chamados não podem ser finalizados enquanto houver itens configuráveis não concluídos.
+- Alterações futuras no cadastro de equipamentos ou kits não afetam execuções passadas.
+- Correções operacionais exigem nova execução (novo Chamado), nunca edição retroativa.
+
+Essa decisão reforça:
+- rastreabilidade histórica;
+- governança operacional;
+- separação clara entre Registry e Operation.
+
+---## 2026-01-22 — Transições de Status de Configuração por Item
+
+**Decisão**  
+O estado de configuração técnica de cada item de execução seguirá um modelo de
+**transições livres**, sem bloqueio rígido entre estados,
+sendo exigido apenas que o item esteja em estado **CONFIGURADO**
+no momento da finalização do Chamado.
+
+As regras de transição pertencem ao domínio,
+mas **não impõem travamento irreversível neste estágio do projeto**.
+
+---
+
+**Contexto**  
+Durante a execução de campo, podem ocorrer situações como:
+- reconfiguração por erro humano;
+- necessidade de ajuste após validação inicial;
+- correções rápidas antes da finalização.
+
+Impor travamento rígido (ex.: impedir retorno para AGUARDANDO)
+neste momento aumentaria fricção operacional
+sem benefício concreto imediato.
+
+A governança principal está na **finalização do Chamado**,
+não no bloqueio intermediário de estados.
+
+---
+
+**Consequências**  
+
+- Estados possíveis continuam sendo:
+  - AGUARDANDO
+  - EM_CONFIGURACAO
+  - CONFIGURADO
+- O operador pode transitar livremente entre estados.
+- A finalização do Chamado **exige que todos os itens configuráveis estejam CONFIGURADOS**.
+- O domínio permanece simples e flexível.
+- Auditoria é garantida pelo estado final, não pelo caminho intermediário.
+- Travamentos mais rígidos poderão ser introduzidos futuramente sem quebra de modelo.
+
+📌 Nota: esta decisão prioriza fluidez operacional sem comprometer rastreabilidade.
+
+
+---
+
+## 2026-01-22 — IAM Mínimo para Execução (Baseado em Capacidades)
+
+**Decisão**  
+O EXPANSÃO360 adotará um modelo de **IAM mínimo baseado em capacidades**,
+em vez de perfis ou RBAC complexo, nesta fase do projeto.
+
+Permissões serão expressas como **capacidades explícitas**,
+avaliadas pela camada de domínio e consultadas pela UI.
+
+---
+
+**Contexto**  
+O sistema precisa:
+- impedir ações críticas por usuários não autorizados;
+- manter simplicidade inicial;
+- evitar acoplamento precoce a RBAC complexo.
+
+Perfis fixos (ex.: “técnico”, “admin”) tendem a crescer descontroladamente
+e dificultam evolução futura.
+
+---
+
+**Capacidades definidas (iniciais)**  
+
+| Capacidade | Permissão |
+|-----------|----------|
+| CONFIGURAR_ITEM | Alterar status de configuração |
+| EXECUTAR_ITEM | Registrar execução (ativos, confirmação) |
+| FINALIZAR_CHAMADO | Finalizar chamado |
+| GERENCIAR_EVIDENCIAS | Adicionar/remover evidências |
+| VISUALIZAR | Acesso somente leitura |
+
+---
+
+**Regras de Domínio**
+- Alteração de status de configuração exige `CONFIGURAR_ITEM`
+- Atualização de execução exige `EXECUTAR_ITEM`
+- Finalização exige `FINALIZAR_CHAMADO`
+- Evidências exigem `GERENCIAR_EVIDENCIAS`
+
+A UI:
+- **não decide regras**
+- apenas habilita/desabilita ações conforme capacidades
+
+---
+
+**Consequências**
+- Segurança mínima garantida desde já
+- Evolução fácil para RBAC completo
+- Menor acoplamento entre UI e regras
+- Clareza de responsabilidade operacional

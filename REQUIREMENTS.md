@@ -1,48 +1,66 @@
-# Requisitos — EXPANSÃO360
+# REQUIREMENTS — EXPANSÃO360
 
-## Contexto
-O EXPANSÃO360 é uma plataforma para gestão de expansão e operação de campo,
-baseada na separação clara entre:
+## 1. Contexto
 
-- **Registry (Cadastro Mestre):**
-  Define o que existe e como deve ser padronizado
-  (ex.: lojas, projetos, kits, equipamentos).
+O **EXPANSÃO360** é uma plataforma para gestão de **expansão e operação de campo**,
+projetada para garantir **governança, rastreabilidade e auditoria** em operações
+logísticas e técnicas.
 
-- **Operation (Execução de Campo):**
-  Registra o que foi executado na prática, com histórico,
-  rastreabilidade e impacto operacional/contábil.
+O sistema é baseado na separação explícita entre:
+
+- **Registry (Cadastro Mestre)**  
+  Define *o que existe* e *como deve ser padronizado*
+  (lojas, projetos, equipamentos, kits).
+
+- **Operation (Execução de Campo)**  
+  Registra *o que foi executado na prática*, com histórico imutável,
+  evidências e impacto operacional e contábil.
 
 ---
 
-## Definições
+## 2. Definições de Domínio
 
-- **Loja (Registry):**
-  Unidade física cadastrada onde a execução ocorre.
+- **Loja (Registry)**  
+  Unidade física onde a execução ocorre.
 
-- **Projeto / Subprojeto (Registry):**
+- **Projeto / Subprojeto (Registry)**  
   Contexto organizacional da execução.
 
-- **Equipamento (Registry):**
-  Item padronizado, podendo ser rastreável ou contável.
+- **Equipamento (Registry)**  
+  Item padronizado, classificado como:
+  - rastreável (`tem_ativo=True`)
+  - contável (`tem_ativo=False`)
 
-- **Kit (Registry):**
-  Conjunto de equipamentos e quantidades previstos para execução.
+- **Kit (Registry)**  
+  Conjunto padronizado de equipamentos, tipos, quantidades
+  e regras de configuração.
 
-- **Chamado (Operation):**
-  Unidade central de execução operacional.
-  Representa uma operação de envio, instalação ou retorno de itens,
-  com status, histórico e validações.
+- **ItemKit (Registry)**  
+  Associação entre Kit e Equipamento, definindo:
+  - tipo
+  - quantidade
+  - se requer configuração técnica naquele contexto.
 
-- **Item de Execução (Operation):**
-  Instância de um equipamento dentro de um Chamado,
-  derivada de um Kit.
+- **Chamado (Operation)**  
+  Unidade central da execução operacional.
+  Representa uma operação de envio, instalação ou retorno,
+  com status, validações e histórico.
+
+- **Item de Execução (Operation)**  
+  Snapshot operacional de um ItemKit dentro de um Chamado,
+  representando o estado real da execução.
+
+- **Evidência (Operation)**  
+  Documento ou arquivo que comprova a execução
+  (NF, Carta de Conteúdo, exceção).
 
 ---
 
-## Regras de Negócio (Core)
+## 3. Requisitos Funcionais (Core)
 
-### RN-001 — Execução depende do cadastro mestre
-Um Chamado **só pode ser criado** se existir:
+### RF-001 — Criação de Chamado depende do Cadastro Mestre
+
+Um Chamado **só pode ser criado** se existirem:
 - Loja válida
 - Projeto válido
 - Kit válido
@@ -54,46 +72,81 @@ Um Chamado **só pode ser criado** se existir:
 
 ---
 
-### RN-002 — Geração automática de itens de execução
-Ao criar um Chamado associado a um Kit,
-o sistema deve gerar automaticamente os itens de execução
-conforme o cadastro do Kit.
+### RF-002 — Geração automática de Itens de Execução
+
+Ao acessar um Chamado associado a um Kit,
+o sistema deve gerar automaticamente os Itens de Execução
+com base no Kit.
 
 **Critério de Aceite**
 - Cada ItemKit gera um Item de Execução correspondente.
-- Quantidade e tipo devem ser preservados.
+- Quantidade, tipo e regras são preservadas.
+- A geração ocorre apenas uma vez por Chamado.
 
 ---
 
-### RN-003 — Rastreabilidade por tipo de equipamento
+### RF-003 — Snapshot operacional imutável
+
+Os Itens de Execução devem armazenar um **snapshot**
+do estado do cadastro no momento da execução.
+
+**Critério de Aceite**
+- Alterações futuras no Registry não afetam Chamados existentes.
+- Itens de Execução não refletem mudanças posteriores no Kit ou Equipamento.
+
+---
+
+### RF-004 — Rastreabilidade por tipo de equipamento
+
 Equipamentos são classificados como:
 
 - **Rastreáveis (`tem_ativo=True`)**
   - Exigem Ativo e Número de Série.
 
 - **Contáveis (`tem_ativo=False`)**
-  - Exigem confirmação explícita de execução.
+  - Exigem confirmação explícita da execução.
 
 **Critério de Aceite**
-- Chamado não pode ser finalizado se:
-  - Item rastreável estiver sem Ativo ou Série.
-  - Item contável não estiver confirmado.
+- Um Chamado não pode ser finalizado se:
+  - existir item rastreável sem Ativo ou Série;
+  - existir item contável não confirmado.
 
 ---
 
-### RN-004 — Workflow de status do Chamado
+### RF-005 — Controle de configuração técnica por item
+
+Itens podem exigir configuração técnica,
+definida no contexto do Kit.
+
+Estados possíveis:
+- AGUARDANDO
+- EM_CONFIGURACAO
+- CONFIGURADO
+
+**Critério de Aceite**
+- Apenas itens marcados como configuráveis possuem status.
+- O Chamado não pode ser finalizado enquanto
+  houver itens configuráveis não configurados.
+
+---
+
+### RF-006 — Workflow de status do Chamado
+
 Todo Chamado segue o fluxo:
 
+
 **Critério de Aceite**
-- Um Chamado inicia como **ABERTO**.
+- Chamado inicia como **ABERTO**.
 - Ao salvar itens, passa para **EM_EXECUCAO**.
 - Apenas Chamados válidos podem ser **FINALIZADOS**.
+- Chamados finalizados tornam-se imutáveis.
 
 ---
 
-### RN-005 — Identificação e rastreabilidade do Chamado
+### RF-007 — Identificação e unicidade do Chamado
+
 Todo Chamado deve possuir:
-- Protocolo único gerado automaticamente
+- Protocolo único gerado automaticamente.
 - Referências externas únicas (quando informadas):
   - ServiceNow
   - Contabilidade
@@ -105,21 +158,96 @@ Todo Chamado deve possuir:
 
 ---
 
-### RN-006 — Fluxo inverso de execução (retorno)
-Quando for necessário corrigir uma execução ou retornar itens,
-o sistema deve registrar um **novo Chamado**,
-representando o fluxo inverso (**Loja → Matriz**).
+### RF-008 — Evidências por Chamado
+
+O sistema deve permitir anexar evidências a um Chamado.
+
+Tipos iniciais:
+- NF de saída
+- NF de retorno
+- Carta de Conteúdo
+- Documento de exceção
 
 **Critério de Aceite**
-- Chamados finalizados não são reabertos.
-- Chamados de retorno devem referenciar o Chamado de origem.
-- A finalização do retorno exige decisão explícita:
-  - Retornado para matriz
-  - Não retornado (extravio / exceção)
+- Evidências ficam vinculadas ao Chamado.
+- Evidências não podem ser removidas após finalização.
+- Evidências são visíveis no detalhe do Chamado.
 
 ---
 
-## Observações
-- O core de domínio permanece independente de frameworks.
-- Interfaces (CLI / Web / futuras APIs) apenas orquestram casos de uso.
-- Persistência pode variar sem impacto nas regras de negócio.
+### RF-009 — Regra de finalização com evidências
+
+A finalização de um Chamado pode exigir evidência,
+dependendo do tipo de fluxo.
+
+**Critério de Aceite**
+- Chamados de retorno exigem decisão explícita:
+  - retorno confirmado
+  - não retornado (extravio / exceção)
+
+---
+
+### RF-010 — Fluxo inverso de execução (Loja → Matriz)
+
+Quando houver correção ou retorno de itens,
+o sistema deve criar **um novo Chamado**.
+
+**Critério de Aceite**
+- Chamados finalizados não podem ser reabertos.
+- Chamados de retorno referenciam o Chamado original.
+- O histórico do Chamado original permanece imutável.
+
+---
+
+### RF-011 — IAM mínimo baseado em capacidades
+
+O sistema deve suportar permissões mínimas para ações críticas.
+
+Capacidades iniciais:
+- CONFIGURAR_ITEM
+- TRAVAR_CONFIGURACAO
+- EXECUTAR_ITEM
+- FINALIZAR_EXECUCAO
+- VISUALIZAR_HISTORICO
+
+**Critério de Aceite**
+- Usuários sem capacidade não podem executar ações sensíveis.
+- A UI apenas reflete permissões; não decide regras.
+
+---
+
+## 4. Requisitos Não Funcionais
+
+### RNF-001 — Imutabilidade operacional
+- Chamados finalizados não podem ser alterados.
+- Correções exigem nova execução.
+
+### RNF-002 — Auditoria e rastreabilidade
+- Todas as operações relevantes são registradas.
+- Histórico completo deve ser preservado.
+
+### RNF-003 — Independência de framework
+- O core de domínio não depende de Django ou outras interfaces.
+
+### RNF-004 — Evolução segura
+- O sistema deve permitir evolução (API, mobile, RBAC)
+  sem refatoração estrutural.
+
+---
+
+## 5. Fora de Escopo (neste momento)
+- API pública
+- Mobile
+- RBAC avançado
+- Eventos assíncronos
+- Versionamento explícito de configuração
+
+Esses itens estão **arquiteturalmente previstos**,
+mas não implementados.
+
+---
+
+## 6. Observações Finais
+- Interfaces (Web / CLI) apenas orquestram casos de uso.
+- Regras de negócio pertencem ao domínio.
+- Todas as decisões relevantes estão registradas em `DECISIONS.md`.
