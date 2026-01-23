@@ -1,3 +1,4 @@
+{% load static %}
 <!doctype html>
 <html lang="pt-br">
   <head>
@@ -8,6 +9,9 @@
 
     <!-- Tailwind (CDN) — MVP -->
     <script src="https://cdn.tailwindcss.com"></script>
+
+    {# CSS opcional global (se existir algo global do projeto) #}
+    {# <link rel="stylesheet" href="{% static 'execucao/css/execucao.css' %}"> #}
 
     {% block extra_head %}{% endblock %}
   </head>
