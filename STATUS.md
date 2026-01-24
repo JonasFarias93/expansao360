@@ -1,10 +1,25 @@
 # STATUS — EXPANSÃO360
 
 ## Sprint Atual
-**Sprint 2 — Cadastro e Execução Base (Web + CLI)**
+**Sprint 3 — Fluxo Inverso e Evolução Operacional**
 
-Objetivo desta sprint:
-Consolidar o cadastro mestre (Registry) e a execução base (Chamado),
+**Objetivo da sprint**  
+Evoluir a execução operacional já consolidada, introduzindo:
+- fluxo inverso (Loja → Matriz)
+- regras específicas de retorno
+- amadurecimento do IAM mínimo
+- robustez operacional e UX
+
+Esta sprint parte de uma base estável entregue na Sprint 2.
+
+---
+
+## Sprint Anterior
+**Sprint 2 — Cadastro e Execução Base (Web + CLI)**  
+Status: ✅ **Concluída**
+
+Objetivo atingido:
+Consolidação do cadastro mestre (Registry) e da execução base (Chamado),
 com testes automatizados e separação clara entre core, CLI e Web.
 
 ---
@@ -21,124 +36,145 @@ com testes automatizados e separação clara entre core, CLI e Web.
 ### Documentação Base
 - [x] README.md — Visão geral e objetivo do projeto
 - [x] ARCHITECTURE.md — Arquitetura e camadas conceituais
-- [x] DECISIONS.md — Registro de decisões técnicas
+- [x] DECISIONS.md — Registro de decisões técnicas (ADR)
 
 ---
 
-## Progresso Atual
+## Progresso Consolidado (até Sprint 2)
 
 ### Core + CLI
-- [x] Core de domínio implementado
-- [x] Casos de uso testados (TDD)
-- [x] CLI funcional para Location e Mount
+- [x] Core de domínio independente
+- [x] Casos de uso cobertos por testes (TDD)
+- [x] CLI funcional (Location / Mount)
 - [x] Persistência local (arquivo JSON)
+- [x] Registry desacoplado da execução
+
+---
 
 ### Web (Django)
 
 #### Cadastro (Registry)
 - [x] Categoria
-- [x] Equipamento (com regra `tem_ativo`)
+- [x] Equipamento  
+  - classificação rastreável vs contável (`tem_ativo`)
 - [x] Loja
 - [x] Projeto / Subprojeto
-- [x] Kit / ItemKit (equipamento + tipo + quantidade)
+- [x] Kit
+- [x] ItemKit  
+  - equipamento  
+  - tipo  
+  - quantidade  
+  - `requer_configuracao`
 - [x] Admin configurado
 - [x] Migrations aplicadas
-- [x] Testes de integridade do cadastro
+- [x] Consistência e integridade de dados validadas
+
+---
 
 #### Execução (Operation)
+
+##### Chamado
 - [x] Entidade Chamado
-- [x] Protocolo único automático (`EX360-YYYYMMDD-XXXXXX`)
-- [x] Referências externas únicas (ServiceNow, Contabilidade, NF)
+- [x] Protocolo automático (`EX360-YYYYMMDD-XXXXXX`)
+- [x] Referências externas únicas  
+  - ServiceNow  
+  - Contabilidade  
+  - NF
+- [x] Status do Chamado  
+  - ABERTO → EM_EXECUCAO → FINALIZADO
 - [x] Campo de auditoria `finalizado_em`
-- [x] Validação de finalização do Chamado
-- [x] Geração de itens de execução a partir do Kit
-- [x] Snapshot de `tem_ativo` por item
-- [x] Admin com busca e filtros aprimorados
-- [x] Testes automatizados do app `execucao`
+- [x] Imutabilidade após finalização
+- [x] Validações de finalização no domínio
+
+##### Itens de Execução
+- [x] Geração automática de itens a partir do Kit
+- [x] Snapshot operacional por item  
+  - `tem_ativo`  
+  - `requer_configuracao`
+- [x] Separação clara:  
+  - item contável  
+  - item rastreável
+- [x] Validações:  
+  - ativo + série obrigatórios quando rastreável  
+  - confirmação obrigatória quando contável
+
+##### Configuração Técnica por Item
+- [x] Status individual de configuração:  
+  - AGUARDANDO  
+  - EM_CONFIGURACAO  
+  - CONFIGURADO
+- [x] Progresso calculado dinamicamente no Chamado
+- [x] UI com botões de transição por item
+- [x] Regra de finalização:  
+  - Chamado não finaliza com item configurável pendente
+- [x] ADR formalizando governança de configuração
+
+---
+
+#### Evidências (Anexos)
+- [x] Entidade EvidenciaChamado
+- [x] Upload de arquivos por Chamado
+- [x] Tipos de evidência  
+  - NF  
+  - Carta de Conteúdo  
+  - Exceção
+- [x] Listagem e download
+- [x] Remoção condicionada ao status do Chamado
+- [x] Governança registrada em ADR
+
+---
+
+#### IAM (mínimo)
+- [x] Modelo de Capability
+- [x] Associação User ↔ Capability
+- [x] Admin configurado
+- [x] Decorator `capability_required`
+- [x] Enforcement nas actions críticas de Execução
+- [x] ADR de IAM mínimo por capacidades
+
+---
 
 #### UI / Layout Web
 - [x] Layout base (`base.html`)
-- [x] Estrutura de templates (`partials/`, `components/`)
-- [x] Tailwind CSS via CDN
-- [x] Página de histórico de Chamados (Histórico v1)
-- [x] Página de detalhe do Chamado
-- [x] Edição de itens do Chamado
-- [x] Badges de status (Aberto / Em execução / Finalizado)
-
-
-
----
-
-## Marcos e Planejamento
-
-### Concluído
-- **Dia 1–8 — Execução Web v1**
-  - Core e CLI estáveis (TDD)
-  - Chamado com:
-    - protocolo automático
-    - itens de execução
-    - validações de finalização
-    - workflow de status
-  - UI Web:
-    - histórico de chamados
-    - detalhe do chamado
-    - edição de itens
-    - badges de status
-  - ADRs fundamentais definidos
-  - Documentação alinhada ao código
-
+- [x] Estrutura de templates  
+  - `partials/`  
+  - `components/`
+- [x] Tailwind CSS (CDN — MVP)
+- [x] Histórico de Chamados
+- [x] Detalhe completo do Chamado
+- [x] Edição de itens de execução
+- [x] Barra de progresso de configuração
+- [x] Evidências integradas ao fluxo
+- [x] Separação de static files (CSS / JS)
 
 ---
 
-### Planejamento (Dias Restantes)
+## Planejamento — Sprint 3
 
-- **Dia 9 — Planejamento técnico**
-  - ADR de evidências/anexos por Chamado
-  - Atualização de STATUS e REQUIREMENTS
+### Fluxo Inverso (Loja → Matriz)
+- [ ] Modelo de Chamado de retorno
+- [ ] Vínculo explícito com Chamado original
+- [ ] Regras específicas de finalização
+- [ ] Integração com evidências
+- [ ] Visibilidade de retornos pendentes
 
-- **Dia 10 — Feature: Anexos (backend)**
-  - Model de evidências por Chamado
-  - Upload e persistência de arquivos
-  - Listagem e download
-  - Testes (TDD)
+### IAM — Evolução
+- [ ] Capabilities específicas para retorno
+- [ ] UI condicionada por permissão (ocultar/desabilitar ações)
+- [ ] Testes de autorização (403 / redirect controlado)
 
-- **Dia 11 — Feature: Anexos (UI)**
-  - Upload de NF e Carta de Conteúdo
-  - Visualização de evidências no Chamado
-  - Validações básicas (tipo e tamanho)
+### Robustez e UX
+- [ ] Revisão de mensagens e feedbacks
+- [ ] Edge cases operacionais
+- [ ] Revisão geral de documentação
+- [ ] Preparação para próxima sprint
 
-- **Dia 12 — Regras de evidência**
-  - Exigência de evidência na finalização
-  - Suporte a exceções (extravio / não retornado)
-  - Testes de cenários operacionais
-
-- **Dia 13 — Fluxo inverso (Loja → Matriz)**
-  - Chamado de retorno vinculado ao original
-  - Regras específicas de finalização
-  - Integração com evidências
-
-- **Dia 14 — IAM mínimo**
-  - Permissões para ações sensíveis
-  - UI condicionada por permissão
-
-- **Dias 15–16 — Buffer**
-  - UX, robustez, revisão final e documentação
-  
 ---
-
-## Em Andamento
-- [x] Validações finais da execução:
-  - exigir Ativo + Série quando `tem_ativo=True`
-  - exigir confirmação quando `tem_ativo=False`
-- [x] Controle de status do Chamado (ABERTO → EM_EXECUCAO → FINALIZADO)
-- [ ] Permissões e perfis (IAM)
-- [ ] Fluxo inverso de execução (Loja → Matriz)
-- [ ] Regras de finalização para retorno (retornado / não retornado)
-
 
 ## Observações
-- O core permanece independente de framework.
-- Django atua como camada de entrega e persistência.
-- Toda regra de negócio é validada via testes.
-- Fluxos operacionais críticos são registrados via ADR.
----
+- O domínio permanece independente de framework.
+- Django atua exclusivamente como adapter (UI + persistência).
+- Toda regra crítica está:
+  - documentada (ADR)
+  - validada no domínio
+- Nenhuma decisão estrutural é implícita ou acidental.

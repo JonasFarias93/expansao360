@@ -389,3 +389,267 @@ Precisamos:
 - Este modelo é deliberadamente mínimo e evolutivo:
   - futuras evoluções podem incluir papéis, grupos, hierarquias, escopo por projeto/loja e integração com provedores corporativos,
     mantendo o contrato de capabilities como base estável.
+
+---
+
+## 2026-01-23 — Versionamento, releases e uso de tags (SemVer em estágio 0.x)
+
+**Decisão**  
+O EXPANSÃO360 adotará **versionamento semântico (SemVer)** com uso de **tags Git anotadas**
+para marcar releases estáveis, mantendo o projeto em versão **0.x** enquanto
+estruturas centrais ainda estiverem em evolução.
+
+As versões seguirão o padrão:
+
+- `v0.X.0` — **release de sprint** (entrega funcional relevante)
+- `v0.X.Y` — **correção pontual / hotfix** sem adição de feature
+
+Tags serão criadas **somente ao final de uma sprint**, nunca no início.
+
+---
+
+**Contexto**  
+A partir da Sprint 2, o projeto passou a possuir:
+- sprints bem definidas
+- entregas incrementais
+- documentação arquitetural (ADR)
+- releases utilizáveis (ex.: `v0.2.0 — Web v1`)
+
+Até então, o versionamento vinha sendo aplicado de forma correta,
+porém **implícita**.
+Com a entrada na Sprint 3, tornou-se necessário formalizar:
+- quando criar uma tag
+- o que cada versão representa
+- como relacionar sprints e releases
+
+---
+
+**Consequências**  
+
+### 1) Relação entre Sprint e Release
+- **Sprint ≠ Release automaticamente**
+- Uma sprint **só gera uma tag** quando:
+  - seus objetivos foram atingidos
+  - o sistema está funcional e estável
+  - a documentação foi atualizada
+
+Exemplo:
+- Sprint 2 → `v0.2.0`
+- Sprint 3 → `v0.3.0`
+
+---
+
+### 2) Uso de versões 0.x
+Enquanto o projeto estiver em `0.x`:
+- mudanças estruturais são permitidas
+- não há garantia de backward compatibility
+- o foco é evolução controlada, não estabilidade pública
+
+A transição para `v1.0.0` será uma decisão explícita e registrada em ADR futura.
+
+---
+
+### 3) Tags Git
+- Releases devem ser marcados com **tags anotadas**
+- A tag deve conter:
+  - nome da versão
+  - breve descrição da entrega
+  - principais funcionalidades
+
+Exemplo:
+
+
+
+
+
+---
+
+## 2026-01-23 — Fluxo inverso de execução (Loja → Matriz) via Chamado de Retorno
+
+**Decisão**  
+O EXPANSÃO360 representará fluxos de retorno (Loja → Matriz) como **Chamados explícitos de Retorno**,
+distintos dos Chamados de envio (Matriz → Loja), mantendo:
+- imutabilidade do histórico
+- rastreabilidade operacional
+- governança contábil e de ativos
+
+Chamados de retorno:
+- são criados a partir de um Chamado finalizado
+- possuem vínculo explícito com o Chamado de origem
+- seguem regras específicas de execução e finalização
+
+---
+
+## Contexto
+
+Chamados no EXPANSÃO360 representam **eventos operacionais reais**,
+com impacto em:
+- ativos físicos
+- estoque
+- contabilidade
+- auditoria
+
+Permitir:
+- reabertura de Chamados
+- edição de itens após finalização
+- correção destrutiva do histórico
+
+quebraria princípios fundamentais do sistema:
+- rastreabilidade
+- confiabilidade histórica
+- auditoria contábil
+
+Na prática operacional, quando ocorre:
+- erro de envio
+- defeito pós-instalação
+- devolução de equipamento
+- recolhimento de ativos
+
+o processo correto **não é corrigir o passado**, mas **registrar uma nova operação**:
+o retorno físico e contábil do item.
+
+---
+
+## Decisão Arquitetural
+
+### 1) Tipos de Chamado
+
+O sistema passará a distinguir explicitamente dois tipos de Chamado:
+
+- **ENVIO**  
+  Representa o fluxo padrão **Matriz → Loja**
+
+- **RETORNO**  
+  Representa o fluxo inverso **Loja → Matriz**
+
+Essa distinção é **semântica e operacional**, não apenas visual.
+
+---
+
+### 2) Vínculo entre Chamados
+
+Todo Chamado de Retorno:
+- deve referenciar **exatamente um Chamado de origem**
+- não pode existir de forma isolada
+
+Esse vínculo garante:
+- rastreabilidade completa
+- navegação entre envio e retorno
+- relatórios consistentes
+
+Exemplo:
+
+Chamado ENVIO: EX360-20260110-000123
+Chamado RETORNO: EX360-20260118-000045 (ref: 000123)
+
+
+---
+
+### 3) Itens no Chamado de Retorno
+
+Itens do Chamado de Retorno:
+- derivam dos itens do Chamado original
+- podem representar:
+  - retorno efetivo
+  - tentativa de retorno
+  - exceção (extravio, descarte, perda)
+
+O Chamado de Retorno **não pressupõe** que todos os itens retornarão com sucesso.
+
+---
+
+## Regras de Finalização (Chamado de Retorno)
+
+Chamados de Retorno **não podem ser finalizados automaticamente**.
+
+Para finalizar, será obrigatório indicar o **desfecho de cada item**, com uma das opções:
+
+- **RETORNADO**
+  - item devolvido fisicamente à matriz
+  - ativo recuperado (quando aplicável)
+
+- **NAO_RETORNADO**
+  - extravio
+  - perda
+  - descarte
+  - exceção operacional
+
+Essa decisão:
+- é obrigatória
+- é registrada
+- não pode ser omitida
+- tem impacto contábil explícito
+
+---
+
+## Evidências no Retorno
+
+Chamados de Retorno reutilizam o mesmo mecanismo de evidências.
+
+Para finalização:
+- poderá ser exigida evidência por item ou por Chamado, conforme regra futura
+- exemplos:
+  - NF de retorno
+  - Carta de Conteúdo assinada
+  - Documento de exceção
+
+---
+
+## IAM e Governança
+
+Ações sensíveis no fluxo de retorno exigem **capabilities específicas**, por exemplo:
+
+- `execucao.chamado.criar_retorno`
+- `execucao.chamado.finalizar_retorno`
+- `execucao.item_retorno.definir_desfecho`
+
+A autorização ocorre exclusivamente na camada Web (adapter),
+mantendo o domínio independente de IAM.
+
+---
+
+## Consequências
+
+### 1) Histórico Imutável
+- Chamados finalizados nunca são alterados
+- Correções geram novos eventos, não mutações
+
+---
+
+### 2) Auditoria Clara
+- Toda movimentação possui:
+  - data
+  - responsável
+  - evidência
+  - vínculo com evento anterior
+
+---
+
+### 3) Contabilidade Confiável
+- Envio e retorno são eventos distintos
+- Permite:
+  - baixa correta de ativos
+  - identificação de perdas
+  - relatórios consistentes
+
+---
+
+### 4) UX e Operação
+- Usuário entende claramente:
+  - o que foi enviado
+  - o que retornou
+  - o que não retornou
+- Evita “chamados eternos” ou ambíguos
+
+---
+
+### 5) Evolução futura
+Este modelo permite evoluir para:
+- múltiplos retornos por Chamado
+- SLA de retorno
+- workflow de aprovação
+- integrações contábeis automatizadas
+
+sem quebra de compatibilidade conceitual.
+
+---
