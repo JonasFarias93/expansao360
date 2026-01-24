@@ -5,6 +5,7 @@ from django.db import transaction
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
+from iam.decorators import capability_required
 
 from .models import (
     Chamado,
@@ -91,6 +92,7 @@ def chamado_detalhe(request, chamado_id):
 
 
 @require_POST
+@capability_required("execucao.chamado.editar_itens")
 @transaction.atomic
 def chamado_atualizar_itens(request, chamado_id):
     chamado = get_object_or_404(Chamado, pk=chamado_id)
@@ -123,6 +125,7 @@ def chamado_atualizar_itens(request, chamado_id):
 
 
 @require_POST
+@capability_required("execucao.chamado.editar_itens")
 def chamado_finalizar(request, chamado_id):
     chamado = get_object_or_404(Chamado, pk=chamado_id)
     chamado.gerar_itens_de_instalacao()
@@ -146,6 +149,7 @@ def chamado_finalizar(request, chamado_id):
 # EVIDÊNCIAS
 # ==================
 @require_POST
+@capability_required("execucao.chamado.editar_itens")
 def chamado_adicionar_evidencia(request, chamado_id):
     chamado = get_object_or_404(Chamado, pk=chamado_id)
 
@@ -174,6 +178,7 @@ def chamado_adicionar_evidencia(request, chamado_id):
 
 
 @require_POST
+@capability_required("execucao.chamado.editar_itens")
 def evidencia_remover(request, chamado_id, evidencia_id):
     chamado = get_object_or_404(Chamado, pk=chamado_id)
 
@@ -194,6 +199,7 @@ def evidencia_remover(request, chamado_id, evidencia_id):
 
 
 @require_POST
+@capability_required("execucao.chamado.editar_itens")
 def item_set_status_configuracao(request, chamado_id, item_id):
     chamado = get_object_or_404(Chamado, pk=chamado_id)
 
