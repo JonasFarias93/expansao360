@@ -42,6 +42,69 @@ class Chamado(models.Model):
     contabilidade_numero = models.CharField(max_length=40, unique=True, null=True, blank=True)
     nf_saida_numero = models.CharField(max_length=40, unique=True, null=True, blank=True)
 
+    class Tipo(models.TextChoices):
+        ENVIO = "ENVIO", "Envio (Matriz → Loja)"
+        RETORNO = "RETORNO", "Retorno (Loja → Matriz)"
+
+    loja = models.ForeignKey(Loja, on_delete=models.PROTECT)
+    projeto = models.ForeignKey(Projeto, on_delete=models.PROTECT)
+    subprojeto = models.ForeignKey(Subprojeto, on_delete=models.PROTECT)
+    kit = models.ForeignKey(Kit, on_delete=models.PROTECT)
+
+    tipo = models.CharField(
+        max_length=20,
+        choices=Tipo.choices,
+        default=Tipo.ENVIO,
+    )
+
+    chamado_origem = models.ForeignKey(
+        "self",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="retornos",
+        help_text="Chamado de origem (obrigatório quando tipo=RETORNO).",
+    )
+
+    status = models.CharField(
+        max_length=20,
+        choices=Status.choices,
+        default=Status.ABERTO,
+    )
+
+    criado_em = models.DateTimeField(auto_now_add=True)
+    finalizado_em = models.DateTimeField(null=True, blank=True)
+    protocolo = models.CharField(max_length=32, unique=True, editable=False)
+
+    servicenow_numero = models.CharField(max_length=40, unique=True, null=True, blank=True)
+    contabilidade_numero = models.CharField(max_length=40, unique=True, blank=True, null=True)
+    nf_saida_numero = models.CharField(max_length=40, unique=True, blank=True, null=True)
+
+    def clean(self):
+        super().clean()
+
+        if self.tipo == self.Tipo.RETORNO:
+            if not self.chamado_origem_id:
+                raise ValidationError(
+                    {"chamado_origem": "Chamado de retorno exige um chamado de origem."}
+                )
+
+            if self.pk and self.chamado_origem_id == self.pk:
+                raise ValidationError(
+                    {"chamado_origem": "Chamado não pode ser origem de si mesmo."}
+                )
+
+            if self.chamado_origem.status != self.Status.FINALIZADO:
+                raise ValidationError(
+                    {"chamado_origem": "Chamado de origem deve estar FINALIZADO."}
+                )
+
+        else:
+            if self.chamado_origem_id:
+                raise ValidationError(
+                    {"chamado_origem": "Chamado de envio não deve possuir chamado de origem."}
+                )
+
     # -------------------------
     # geração de itens do chamado
     # -------------------------
@@ -72,37 +135,78 @@ class Chamado(models.Model):
 
         erros: list[str] = []
 
-        for item in itens:
-            # regra: se requer configuração, precisa estar CONFIGURADO
-            if (
-                item.requer_configuracao
-                and item.status_configuracao != StatusConfiguracao.CONFIGURADO
-            ):
-                erros.append(
-                    "Não é possível finalizar: "
-                    f"'{item.equipamento.nome} {item.tipo}' ainda não foi marcado como CONFIGURADO."
-                )
+        # ==========================
+        # ENVIO (Matriz -> Loja)
+        # ==========================
+        if self.tipo == self.Tipo.ENVIO:
+            for item in itens:
+                # regra: se requer configuração, precisa estar CONFIGURADO
+                if (
+                    item.requer_configuracao
+                    and item.status_configuracao != StatusConfiguracao.CONFIGURADO
+                ):
+                    erros.append(
+                        "Não é possível finalizar: "
+                        f"'{item.equipamento.nome} {item.tipo}' ainda não foi marcado como "
+                        "CONFIGURADO."
+                    )
 
-            # regra: se rastreável, exige ativo e número de série
-            if item.tem_ativo:
-                if not item.ativo.strip() or not item.numero_serie.strip():
+                # regra: se rastreável, exige ativo e número de série
+                if item.tem_ativo:
+                    if not item.ativo.strip() or not item.numero_serie.strip():
+                        erros.append(
+                            "Item rastreável "
+                            f"'{item.equipamento.nome} {item.tipo}' "
+                            "exige Ativo e Número de Série."
+                        )
+                # regra: se contável, exige confirmação
+                else:
+                    if not item.confirmado:
+                        erros.append(
+                            f"Item contável '{item.equipamento.nome} {item.tipo}' "
+                            "precisa ser confirmado."
+                        )
+
+        # ==========================
+        # RETORNO (Loja -> Matriz)
+        # ==========================
+        elif self.tipo == self.Tipo.RETORNO:
+            for item in itens:
+                # regra: todo item precisa de desfecho
+                if not item.status_retorno:
                     erros.append(
-                        "Item rastreável "
-                        f"'{item.equipamento.nome} {item.tipo}' "
-                        "exige Ativo e Número de Série."
+                        f"Defina o desfecho de retorno para '{item.equipamento.nome} {item.tipo}'."
                     )
-            # regra: se contável, exige confirmação
-            else:
-                if not item.confirmado:
-                    erros.append(
-                        f"Item contável '{item.equipamento.nome} {item.tipo}' "
-                        "precisa ser confirmado."
-                    )
+                    continue
+
+                # regra: NAO_RETORNADO exige motivo
+                if item.status_retorno == item.StatusRetorno.NAO_RETORNADO:
+                    if not item.motivo_nao_retorno.strip():
+                        erros.append(
+                            "Informe o motivo do não retorno para "
+                            f"'{item.equipamento.nome} {item.tipo}'."
+                        )
+
+                    # não exige ativo/série em não-retorno
+                    continue
+
+                # regra: RETORNADO — se rastreável, exige ativo e número de série
+                if item.status_retorno == item.StatusRetorno.RETORNADO:
+                    if item.tem_ativo:
+                        if not item.ativo.strip() or not item.numero_serie.strip():
+                            erros.append(
+                                "Item rastreável retornado "
+                                f"'{item.equipamento.nome} {item.tipo}' "
+                                "exige Ativo e Número de Série."
+                            )
+
+        else:
+            erros.append(f"Tipo de chamado inválido: {self.tipo}")
 
         if erros:
             raise ValidationError(erros)
 
-        # se passou por todas as validações, finaliza
+        # finaliza
         self.status = self.Status.FINALIZADO
         self.finalizado_em = timezone.now()
         self.save(update_fields=["status", "finalizado_em"])
@@ -190,6 +294,26 @@ class ItemConfiguracaoLog(models.Model):
 
     def __str__(self) -> str:
         return f"{self.item_id}: {self.de_status} -> {self.para_status}"
+
+    class StatusRetorno(models.TextChoices):
+        RETORNADO = "RETORNADO", "Retornado"
+        NAO_RETORNADO = "NAO_RETORNADO", "Não retornado"
+
+    status_retorno = models.CharField(
+        max_length=20,
+        choices=StatusRetorno.choices,
+        null=True,
+        blank=True,
+        default=None,
+        help_text="Obrigatório para itens em Chamado do tipo RETORNO.",
+    )
+
+    motivo_nao_retorno = models.CharField(
+        max_length=255,
+        blank=True,
+        default="",
+        help_text="Obrigatório quando status_retorno=NAO_RETORNADO.",
+    )
 
 
 # ==================
