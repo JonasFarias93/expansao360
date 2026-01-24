@@ -8,7 +8,12 @@ from django.urls import include, path
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    path("execucao/", include("execucao.urls")),
+    # Operation
+    path("execucao/", include(("execucao.urls", "execucao"), namespace="execucao")),
+    # Registry (cadastro)
+    path("cadastro/", include(("cadastro.urls", "cadastro"), namespace="cadastro")),
+    # IAM (se você expõe alguma tela/admin extra; senão pode remover)
+    # path("iam/", include(("iam.urls", "iam"), namespace="iam")),
 ]
 
 

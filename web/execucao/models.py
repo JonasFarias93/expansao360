@@ -267,8 +267,28 @@ class InstalacaoItem(models.Model):
         verbose_name = "Item de Instalação"
         verbose_name_plural = "Itens de Instalação"
 
-    def __str__(self) -> str:
-        return f"{self.equipamento.nome} {self.tipo} ({self.quantidade})"
+        def __str__(self) -> str:
+            return f"{self.equipamento.nome} {self.tipo} ({self.quantidade})"
+
+    class StatusRetorno(models.TextChoices):
+        RETORNADO = "RETORNADO", "Retornado"
+        NAO_RETORNADO = "NAO_RETORNADO", "Não retornado"
+
+    status_retorno = models.CharField(
+        max_length=20,
+        choices=StatusRetorno.choices,
+        null=True,
+        blank=True,
+        default=None,
+        help_text="Obrigatório para itens em Chamado do tipo RETORNO.",
+    )
+
+    motivo_nao_retorno = models.CharField(
+        max_length=255,
+        blank=True,
+        default="",
+        help_text="Obrigatório quando status_retorno=NAO_RETORNADO.",
+    )
 
 
 class ItemConfiguracaoLog(models.Model):
@@ -294,26 +314,6 @@ class ItemConfiguracaoLog(models.Model):
 
     def __str__(self) -> str:
         return f"{self.item_id}: {self.de_status} -> {self.para_status}"
-
-    class StatusRetorno(models.TextChoices):
-        RETORNADO = "RETORNADO", "Retornado"
-        NAO_RETORNADO = "NAO_RETORNADO", "Não retornado"
-
-    status_retorno = models.CharField(
-        max_length=20,
-        choices=StatusRetorno.choices,
-        null=True,
-        blank=True,
-        default=None,
-        help_text="Obrigatório para itens em Chamado do tipo RETORNO.",
-    )
-
-    motivo_nao_retorno = models.CharField(
-        max_length=255,
-        blank=True,
-        default="",
-        help_text="Obrigatório quando status_retorno=NAO_RETORNADO.",
-    )
 
 
 # ==================
