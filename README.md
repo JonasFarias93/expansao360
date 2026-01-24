@@ -1,40 +1,61 @@
 # EXPANSÃO360
 
-Plataforma para gestão de expansão, padronização e operação de campo, separando claramente
-cadastro administrativo (mestre) da execução operacional, com rastreabilidade completa.
+Plataforma para gestão de expansão, padronização e **operação de campo**,
+com separação rigorosa entre **cadastro mestre (Registry)** e **execução operacional (Operation)**,
+garantindo rastreabilidade, histórico e governança de ponta a ponta.
+
+---
 
 ## Objetivo
 
 O EXPANSÃO360 tem como objetivo estruturar e padronizar a expansão de operações físicas,
-garantindo que o que foi definido no planejamento seja corretamente executado em campo,
-com histórico, evidências e governança.
+assegurando que o que foi definido no planejamento seja corretamente executado em campo,
+com evidências, histórico auditável e regras claras de operação.
+
+---
 
 ## Status do Projeto
 
-🚧 **Sprint 2 — Cadastro e Execução Base (Web + CLI)**
+🚀 **Release atual: v0.3.0 — Fluxo Operacional Completo**  
+🚧 **Sprint atual: Sprint 4 — UX Operacional & Views**
 
-O projeto já possui:
+O projeto já possui uma base sólida com:
+
 - Arquitetura limpa (Domain / Application / Infrastructure)
 - Core de domínio independente de framework
-- Casos de uso testados (TDD)
-- CLI funcional
-- Camada Web (Django) em evolução
-- Execução via Chamados (UI inicial)
-- Persistência local e ORM
-- Testes automatizados e pre-commit hooks
+- Regras de negócio explícitas e testadas (TDD)
+- Execução operacional baseada em **Chamados**
+- Suporte a **fluxo direto e fluxo inverso**
+- Registro de **itens operacionais** e **evidências**
+- IAM mínimo baseado em **capabilities**
+- Camada Web (Django) funcional
+- CLI funcional (modo apresentação)
+- Testes automatizados e hooks de qualidade
 
+---
 
 ## Conceito Central
 
-O sistema é baseado em uma separação clara de camadas:
+O sistema é baseado em uma separação clara e intencional de camadas:
 
-- **Registry (Cadastro Mestre)**  
-  Define *o que existe* e *como deve ser* (ex: lojas, projetos, layouts, padrões).
+### Registry (Cadastro Mestre)
+Define **o que existe** e **como deve ser padronizado**  
+(ex.: lojas, projetos, equipamentos, kits).
 
-- **Operation (Execução de Campo)**  
-  Registra *o que foi executado*, *quando*, *por quem* e *com quais evidências*.
+Características:
+- Fonte da verdade
+- Alterações controladas
+- Versionamento e governança
 
-Essa separação garante rastreabilidade, auditoria e evolução segura do sistema.
+### Operation (Execução de Campo)
+Registra **o que foi executado**, **quando**, **por quem** e **com quais evidências**.
+
+Características:
+- Histórico imutável
+- Rastreabilidade completa
+- Suporte a exceções e auditoria
+
+Essa separação reduz ambiguidade, melhora governança e permite evolução segura do sistema.
 
 ---
 
@@ -53,6 +74,7 @@ conda env create -f environment.yml
 
 # ativar
 conda activate expansao360
+
 ```
 
 ---
@@ -90,11 +112,18 @@ python -m expansao360 mount list
 ```
 
 
-## Web (Django)
+Web (Django)
 
 A camada Web fornece:
+
 - Cadastro administrativo (Registry)
+
 - Execução operacional via Chamados
+
+- Suporte a fluxo direto e inverso
+
+- Registro e visualização de evidências
+
 - Interface administrativa (Django Admin)
 
 ### Comandos principais
