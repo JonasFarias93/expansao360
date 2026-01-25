@@ -81,3 +81,4 @@ web/media/
 media/
 **/media/
 **/evidencias/
+web/db.sqlite3.bak

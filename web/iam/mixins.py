@@ -15,7 +15,7 @@ class CapabilityRequiredMixin:
     """
 
     required_capability: str | None = None
-    redirect_to: str = "execucao:historico"
+    redirect_to: str = "iam:acesso_negado"
 
     def dispatch(self, request, *args, **kwargs):
         cap = self.required_capability
