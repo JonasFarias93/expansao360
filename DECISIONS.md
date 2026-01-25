@@ -389,3 +389,214 @@ Precisamos:
 - Este modelo é deliberadamente mínimo e evolutivo:
   - futuras evoluções podem incluir papéis, grupos, hierarquias, escopo por projeto/loja e integração com provedores corporativos,
     mantendo o contrato de capabilities como base estável.
+
+
+# ADR-XXX — Adoção de CBVs + CapabilityRequiredMixin (IAM por capability) na camada Web
+
+**Status:** Aceito  
+**Data:** 2026-01-24  
+**Contexto:** Sprint 3 — Execução / Fluxo Inverso / IAM mínimo
+
+---
+
+## Contexto
+
+A camada Web do EXPANSÃO360 (Django) começou com views em FBV (Function-Based Views),
+com controle de acesso via decorator `@capability_required(code)` do app `iam`.
+
+Com a evolução da Sprint 3, o número de endpoints operacionais cresceu
+(detalhe do chamado, atualização de itens, finalização, upload/remoção de evidência, alteração de status de configuração).
+A manutenção e refatoração dessas views em FBV começou a gerar:
+
+- repetição de padrões (autorização + redirects + messages)
+- dificuldade em padronizar comportamento entre GET/POST
+- maior custo para refatorar/organizar views por fluxos
+- risco de divergência entre views com autorização e sem autorização
+
+Ao mesmo tempo, já existia uma fonte de verdade de IAM:
+`iam.decorators.user_has_capability(user, code)` baseada em `UserCapability`.
+
+---
+
+## Decisão
+
+1) Adotar **CBVs (Class-Based Views)** como padrão para a camada Web do app `execucao`,
+migrando as views operacionais críticas de FBV para CBV de forma incremental.
+
+2) Centralizar a autorização por capability em um **mixin** no app `iam`:
+
+- `iam/mixins.py::CapabilityRequiredMixin`
+
+O mixin passa a ser o padrão para CBVs e deve manter o mesmo comportamento do decorator:
+
+- Sem capability: `messages.error(...)` + redirect para rota padrão (`execucao:historico`)
+
+3) Manter `iam.decorators.user_has_capability()` como **fonte de verdade** do IAM
+para evitar divergência de regras entre decorator e mixin.
+
+---
+
+## Escopo
+
+Incluído:
+- migração incremental de views do app `execucao` para CBV
+- aplicação do `CapabilityRequiredMixin` nas views migradas
+- atualização de URLs para referenciar CBVs quando aplicável
+- preservação de nomes de rotas (`name=`) para compatibilidade com testes e templates
+
+Não incluído:
+- mudanças de regra de negócio do domínio (finalização, fluxo inverso, evidências)
+- nova UI de cadastro (Registry) além de placeholders iniciais
+- revisão completa de templates/UX (será tratada na continuação da Sprint 4 / UI)
+
+---
+
+## Alternativas Consideradas
+
+### A) Permanecer com FBVs e decorators
+**Prós**
+- menor esforço inicial
+- sem mudança de estilo
+
+**Contras**
+- repetição crescente
+- maior risco de inconsistência entre endpoints
+- refatorações mais caras em fluxos complexos
+
+### B) Decorators em CBVs (`@method_decorator` no `dispatch`)
+**Prós**
+- funciona bem
+
+**Contras**
+- verboso em muitas views
+- continua repetitivo ao longo do código
+- menos padronização de comportamento (redirect/messages) por classe
+
+---
+
+## Consequências
+
+### Positivas
+- padrão consistente para autorização (mixin único)
+- refatoração mais simples e previsível
+- melhor organização por fluxo (GET/POST/ações)
+- menor repetição de código e menor risco de regressão
+
+### Negativas / Riscos
+- curva de aprendizado para CBVs/mixins
+- necessidade de disciplina na migração incremental para evitar referências quebradas
+
+---
+
+## Guia de Uso
+
+### Para CBVs
+- usar `CapabilityRequiredMixin` como primeira classe base:
+  `class X(CapabilityRequiredMixin, TemplateView): ...`
+- definir `required_capability = "<código>"`
+
+### Para FBVs (legado)
+- manter `@capability_required("<código>")` até migração para CBV
+
+---
+
+## Evidências
+
+- Testes do app `execucao` mantidos verdes após migração incremental das views.
+- Comportamento de autorização padronizado entre decorator e mixin.
+
+---
+---
+
+## 2026-01-24 — Abertura de Chamado via UI com geração automática de Itens de Execução
+
+**Decisão**  
+O sistema passará a oferecer uma **UI para abertura de Chamados** (camada Operation),
+permitindo que usuários criem Chamados manualmente a partir de dados do **Registry**
+(Loja, Projeto/Subprojeto e Kit).
+
+No momento da criação do Chamado, os **Itens de Execução** serão gerados automaticamente
+a partir dos **Itens do Kit selecionado**, funcionando como um *snapshot operacional*.
+
+---
+
+**Contexto**  
+Até este ponto do projeto, o foco esteve no cadastro mestre (Registry) e na execução
+operacional de Chamados já existentes.
+No entanto, para permitir testes end-to-end do fluxo de Execução (Sprint 3/4),
+tornou-se necessário **criar Chamados via UI**, sem depender de seeds manuais ou do Django Admin.
+
+Além disso:
+- Chamados representam eventos operacionais reais
+- A composição do Chamado deve refletir o planejamento aprovado (Kit)
+- Alterações futuras no Kit **não podem impactar Chamados já criados**
+
+Era necessário formalizar:
+- como um Chamado nasce
+- como seus itens são definidos
+- como garantir rastreabilidade entre planejamento e execução
+
+---
+
+**Consequências**
+
+### 1) Chamado nasce a partir do Registry
+A UI de abertura de Chamado exigirá, no mínimo:
+- Loja
+- Projeto (e opcional Subprojeto)
+- Kit
+
+Essas entidades pertencem ao **Registry** e funcionam como insumos para a execução.
+
+---
+
+### 2) Geração automática dos Itens de Execução
+Ao criar um Chamado:
+- cada `ItemKit` do Kit selecionado gera um **Item de Execução**
+- os campos copiados incluem:
+  - equipamento
+  - tipo
+  - quantidade
+  - requer_configuracao
+  - regras derivadas do Equipamento (`tem_ativo`)
+
+Esses itens passam a pertencer exclusivamente ao Chamado.
+
+---
+
+### 3) Snapshot operacional (imutabilidade conceitual)
+- Mudanças posteriores no Kit **não afetam Chamados já criados**
+- O Chamado representa o estado do planejamento **no momento da abertura**
+- Garante rastreabilidade, auditoria e consistência histórica
+
+---
+
+### 4) Separação clara de responsabilidades
+- **Registry**: define padrões e planejamento (Kit, Equipamentos, etc.)
+- **Operation**: executa e registra o que aconteceu (Chamado e Itens)
+
+O Chamado atua como a *ponte controlada* entre planejamento e execução.
+
+---
+
+### 5) UI como ferramenta operacional (não administrativa)
+- A abertura de Chamado via UI não substitui o Django Admin
+- Ela existe para:
+  - testes operacionais
+  - uso real em campo
+  - simulação de fluxos completos (Matriz → Loja / Loja → Matriz)
+- O Admin permanece como ferramenta técnica
+
+---
+
+### 6) Evolução futura prevista
+Este fluxo permite evoluções futuras sem quebra de contrato, como:
+- abertura de Chamado por API
+- integração com sistemas externos (ServiceNow, ERP)
+- abertura automática via eventos
+- validações adicionais por tipo de Projeto ou Kit
+
+Todas essas evoluções preservam a decisão central:
+**Chamados sempre nascem como eventos operacionais derivados do Registry.**
+
+---

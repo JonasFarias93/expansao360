@@ -1,0 +1,73 @@
+<div class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+  <div>
+    <h1 class="text-xl font-semibold">
+      Chamado {{ chamado.protocolo }}
+    </h1>
+
+    <div class="text-sm text-gray-600 space-y-1">
+      <div>
+        <span class="font-medium">Loja:</span> {{ chamado.loja.codigo }} — {{ chamado.loja.nome }}
+      </div>
+
+      <div>
+        <span class="font-medium">Projeto:</span> {{ chamado.projeto.codigo }} — {{ chamado.projeto.nome }}
+        {% if chamado.subprojeto %}
+          / {{ chamado.subprojeto.codigo }} — {{ chamado.subprojeto.nome }}
+        {% endif %}
+      </div>
+
+      <div class="flex items-center gap-2">
+        <span class="font-medium">Status:</span>
+        {% if chamado.status == "ABERTO" %}
+          <span class="inline-flex items-center rounded-full bg-slate-100 px-2 py-1 text-xs font-medium text-slate-700">Aberto</span>
+        {% elif chamado.status == "EM_EXECUCAO" %}
+          <span class="inline-flex items-center rounded-full bg-blue-100 px-2 py-1 text-xs font-medium text-blue-700">Em execução</span>
+        {% elif chamado.status == "FINALIZADO" %}
+          <span class="inline-flex items-center rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-700">Finalizado</span>
+        {% else %}
+          <span class="inline-flex items-center rounded-full bg-amber-100 px-2 py-1 text-xs font-medium text-amber-700">{{ chamado.status }}</span>
+        {% endif %}
+      </div>
+
+      <div class="pt-2 grid grid-cols-1 md:grid-cols-3 gap-2">
+        <div class="bg-gray-50 border rounded p-2">
+          <div class="text-xs text-gray-500">ServiceNow</div>
+          <div class="text-sm">{{ chamado.servicenow_numero|default:"—" }}</div>
+        </div>
+        <div class="bg-gray-50 border rounded p-2">
+          <div class="text-xs text-gray-500">Contabilidade</div>
+          <div class="text-sm">{{ chamado.contabilidade_numero|default:"—" }}</div>
+        </div>
+        <div class="bg-gray-50 border rounded p-2">
+          <div class="text-xs text-gray-500">NF Saída</div>
+          <div class="text-sm">{{ chamado.nf_saida_numero|default:"—" }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="flex gap-2">
+    <a href="{% url 'execucao:historico' %}" class="px-4 py-2 border rounded hover:bg-gray-50">
+      Voltar
+    </a>
+
+    {% if not chamado.finalizado_em %}
+      <!-- Botão que dispara o FORM PRINCIPAL (salvar itens) -->
+      <button form="form-itens" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+        Salvar itens
+      </button>
+
+      <!-- Finalizar chamado: FORM SEPARADO -->
+      <form method="post" action="{% url 'execucao:chamado_finalizar' chamado.id %}" onsubmit="return confirm('Deseja realmente finalizar este chamado?')">
+        {% csrf_token %}
+        <button class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
+          Finalizar
+        </button>
+      </form>
+    {% else %}
+      <span class="px-4 py-2 bg-gray-100 text-gray-600 rounded border">
+        Chamado finalizado
+      </span>
+    {% endif %}
+  </div>
+</div>

@@ -1,3 +1,5 @@
+# web/execucao/models.py
+
 # =========
 # imports
 # =========
@@ -28,20 +30,6 @@ class Chamado(models.Model):
         EM_EXECUCAO = "EM_EXECUCAO", "Em execução"
         FINALIZADO = "FINALIZADO", "Finalizado"
 
-    loja = models.ForeignKey(Loja, on_delete=models.PROTECT)
-    projeto = models.ForeignKey(Projeto, on_delete=models.PROTECT)
-    subprojeto = models.ForeignKey(Subprojeto, on_delete=models.PROTECT)
-    kit = models.ForeignKey(Kit, on_delete=models.PROTECT)
-
-    status = models.CharField(max_length=20, choices=Status.choices, default=Status.ABERTO)
-    criado_em = models.DateTimeField(auto_now_add=True)
-    finalizado_em = models.DateTimeField(null=True, blank=True)
-    protocolo = models.CharField(max_length=32, unique=True, editable=False)
-
-    servicenow_numero = models.CharField(max_length=40, unique=True, null=True, blank=True)
-    contabilidade_numero = models.CharField(max_length=40, unique=True, null=True, blank=True)
-    nf_saida_numero = models.CharField(max_length=40, unique=True, null=True, blank=True)
-
     class Tipo(models.TextChoices):
         ENVIO = "ENVIO", "Envio (Matriz → Loja)"
         RETORNO = "RETORNO", "Retorno (Loja → Matriz)"
@@ -51,11 +39,7 @@ class Chamado(models.Model):
     subprojeto = models.ForeignKey(Subprojeto, on_delete=models.PROTECT)
     kit = models.ForeignKey(Kit, on_delete=models.PROTECT)
 
-    tipo = models.CharField(
-        max_length=20,
-        choices=Tipo.choices,
-        default=Tipo.ENVIO,
-    )
+    tipo = models.CharField(max_length=20, choices=Tipo.choices, default=Tipo.ENVIO)
 
     chamado_origem = models.ForeignKey(
         "self",
@@ -66,19 +50,17 @@ class Chamado(models.Model):
         help_text="Chamado de origem (obrigatório quando tipo=RETORNO).",
     )
 
-    status = models.CharField(
-        max_length=20,
-        choices=Status.choices,
-        default=Status.ABERTO,
-    )
-
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.ABERTO)
     criado_em = models.DateTimeField(auto_now_add=True)
     finalizado_em = models.DateTimeField(null=True, blank=True)
     protocolo = models.CharField(max_length=32, unique=True, editable=False)
 
     servicenow_numero = models.CharField(max_length=40, unique=True, null=True, blank=True)
-    contabilidade_numero = models.CharField(max_length=40, unique=True, blank=True, null=True)
-    nf_saida_numero = models.CharField(max_length=40, unique=True, blank=True, null=True)
+    contabilidade_numero = models.CharField(max_length=40, unique=True, null=True, blank=True)
+    nf_saida_numero = models.CharField(max_length=40, unique=True, null=True, blank=True)
+
+    def __str__(self) -> str:
+        return self.protocolo or f"Chamado {self.pk}"
 
     def clean(self):
         super().clean()
@@ -94,7 +76,9 @@ class Chamado(models.Model):
                     {"chamado_origem": "Chamado não pode ser origem de si mesmo."}
                 )
 
-            if self.chamado_origem.status != self.Status.FINALIZADO:
+            # garante origem finalizada (se objeto ainda não carregado, busca)
+            origem = self.chamado_origem
+            if origem and origem.status != self.Status.FINALIZADO:
                 raise ValidationError(
                     {"chamado_origem": "Chamado de origem deve estar FINALIZADO."}
                 )
@@ -239,6 +223,10 @@ class Chamado(models.Model):
 # item da instalação
 # ================
 class InstalacaoItem(models.Model):
+    class StatusRetorno(models.TextChoices):
+        RETORNADO = "RETORNADO", "Retornado"
+        NAO_RETORNADO = "NAO_RETORNADO", "Não retornado"
+
     chamado = models.ForeignKey(Chamado, on_delete=models.CASCADE, related_name="itens")
     equipamento = models.ForeignKey(Equipamento, on_delete=models.PROTECT)
 
@@ -263,17 +251,6 @@ class InstalacaoItem(models.Model):
     ativo = models.CharField(max_length=80, blank=True, default="")
     numero_serie = models.CharField(max_length=120, blank=True, default="")
 
-    class Meta:
-        verbose_name = "Item de Instalação"
-        verbose_name_plural = "Itens de Instalação"
-
-        def __str__(self) -> str:
-            return f"{self.equipamento.nome} {self.tipo} ({self.quantidade})"
-
-    class StatusRetorno(models.TextChoices):
-        RETORNADO = "RETORNADO", "Retornado"
-        NAO_RETORNADO = "NAO_RETORNADO", "Não retornado"
-
     status_retorno = models.CharField(
         max_length=20,
         choices=StatusRetorno.choices,
@@ -289,6 +266,13 @@ class InstalacaoItem(models.Model):
         default="",
         help_text="Obrigatório quando status_retorno=NAO_RETORNADO.",
     )
+
+    class Meta:
+        verbose_name = "Item de Instalação"
+        verbose_name_plural = "Itens de Instalação"
+
+    def __str__(self) -> str:
+        return f"{self.equipamento.nome} {self.tipo} ({self.quantidade})"
 
 
 class ItemConfiguracaoLog(models.Model):
@@ -332,6 +316,9 @@ class EvidenciaChamado(models.Model):
     arquivo = models.FileField(upload_to="execucao/evidencias/")
     descricao = models.CharField(max_length=255, blank=True, default="")
     criado_em = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-criado_em", "-id"]
 
     def __str__(self) -> str:
         return f"{self.get_tipo_display()} - {self.chamado.protocolo}"

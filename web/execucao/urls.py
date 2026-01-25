@@ -1,3 +1,5 @@
+# execucao/urls
+
 from django.urls import path
 
 from . import views
@@ -5,9 +7,10 @@ from . import views
 app_name = "execucao"
 
 urlpatterns = [
-    path("", views.HistoricoView.as_view(), name="inicio"),
+    path("", views.ChamadoFilaView.as_view(), name="fila"),
     path("historico/", views.HistoricoView.as_view(), name="historico"),
     # CHAMADO
+    path("chamados/novo/", views.ChamadoCreateView.as_view(), name="chamado_create"),
     path("chamados/<int:chamado_id>/", views.ChamadoDetailView.as_view(), name="chamado_detalhe"),
     path(
         "chamados/<int:chamado_id>/itens/",

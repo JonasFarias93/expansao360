@@ -2,12 +2,13 @@
 from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.db import transaction
-from django.db.models import Q
-from django.shortcuts import get_object_or_404, redirect
+from django.db.models import Case, IntegerField, Q, Value, When
+from django.shortcuts import get_object_or_404, redirect, render
 from django.views import View
 from django.views.generic import TemplateView
 from iam.mixins import CapabilityRequiredMixin
 
+from .forms import ChamadoCreateForm
 from .models import (
     Chamado,
     EvidenciaChamado,
@@ -19,6 +20,68 @@ from .models import (
 # ==================
 # HISTÓRICO
 # ==================
+
+
+class ChamadoCreateView(CapabilityRequiredMixin, View):
+    required_capability = "execucao.chamado.criar"
+    template_name = "execucao/chamado_create.html"
+
+    def get(self, request):
+        form = ChamadoCreateForm()
+        return render(request, self.template_name, {"form": form})
+
+    @transaction.atomic
+    def post(self, request):
+        form = ChamadoCreateForm(request.POST)
+
+        if not form.is_valid():
+            return render(request, self.template_name, {"form": form})
+
+        chamado = Chamado.objects.create(
+            loja=form.cleaned_data["loja"],
+            projeto=form.cleaned_data["projeto"],
+            subprojeto=form.cleaned_data["subprojeto"],
+            kit=form.cleaned_data["kit"],
+            status=Chamado.Status.ABERTO,
+            tipo=Chamado.Tipo.ENVIO,
+        )
+
+        chamado.gerar_itens_de_instalacao()
+
+        messages.success(
+            request,
+            f"Chamado {chamado.protocolo} aberto com sucesso.",
+        )
+        return redirect("execucao:chamado_detalhe", chamado_id=chamado.id)
+
+
+class ChamadoFilaView(CapabilityRequiredMixin, TemplateView):
+    """
+    Fila operacional de chamados ativos (ABERTO / EM_EXECUCAO).
+    """
+
+    template_name = "execucao/fila.html"
+    required_capability = "execucao.chamado.visualizar"
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+
+        chamados = (
+            Chamado.objects.filter(status__in=[Chamado.Status.ABERTO, Chamado.Status.EM_EXECUCAO])
+            .select_related("loja", "projeto")
+            .annotate(
+                prioridade=Case(
+                    When(status=Chamado.Status.EM_EXECUCAO, then=Value(0)),
+                    When(status=Chamado.Status.ABERTO, then=Value(1)),
+                    default=Value(2),
+                    output_field=IntegerField(),
+                )
+            )
+            .order_by("prioridade", "criado_em")
+        )
+
+        ctx["chamados"] = chamados
+        return ctx
 
 
 class HistoricoView(CapabilityRequiredMixin, TemplateView):

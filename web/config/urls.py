@@ -4,16 +4,23 @@
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
+from django.shortcuts import redirect
 from django.urls import include, path
+
+
+def root_redirect(request):
+    return redirect("execucao:fila")
+
 
 urlpatterns = [
     path("admin/", admin.site.urls),
+    path("", root_redirect),
     # Operation
     path("execucao/", include(("execucao.urls", "execucao"), namespace="execucao")),
     # Registry (cadastro)
     path("cadastro/", include(("cadastro.urls", "cadastro"), namespace="cadastro")),
     # IAM (se você expõe alguma tela/admin extra; senão pode remover)
-    # path("iam/", include(("iam.urls", "iam"), namespace="iam")),
+    path("iam/", include(("iam.urls", "iam"), namespace="iam")),
 ]
 
 
