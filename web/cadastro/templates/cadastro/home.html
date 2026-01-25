@@ -1,5 +1,42 @@
 {% extends "base.html" %}
+
+{% block title %}Cadastro — EXPANSÃO360{% endblock %}
+
 {% block content %}
-<h1>Cadastro (Registry)</h1>
-<p>UI em construção. Por enquanto, utilize o <a href="/admin/">Admin</a> para manutenção.</p>
+  {% include "components/_card.html" with title="Cadastro (Registry)" subtitle="Cadastros mestres necessários para abrir e testar chamados." content="" %}
+  <div class="mt-4"></div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-3xl">
+    <a href="{% url 'registry:loja_list' %}" class="block">
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 hover:bg-slate-50 transition-colors">
+        <div class="text-sm text-slate-500 uppercase tracking-wide">Cadastro</div>
+        <div class="mt-1 text-lg font-semibold">Lojas</div>
+        <div class="mt-2 text-sm text-slate-600">Cadastrar lojas (código e nome).</div>
+      </div>
+    </a>
+
+    <a href="{% url 'registry:equipamento_list' %}" class="block">
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 hover:bg-slate-50 transition-colors">
+        <div class="text-sm text-slate-500 uppercase tracking-wide">Cadastro</div>
+        <div class="mt-1 text-lg font-semibold">Equipamentos</div>
+        <div class="mt-2 text-sm text-slate-600">Código, categoria, rastreável/contável e configurável.</div>
+      </div>
+    </a>
+
+    <a href="{% url 'registry:projeto_list' %}" class="block">
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 hover:bg-slate-50 transition-colors">
+        <div class="text-sm text-slate-500 uppercase tracking-wide">Cadastro</div>
+        <div class="mt-1 text-lg font-semibold">Projetos</div>
+        <div class="mt-2 text-sm text-slate-600">Projetos e subprojetos para contextualizar a execução.</div>
+      </div>
+    </a>
+
+    <a href="{% url 'registry:kit_list' %}" class="block">
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 hover:bg-slate-50 transition-colors">
+        <div class="text-sm text-slate-500 uppercase tracking-wide">Cadastro</div>
+        <div class="mt-1 text-lg font-semibold">Kits</div>
+        <div class="mt-2 text-sm text-slate-600">Conjunto de itens previstos para execução.</div>
+      </div>
+    </a>
+  </div>
 {% endblock %}

@@ -1,19 +1,27 @@
 {% extends "base.html" %}
-{% block title %}Novo Projeto — Cadastro{% endblock %}
+{% block title %}{% if object %}Editar Projeto{% else %}Novo Projeto{% endif %} — Cadastro{% endblock %}
 
 {% block content %}
   <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 max-w-2xl">
     <div class="flex items-center justify-between">
       <div>
-        <div class="text-lg font-semibold">Novo projeto</div>
-        <div class="text-sm text-slate-600">Informe código e nome.</div>
+        <div class="text-lg font-semibold">
+          {% if object %}Editar projeto{% else %}Novo projeto{% endif %}
+        </div>
+        <div class="text-sm text-slate-600">Informe os dados.</div>
       </div>
       <a href="{% url 'registry:projeto_list' %}" class="text-sm text-slate-600 hover:underline">Voltar</a>
     </div>
 
     <form method="post" class="mt-5 space-y-4">
       {% csrf_token %}
-      {{ form.as_p }}
+
+      {{ form.codigo.label_tag }} {{ form.codigo }}
+      {{ form.nome.label_tag }} {{ form.nome }}
+
+      {% if form.non_field_errors %}
+        <div class="text-sm text-red-600">{{ form.non_field_errors }}</div>
+      {% endif %}
 
       <div class="pt-2 flex justify-end gap-2">
         <a href="{% url 'registry:projeto_list' %}" class="px-4 py-2 border rounded-lg hover:bg-slate-50 text-sm">
