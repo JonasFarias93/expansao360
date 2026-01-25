@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block title %}Nova Loja — Cadastro{% endblock %}
+
+{% block content %}
+  <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 max-w-2xl">
+    <div class="flex items-center justify-between">
+      <div>
+        <div class="text-lg font-semibold">Nova loja</div>
+        <div class="text-sm text-slate-600">Informe código e nome.</div>
+      </div>
+      <a href="{% url 'registry:loja_list' %}" class="text-sm text-slate-600 hover:underline">Voltar</a>
+    </div>
+
+    <form method="post" class="mt-5 space-y-4">
+      {% csrf_token %}
+      {{ form.as_p }}
+
+      <div class="pt-2 flex justify-end gap-2">
+        <a href="{% url 'registry:loja_list' %}" class="px-4 py-2 border rounded-lg hover:bg-slate-50 text-sm">
+          Cancelar
+        </a>
+        <button class="px-4 py-2 rounded-lg bg-slate-900 text-white hover:bg-slate-800 text-sm">
+          Salvar
+        </button>
+      </div>
+    </form>
+  </div>
+{% endblock %}

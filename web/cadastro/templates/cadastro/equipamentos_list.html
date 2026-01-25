@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Equipamentos — Cadastro{% endblock %}
+
+{% block content %}
+  <div class="flex items-center justify-between mb-4">
+    <div>
+      <h1 class="text-xl font-semibold">Equipamentos</h1>
+      <div class="text-sm text-slate-600">Cadastro mestre de equipamentos.</div>
+    </div>
+
+    <a
+      href="{% url 'registry:equipamento_create' %}"
+      class="rounded-lg bg-slate-900 text-white px-4 py-2 hover:bg-slate-800 text-sm"
+    >
+      Novo equipamento
+    </a>
+  </div>
+
+  <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
+    <table class="min-w-full text-sm">
+      <thead>
+        <tr class="text-left text-slate-600 border-b border-slate-200">
+          <th class="py-3 pr-4">Código</th>
+          <th class="py-3 pr-4">Nome</th>
+          <th class="py-3 pr-4">Categoria</th>
+          <th class="py-3 pr-4">Ativo</th>
+          <th class="py-3 pr-4">Config.</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100">
+        {% for e in equipamentos %}
+          <tr class="hover:bg-slate-50">
+            <td class="py-3 pr-4 font-medium">{{ e.codigo }}</td>
+            <td class="py-3 pr-4">{{ e.nome }}</td>
+            <td class="py-3 pr-4">{{ e.categoria.nome }}</td>
+            <td class="py-3 pr-4">{% if e.tem_ativo %}Sim{% else %}Não{% endif %}</td>
+            <td class="py-3 pr-4">{% if e.configuravel %}Sim{% else %}Não{% endif %}</td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="5" class="py-6 text-slate-500 text-center">Nenhum equipamento cadastrado.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endblock %}

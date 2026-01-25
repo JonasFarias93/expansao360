@@ -1,3 +1,5 @@
+# execucao/urls
+
 from django.urls import path
 
 from . import views
@@ -5,31 +7,36 @@ from . import views
 app_name = "execucao"
 
 urlpatterns = [
-    path("historico/", views.historico, name="historico"),
-    path("chamado/<int:chamado_id>/", views.chamado_detalhe, name="chamado_detalhe"),
+    path("", views.ChamadoFilaView.as_view(), name="fila"),
+    path("historico/", views.HistoricoView.as_view(), name="historico"),
+    # CHAMADO
+    path("chamados/novo/", views.ChamadoCreateView.as_view(), name="chamado_create"),
+    path("chamados/<int:chamado_id>/", views.ChamadoDetailView.as_view(), name="chamado_detalhe"),
     path(
-        "chamado/<int:chamado_id>/itens/",
-        views.chamado_atualizar_itens,
+        "chamados/<int:chamado_id>/itens/",
+        views.ChamadoAtualizarItensView.as_view(),
         name="chamado_atualizar_itens",
     ),
     path(
-        "chamado/<int:chamado_id>/finalizar/",
-        views.chamado_finalizar,
+        "chamados/<int:chamado_id>/finalizar/",
+        views.ChamadoFinalizarView.as_view(),
         name="chamado_finalizar",
     ),
+    # EVIDÊNCIAS
     path(
-        "chamado/<int:chamado_id>/evidencias/",
-        views.chamado_adicionar_evidencia,
+        "chamados/<int:chamado_id>/evidencias/add/",
+        views.ChamadoAdicionarEvidenciaView.as_view(),
         name="chamado_adicionar_evidencia",
     ),
     path(
-        "chamado/<int:chamado_id>/evidencias/<int:evidencia_id>/remover/",
-        views.evidencia_remover,
+        "chamados/<int:chamado_id>/evidencias/<int:evidencia_id>/remover/",
+        views.EvidenciaRemoverView.as_view(),
         name="evidencia_remover",
     ),
+    # ITENS
     path(
-        "chamado/<int:chamado_id>/itens/<int:item_id>/configuracao/",
-        views.item_set_status_configuracao,
+        "chamados/<int:chamado_id>/itens/<int:item_id>/status/",
+        views.ItemSetStatusConfiguracaoView.as_view(),
         name="item_set_status_configuracao",
     ),
 ]

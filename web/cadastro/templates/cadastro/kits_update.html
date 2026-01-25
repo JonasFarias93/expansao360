@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+{% block title %}Editar Kit — Cadastro{% endblock %}
+
+{% block content %}
+  <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 max-w-4xl">
+    <div class="flex items-center justify-between">
+      <div>
+        <div class="text-lg font-semibold">Editar kit</div>
+        <div class="text-sm text-slate-600">Defina o kit e os itens (equipamento, tipo, quantidade).</div>
+      </div>
+      <a href="{% url 'registry:kit_list' %}" class="text-sm text-slate-600 hover:underline">Voltar</a>
+    </div>
+
+    <form method="post" class="mt-5 space-y-6">
+      {% csrf_token %}
+
+      <div class="max-w-xl">
+        {{ form.as_p }}
+      </div>
+
+      <div class="border-t pt-4">
+        <div class="flex items-center justify-between">
+          <div class="font-semibold">Itens do kit</div>
+
+          <div class="flex items-center gap-3">
+            <div class="text-sm text-slate-600">{{ kit.itens.count }} item(ns)</div>
+            <button
+              type="button"
+              id="btn-add-item"
+              class="px-3 py-2 rounded-lg bg-slate-900 text-white hover:bg-slate-800 text-sm"
+            >
+              + Adicionar item
+            </button>
+          </div>
+        </div>
+
+        <div class="mt-3">
+          {{ formset.management_form }}
+
+          <div id="itens-container" class="space-y-3">
+            {% for f in formset %}
+              <div class="border rounded-xl p-4 bg-slate-50">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
+                  <div class="md:col-span-2">
+                    {{ f.equipamento.label_tag }} {{ f.equipamento }}
+                  </div>
+                  <div>
+                    {{ f.tipo.label_tag }} {{ f.tipo }}
+                  </div>
+                  <div>
+                    {{ f.quantidade.label_tag }} {{ f.quantidade }}
+                  </div>
+                </div>
+
+                <div class="mt-3 flex items-center justify-between">
+                  <label class="flex items-center gap-2 text-sm">
+                    {{ f.requer_configuracao }} <span>Requer configuração</span>
+                  </label>
+
+                  {% if f.instance.pk %}
+                    <label class="flex items-center gap-2 text-sm text-red-700">
+                      {{ f.DELETE }} <span>Remover</span>
+                    </label>
+                  {% else %}
+                    <button type="button" class="btn-remove-new text-sm text-red-700 hover:underline">
+                      Remover linha
+                    </button>
+                  {% endif %}
+                </div>
+
+                {% if f.non_field_errors %}
+                  <div class="text-sm text-red-600 mt-2">{{ f.non_field_errors }}</div>
+                {% endif %}
+              </div>
+            {% endfor %}
+          </div>
+
+          <template id="empty-form-template">
+            <div class="border rounded-xl p-4 bg-slate-50">
+              <div class="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
+                <div class="md:col-span-2">
+                  {{ formset.empty_form.equipamento.label_tag }} {{ formset.empty_form.equipamento }}
+                </div>
+                <div>
+                  {{ formset.empty_form.tipo.label_tag }} {{ formset.empty_form.tipo }}
+                </div>
+                <div>
+                  {{ formset.empty_form.quantidade.label_tag }} {{ formset.empty_form.quantidade }}
+                </div>
+              </div>
+
+              <div class="mt-3 flex items-center justify-between">
+                <label class="flex items-center gap-2 text-sm">
+                  {{ formset.empty_form.requer_configuracao }} <span>Requer configuração</span>
+                </label>
+
+                <button type="button" class="btn-remove-new text-sm text-red-700 hover:underline">
+                  Remover linha
+                </button>
+              </div>
+            </div>
+          </template>
+
+          {% if formset.non_form_errors %}
+            <div class="text-sm text-red-600 mt-3">{{ formset.non_form_errors }}</div>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="pt-2 flex justify-end gap-2">
+        <a href="{% url 'registry:kit_list' %}" class="px-4 py-2 border rounded-lg hover:bg-slate-50 text-sm">
+          Cancelar
+        </a>
+        <button class="px-4 py-2 rounded-lg bg-slate-900 text-white hover:bg-slate-800 text-sm">
+          Salvar
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <script>
+    const addBtn = document.getElementById("btn-add-item");
+    const container = document.getElementById("itens-container");
+    const template = document.getElementById("empty-form-template");
+
+    const totalFormsInput = document.querySelector('input[name="{{ formset.prefix }}-TOTAL_FORMS"]');
+
+    function wireRemoveButtons(scope) {
+      scope.querySelectorAll(".btn-remove-new").forEach((btn) => {
+        // evita múltiplos listeners ao rewire
+        if (btn.dataset.bound === "1") return;
+        btn.dataset.bound = "1";
+
+        btn.addEventListener("click", () => {
+          const card = btn.closest("div.border");
+          if (card) card.remove();
+          // MVP: não decrementa TOTAL_FORMS (evita quebrar índices).
+        });
+      });
+    }
+
+    addBtn?.addEventListener("click", () => {
+      const total = parseInt(totalFormsInput.value, 10);
+      const html = template.innerHTML.replaceAll("__prefix__", total);
+
+      const wrapper = document.createElement("div");
+      wrapper.innerHTML = html.trim();
+
+      container.appendChild(wrapper.firstElementChild);
+      totalFormsInput.value = total + 1;
+
+      wireRemoveButtons(container);
+    });
+
+    wireRemoveButtons(container);
+  </script>
+{% endblock %}

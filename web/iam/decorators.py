@@ -11,6 +11,10 @@ from .models import UserCapability
 def user_has_capability(user, code: str) -> bool:
     if not user or not getattr(user, "is_authenticated", False):
         return False
+
+    # ✅ bypass para superuser
+    if getattr(user, "is_superuser", False):
+        return True
     return UserCapability.objects.filter(user=user, capability__code=code).exists()
 
 
