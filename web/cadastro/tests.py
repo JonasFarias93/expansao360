@@ -2,6 +2,8 @@
 from django.db import IntegrityError
 from django.test import TestCase
 
+from cadastro.services.import_lojas import normalizar_loja_row
+
 from .models import Categoria, Equipamento, ItemKit, Kit, Projeto, Subprojeto
 
 
@@ -52,3 +54,54 @@ class CadastroModelsTest(TestCase):
 
         with self.assertRaises(IntegrityError):
             Subprojeto.objects.create(projeto=projeto, codigo="S1", nome="Sub duplicado")
+
+
+# ==========================
+# Import / Normalização Loja
+# ==========================
+
+
+class LojaImportMapperTest(TestCase):
+    def test_normalizar_loja_row_mapeia_campos(self) -> None:
+        row = {
+            "Filial": " 123 ",
+            "Hist.": "H1",
+            "Nome Filial": " Loja Centro ",
+            "Endereço": "Rua X, 10",
+            "Bairro": "Centro",
+            "Cidade": "São Paulo",
+            "UF": "sp",
+            "Logomarca": "logo.png",
+            "Telefone": "11999990000",
+            "IP Banco 12": "10.0.0.1",
+        }
+
+        out = normalizar_loja_row(row)
+
+        self.assertEqual(out["filial"], "123")
+        self.assertEqual(out["hist"], "H1")
+        self.assertEqual(out["nome_loja"], "Loja Centro")
+        self.assertEqual(out["endereco"], "Rua X, 10")
+        self.assertEqual(out["bairro"], "Centro")
+        self.assertEqual(out["cidade"], "São Paulo")
+        self.assertEqual(out["uf"], "SP")  # normaliza UF
+        self.assertEqual(out["logomarca"], "logo.png")
+        self.assertEqual(out["telefone"], "11999990000")
+        self.assertEqual(out["ip_banco_12"], "10.0.0.1")
+
+    def test_normalizar_loja_row_ip_vazio_vira_none(self) -> None:
+        row = {
+            "Filial": "123",
+            "Hist.": "",
+            "Nome Filial": "Loja",
+            "Endereço": "",
+            "Bairro": "",
+            "Cidade": "",
+            "UF": "RJ",
+            "Logomarca": "",
+            "Telefone": "",
+            "IP Banco 12": "   ",
+        }
+
+        out = normalizar_loja_row(row)
+        self.assertIsNone(out["ip_banco_12"])
