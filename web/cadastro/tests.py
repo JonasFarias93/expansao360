@@ -1,4 +1,5 @@
 # Create your tests here.
+from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 from django.test import TestCase
 
@@ -105,3 +106,42 @@ class LojaImportMapperTest(TestCase):
 
         out = normalizar_loja_row(row)
         self.assertIsNone(out["ip_banco_12"])
+
+
+# ==========================
+# cadasto / Loja
+# ==========================
+
+
+class LojaModelCamposExtrasTest(TestCase):
+    def test_loja_recebe_campos_extras_e_normaliza_uf(self) -> None:
+        from cadastro.models import Loja
+
+        loja = Loja.objects.create(
+            codigo="6",
+            nome="PAULISTA",
+            hist="6",
+            endereco="AVENIDA PAULISTA, 807",
+            bairro="BELA VISTA",
+            cidade="SAO PAULO",
+            uf="sp",
+            logomarca="RAIA",
+            telefone="(11) 31710248          ",
+            ip_banco_12="10.140.6.12",
+        )
+
+        loja.refresh_from_db()
+        self.assertEqual(loja.uf, "SP")
+        self.assertEqual(loja.ip_banco_12, "10.140.6.12")
+        self.assertEqual(loja.telefone.strip(), "(11) 31710248")
+
+    def test_loja_uf_invalida_quebra_no_clean(self) -> None:
+        from cadastro.models import Loja
+
+        loja = Loja(
+            codigo="7",
+            nome="SAO CARLOS - A",
+            uf="SPO",
+        )
+        with self.assertRaises(ValidationError):
+            loja.full_clean()

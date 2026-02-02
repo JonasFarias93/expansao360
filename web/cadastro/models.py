@@ -1,3 +1,4 @@
+from django.core.exceptions import ValidationError
 from django.db import models
 
 
@@ -28,15 +29,53 @@ class Equipamento(models.Model):
 
 
 class Loja(models.Model):
-    codigo = models.CharField(max_length=50, unique=True)
-    nome = models.CharField(max_length=120)
+    codigo = models.CharField(max_length=50, unique=True)  # UI: "Java"
+    nome = models.CharField(max_length=120)  # UI: "Nome loja"
+
+    # Campos adicionais do layout externo
+    hist = models.CharField(max_length=50, blank=True, default="")
+    endereco = models.CharField(max_length=255, blank=True, default="")
+    bairro = models.CharField(max_length=120, blank=True, default="")
+    cidade = models.CharField(max_length=120, blank=True, default="")
+    uf = models.CharField(max_length=2, blank=True, default="")
+    logomarca = models.CharField(max_length=80, blank=True, default="")
+    telefone = models.CharField(max_length=60, blank=True, default="")
+    ip_banco_12 = models.GenericIPAddressField(null=True, blank=True)
 
     class Meta:
         verbose_name = "Loja"
         verbose_name_plural = "Lojas"
 
+    def clean(self):
+        super().clean()
+        if self.uf and len(self.uf.strip()) != 2:
+            raise ValidationError({"uf": "UF deve ter 2 caracteres."})
+
+        # normalizações leves e seguras
+        self.codigo = (self.codigo or "").strip()
+        self.nome = (self.nome or "").strip()
+
+        self.hist = (self.hist or "").strip()
+        self.endereco = (self.endereco or "").strip()
+        self.bairro = (self.bairro or "").strip()
+        self.cidade = (self.cidade or "").strip()
+        self.logomarca = (self.logomarca or "").strip()
+        self.telefone = (self.telefone or "").strip()
+
+        if self.uf:
+            self.uf = self.uf.strip().upper()
+            if len(self.uf) != 2:
+                raise ValidationError({"uf": "UF deve ter 2 caracteres."})
+
     def __str__(self) -> str:
         return f"{self.codigo} - {self.nome}"
+
+    def save(self, *args, **kwargs):  # type: ignore[override]
+        if self.uf:
+            self.uf = self.uf.strip().upper()
+        self.codigo = (self.codigo or "").strip()
+        self.nome = (self.nome or "").strip()
+        super().save(*args, **kwargs)
 
 
 class Projeto(models.Model):
