@@ -82,7 +82,8 @@ class ItemKit(models.Model):
     tipo = models.CharField(max_length=80)  # PDV, TOUCH, etc
     quantidade = models.PositiveIntegerField()
     requer_configuracao = models.BooleanField(
-        default=False, help_text="Define se este item exige configuração técnica neste kit."
+        default=False,
+        help_text="Define se este item exige configuração técnica neste kit.",
     )
 
     class Meta:

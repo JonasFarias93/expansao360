@@ -11,7 +11,11 @@ urlpatterns = [
     path("historico/", views.HistoricoView.as_view(), name="historico"),
     # CHAMADO
     path("chamados/novo/", views.ChamadoCreateView.as_view(), name="chamado_create"),
-    path("chamados/<int:chamado_id>/", views.ChamadoDetailView.as_view(), name="chamado_detalhe"),
+    path(
+        "chamados/<int:chamado_id>/",
+        views.ChamadoDetailView.as_view(),
+        name="chamado_detalhe",
+    ),
     path(
         "chamados/<int:chamado_id>/itens/",
         views.ChamadoAtualizarItensView.as_view(),

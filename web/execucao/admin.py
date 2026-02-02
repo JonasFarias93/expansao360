@@ -66,5 +66,16 @@ class InstalacaoItemAdmin(admin.ModelAdmin):
         "status_configuracao",
         "confirmado",
     )
-    list_filter = ("tem_ativo", "confirmado", "requer_configuracao", "status_configuracao")
-    search_fields = ("ativo", "numero_serie", "equipamento__codigo", "equipamento__nome", "tipo")
+    list_filter = (
+        "tem_ativo",
+        "confirmado",
+        "requer_configuracao",
+        "status_configuracao",
+    )
+    search_fields = (
+        "ativo",
+        "numero_serie",
+        "equipamento__codigo",
+        "equipamento__nome",
+        "tipo",
+    )

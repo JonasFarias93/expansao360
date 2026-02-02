@@ -1,6 +1,14 @@
 from __future__ import annotations
 
-from cadastro.models import Categoria, Equipamento, ItemKit, Kit, Loja, Projeto, Subprojeto
+from cadastro.models import (
+    Categoria,
+    Equipamento,
+    ItemKit,
+    Kit,
+    Loja,
+    Projeto,
+    Subprojeto,
+)
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import SimpleUploadedFile

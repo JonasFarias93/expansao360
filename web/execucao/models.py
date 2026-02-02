@@ -97,14 +97,29 @@ class Chamado(models.Model):
             return
 
         for item_kit in self.kit.itens.select_related("equipamento").all():
-            InstalacaoItem.objects.create(
-                chamado=self,
-                equipamento=item_kit.equipamento,
-                tipo=item_kit.tipo,
-                quantidade=item_kit.quantidade,
-                tem_ativo=item_kit.equipamento.tem_ativo,
-                requer_configuracao=item_kit.requer_configuracao,
-            )
+            eq = item_kit.equipamento
+
+            # rastreável: explode em linhas unitárias para permitir bipagem por unidade
+            if eq.tem_ativo:
+                for _ in range(item_kit.quantidade):
+                    InstalacaoItem.objects.create(
+                        chamado=self,
+                        equipamento=eq,
+                        tipo=item_kit.tipo,
+                        quantidade=1,
+                        tem_ativo=True,
+                        requer_configuracao=item_kit.requer_configuracao,
+                    )
+            else:
+                # contável: uma linha com quantidade agregada
+                InstalacaoItem.objects.create(
+                    chamado=self,
+                    equipamento=eq,
+                    tipo=item_kit.tipo,
+                    quantidade=item_kit.quantidade,
+                    tem_ativo=False,
+                    requer_configuracao=item_kit.requer_configuracao,
+                )
 
     # ----------
     # finalizar

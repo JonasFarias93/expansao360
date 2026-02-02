@@ -2,26 +2,28 @@
 {% block content %}
 <div class="space-y-4">
   <div class="flex items-center justify-between">
-    <h1 class="text-xl font-semibold">Projetos</h1>
-    <a href="{% url 'cadastro:projeto_create' %}" class="px-4 py-2 bg-blue-600 text-white rounded">Novo</a>
+    <h1 class="text-xl font-semibold">Subprojetos</h1>
+    <a href="{% url 'cadastro:subprojeto_create' %}" class="px-4 py-2 bg-blue-600 text-white rounded">Novo</a>
   </div>
 
   <div class="bg-white border rounded">
     <table class="w-full text-sm">
       <thead class="bg-gray-50">
         <tr>
+          <th class="text-left p-2">Projeto</th>
           <th class="text-left p-2">Código</th>
           <th class="text-left p-2">Nome</th>
         </tr>
       </thead>
       <tbody>
-      {% for p in projetos %}
+      {% for s in subprojetos %}
         <tr class="border-t">
-          <td class="p-2 font-medium">{{ p.codigo }}</td>
-          <td class="p-2">{{ p.nome }}</td>
+          <td class="p-2">{{ s.projeto.codigo }}</td>
+          <td class="p-2 font-medium">{{ s.codigo }}</td>
+          <td class="p-2">{{ s.nome }}</td>
         </tr>
       {% empty %}
-        <tr><td class="p-4 text-gray-500" colspan="2">Nenhum projeto cadastrado.</td></tr>
+        <tr><td class="p-4 text-gray-500" colspan="3">Nenhum subprojeto cadastrado.</td></tr>
       {% endfor %}
       </tbody>
     </table>
