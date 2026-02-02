@@ -32,7 +32,6 @@ class Loja(models.Model):
     codigo = models.CharField(max_length=50, unique=True)  # UI: "Java"
     nome = models.CharField(max_length=120)  # UI: "Nome loja"
 
-    # Campos adicionais do layout externo
     hist = models.CharField(max_length=50, blank=True, default="")
     endereco = models.CharField(max_length=255, blank=True, default="")
     bairro = models.CharField(max_length=120, blank=True, default="")
@@ -48,10 +47,12 @@ class Loja(models.Model):
 
     def clean(self):
         super().clean()
+        # validação apenas (normalização fica no save)
         if self.uf and len(self.uf.strip()) != 2:
             raise ValidationError({"uf": "UF deve ter 2 caracteres."})
 
-        # normalizações leves e seguras
+    def save(self, *args, **kwargs):  # type: ignore[override]
+        # normalizações leves e seguras (sempre aplicadas)
         self.codigo = (self.codigo or "").strip()
         self.nome = (self.nome or "").strip()
 
@@ -64,18 +65,11 @@ class Loja(models.Model):
 
         if self.uf:
             self.uf = self.uf.strip().upper()
-            if len(self.uf) != 2:
-                raise ValidationError({"uf": "UF deve ter 2 caracteres."})
+
+        super().save(*args, **kwargs)
 
     def __str__(self) -> str:
         return f"{self.codigo} - {self.nome}"
-
-    def save(self, *args, **kwargs):  # type: ignore[override]
-        if self.uf:
-            self.uf = self.uf.strip().upper()
-        self.codigo = (self.codigo or "").strip()
-        self.nome = (self.nome or "").strip()
-        super().save(*args, **kwargs)
 
 
 class Projeto(models.Model):
