@@ -52,7 +52,30 @@ class CategoriaForm(forms.ModelForm):
 class LojaForm(forms.ModelForm):
     class Meta:
         model = Loja
-        fields = ["codigo", "nome"]
+        fields = [
+            "codigo",
+            "nome",
+            "hist",
+            "endereco",
+            "bairro",
+            "cidade",
+            "uf",
+            "logomarca",
+            "telefone",
+            "ip_banco_12",
+        ]
+        labels = {
+            "codigo": "Java",
+            "nome": "Nome loja",
+            "hist": "Hist.",
+            "endereco": "Endereço",
+            "bairro": "Bairro",
+            "cidade": "Cidade",
+            "uf": "UF",
+            "logomarca": "Logomarca",
+            "telefone": "Telefone",
+            "ip_banco_12": "IP Banco 12",
+        }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
