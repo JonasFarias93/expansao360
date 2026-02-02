@@ -10,11 +10,22 @@ from cadastro.models import Loja
 def _get(row: dict[str, Any], *keys: str) -> str:
     """
     Pega o primeiro valor existente dentre as chaves informadas.
-    Retorna string (trim) ou "".
+    Tolerante a BOM no início do header e variações de case/trim.
     """
+    if not row:
+        return ""
+
+    # mapa normalizado: remove BOM, strip e lower
+    normalized_row: dict[str, Any] = {}
+    for k, v in row.items():
+        nk = str(k).replace("\ufeff", "").strip().lower()
+        normalized_row[nk] = v
+
     for k in keys:
-        if k in row and row[k] is not None:
-            return str(row[k]).strip()
+        nk = str(k).replace("\ufeff", "").strip().lower()
+        if nk in normalized_row and normalized_row[nk] is not None:
+            return str(normalized_row[nk]).strip()
+
     return ""
 
 
