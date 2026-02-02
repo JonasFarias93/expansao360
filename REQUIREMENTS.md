@@ -213,3 +213,29 @@ Exemplos:
 - Integração com ERP / ServiceNow
 - API pública
 - Mobile / offline-first
+
+
+### Subprojeto (Registry — detalhamento funcional mínimo)
+
+O Subprojeto representa um **recorte organizacional e operacional**
+dentro de um Projeto, utilizado para:
+
+- segmentação de execução
+- consolidação de histórico
+- análise e dashboards
+
+Exemplos de Subprojeto:
+- Fase
+- Região
+- Linha de entrega
+- Tipo de iniciativa (ex.: Sala Sua Saúde, Impressoras, Tablets)
+
+#### Características
+- Todo Subprojeto **pertence a um único Projeto**
+- Um Projeto pode possuir **zero ou mais Subprojetos**
+- Subprojetos possuem ciclo de vida próprio
+
+#### Status de Subprojeto
+- **ATIVO** — pode receber novos Chamados
+- **INATIVO** — não recebe novos Chamados, histórico preservado
+- **ENCERRADO** — finalizado, não reativável

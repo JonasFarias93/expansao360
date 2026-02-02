@@ -243,3 +243,66 @@ Necessidade de testes end-to-end e uso real do sistema.
 ---
 
 **Chamados sempre nascem como eventos operacionais derivados do Registry.**
+
+
+
+---
+
+## 2026-01-25 — Introdução de Subprojetos no Registry
+
+**Decisão**  
+Introduzir a entidade **Subprojeto** no **Registry (Cadastro Mestre)** como
+recorte organizacional obrigatório quando existente, vinculado a um **Projeto**,
+e referenciado por **Chamados** para fins de rastreabilidade, governança
+e consolidação histórica.
+
+**Contexto**  
+Projetos reais de expansão (especialmente *ROLLOUT* e *ADIÇÃO*) exigem
+segmentação operacional por linhas de entrega, fases, regiões ou áreas
+(ex.: Sala Sua Saúde, Impressoras, Tablets).
+
+Sem Subprojetos:
+- o histórico fica dependente de texto livre
+- dashboards exigem inferência ou regras frágeis
+- não há governança explícita sobre “para onde” a execução está indo
+
+A introdução de Subprojetos resolve esse problema sem violar o princípio
+central do sistema: **Registry define intenção, Operation registra execução**.
+
+**Consequências**
+- Subprojeto passa a ser uma entidade do **Registry**, nunca da Operation.
+- Todo Subprojeto pertence a exatamente um Projeto.
+- Projetos podem existir sem Subprojetos.
+- Quando um Projeto possuir Subprojetos cadastrados:
+  - Chamados **devem** referenciar um Subprojeto válido e ativo.
+- Alterações em Subprojetos (nome, status) **não afetam Chamados já existentes**.
+- Subprojetos não são deletados destrutivamente se houver Chamados associados;
+  apenas inativados ou encerrados.
+- Dashboards e relatórios passam a operar por `Projeto → Subprojeto`
+  sem inferência semântica.
+
+---
+## 2026-02-02 — Mapeamento operacional: “Filial” (base externa) como “Java” (UI) no Cadastro de Lojas
+
+**Decisão**  
+No cadastro de **Lojas (Registry)**, adotaremos a nomenclatura operacional utilizada no dia a dia:
+- Exibir **Filial** como **Java** na UI e na comunicação com usuários.
+- Exibir **Nome Filial** como **Nome loja** na UI.
+
+Para compatibilidade com a base externa, o sistema deve aceitar o layout:
+`Filial;Hist.;Nome Filial;Endereço;Bairro;Cidade;UF;Logomarca;Telefone;IP Banco 12`
+e mapear esses campos para os atributos internos do cadastro de loja.
+
+**Contexto**  
+A base de dados externa/legada fornece campos com nomenclatura “Filial” e “Nome Filial”.
+Na operação real, os usuários estão acostumados com os termos **Java** e **Nome loja**.
+Até aqui o cadastro foi simplificado para acelerar desenvolvimento, mas agora precisamos
+refinar para condizer com a realidade do dia a dia sem perder compatibilidade com a base.
+
+**Consequências**  
+- O importador/sincronização deve mapear explicitamente:
+  - `Filial` → identificador da loja (exibido como “Java”)
+  - `Nome Filial` → nome de exibição da loja (exibido como “Nome loja”)
+  - demais colunas conforme layout oficial
+- Templates e formulários devem refletir os labels operacionais (“Java”, “Nome loja”).
+- Testes devem validar o mapeamento do layout e o recebimento correto dos campos no cadastro.
