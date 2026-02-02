@@ -2,36 +2,128 @@
 
 from __future__ import annotations
 
+from typing import Any
 
-def normalizar_loja_row(row: dict[str, str]) -> dict[str, str | None]:
+from cadastro.models import Loja
+
+
+def _get(row: dict[str, Any], *keys: str) -> str:
     """
-    Normaliza uma linha vinda do layout externo:
-
-    Filial;Hist.;Nome Filial;Endereço;Bairro;Cidade;UF;Logomarca;Telefone;IP Banco 12
-
-    Regras:
-    - 'Filial' é o identificador operacional (na UI é chamado de "Java").
-    - 'Nome Filial' é o nome de exibição (na UI é chamado de "Nome loja").
-    - UF sempre em uppercase.
-    - IP Banco 12 vira None quando vazio.
+    Pega o primeiro valor existente dentre as chaves informadas.
+    Retorna string (trim) ou "".
     """
+    for k in keys:
+        if k in row and row[k] is not None:
+            return str(row[k]).strip()
+    return ""
 
-    def s(key: str) -> str:
-        return (row.get(key) or "").strip()
 
-    uf = s("UF").upper()
-    ip = s("IP Banco 12")
+def normalizar_loja_row(row: dict[str, Any]) -> dict[str, Any]:
+    """
+    Normaliza uma linha vinda do Excel/CSV (layout Banco 12) para o formato interno do model Loja.
+
+    Aceita:
+    - layout externo:
+      Filial;Hist.;Nome Filial;Endereço;Bairro;Cidade;UF;Logomarca;Telefone;IP Banco 12
+    - layout interno: codigo/nome/...
+    """
+    codigo = _get(row, "codigo", "Java", "Filial")
+    nome = _get(row, "nome", "Nome loja", "Nome Filial")
+
+    hist = _get(row, "hist", "Hist.", "Hist")
+    endereco = _get(row, "endereco", "Endereço", "Endereco")
+    bairro = _get(row, "bairro", "Bairro")
+    cidade = _get(row, "cidade", "Cidade")
+    uf = _get(row, "uf", "UF").upper()
+
+    logomarca = _get(row, "logomarca", "Logomarca").upper()
+    telefone = _get(row, "telefone", "Telefone")
+
+    ip = _get(row, "ip_banco_12", "IP Banco 12", "IP Banco 12 ", "IP Banco12")
     ip_banco_12 = ip if ip else None
 
     return {
-        "filial": s("Filial"),
-        "hist": s("Hist."),
-        "nome_loja": s("Nome Filial"),
-        "endereco": s("Endereço"),
-        "bairro": s("Bairro"),
-        "cidade": s("Cidade"),
+        "codigo": codigo,
+        "nome": nome,
+        "hist": hist,
+        "endereco": endereco,
+        "bairro": bairro,
+        "cidade": cidade,
         "uf": uf,
-        "logomarca": s("Logomarca"),
-        "telefone": s("Telefone"),
+        "logomarca": logomarca,
+        "telefone": telefone,
         "ip_banco_12": ip_banco_12,
+    }
+
+
+def _row_changed(loja: Loja, data: dict[str, Any]) -> bool:
+    fields = [
+        "nome",
+        "hist",
+        "endereco",
+        "bairro",
+        "cidade",
+        "uf",
+        "logomarca",
+        "telefone",
+        "ip_banco_12",
+    ]
+    for f in fields:
+        if getattr(loja, f) != data.get(f):
+            return True
+    return False
+
+
+def importar_lojas(rows: list[dict[str, str]]) -> dict[str, int]:
+    """
+    Import idempotente:
+    - cria quando não existe (por codigo)
+    - atualiza apenas quando houver diferença
+    - não duplica nunca
+    Retorna contadores: created, updated, unchanged, skipped.
+    """
+    created = 0
+    updated = 0
+    unchanged = 0
+    skipped = 0
+
+    for raw in rows:
+        normalized = normalizar_loja_row(raw)
+
+        codigo = (normalized.get("codigo") or "").strip()
+        if not codigo:
+            skipped += 1
+            continue
+
+        defaults = {
+            "nome": normalized.get("nome", "") or "",
+            "hist": normalized.get("hist", "") or "",
+            "endereco": normalized.get("endereco", "") or "",
+            "bairro": normalized.get("bairro", "") or "",
+            "cidade": normalized.get("cidade", "") or "",
+            "uf": normalized.get("uf", "") or "",
+            "logomarca": normalized.get("logomarca", "") or "",
+            "telefone": normalized.get("telefone", "") or "",
+            "ip_banco_12": normalized.get("ip_banco_12", None),
+        }
+
+        loja, was_created = Loja.objects.get_or_create(codigo=codigo, defaults=defaults)
+
+        if was_created:
+            created += 1
+            continue
+
+        if _row_changed(loja, defaults):
+            for k, v in defaults.items():
+                setattr(loja, k, v)
+            loja.save()
+            updated += 1
+        else:
+            unchanged += 1
+
+    return {
+        "created": created,
+        "updated": updated,
+        "unchanged": unchanged,
+        "skipped": skipped,
     }
