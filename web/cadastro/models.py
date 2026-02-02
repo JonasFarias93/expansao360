@@ -60,7 +60,7 @@ class Loja(models.Model):
         self.endereco = (self.endereco or "").strip()
         self.bairro = (self.bairro or "").strip()
         self.cidade = (self.cidade or "").strip()
-        self.logomarca = (self.logomarca or "").strip()
+        self.logomarca = (self.logomarca or "").strip().upper()
         self.telefone = (self.telefone or "").strip()
 
         if self.uf:

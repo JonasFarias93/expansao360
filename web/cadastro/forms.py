@@ -50,6 +50,17 @@ class CategoriaForm(forms.ModelForm):
 
 
 class LojaForm(forms.ModelForm):
+    LOGOMARCA_CHOICES = [
+        ("RAIA", "RAIA"),
+        ("DROGASIL", "DROGASIL"),
+    ]
+
+    logomarca = forms.ChoiceField(
+        choices=[("", "---------")] + LOGOMARCA_CHOICES,
+        required=False,
+        label="Logomarca",
+    )
+
     class Meta:
         model = Loja
         fields = [
