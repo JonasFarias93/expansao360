@@ -306,3 +306,19 @@ refinar para condizer com a realidade do dia a dia sem perder compatibilidade co
   - demais colunas conforme layout oficial
 - Templates e formulários devem refletir os labels operacionais (“Java”, “Nome loja”).
 - Testes devem validar o mapeamento do layout e o recebimento correto dos campos no cadastro.
+---
+## 2026-02-02 — Padronização de Logomarca no Cadastro de Lojas
+
+**Decisão**  
+Padronizar o campo **Logomarca** no cadastro de Lojas para reduzir inconsistência:
+- Normalizar valores para **maiúsculo** no salvamento.
+- (Opcional) Preferir seleção via dropdown (RAIA/DROGASIL) no cadastro manual.
+
+**Contexto**  
+O valor de Logomarca vem padronizado na base externa (ex.: RAIA, DROGASIL),
+mas no cadastro manual pode haver variações e erros de digitação.
+
+**Consequências**  
+- Menos divergência de dados (RAIA/raia/RaIa).
+- UI pode evoluir para dropdown sem afetar importação.
+- Testes devem cobrir a normalização (quando aplicada).
