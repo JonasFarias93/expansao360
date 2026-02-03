@@ -131,7 +131,7 @@ class Kit(models.Model):
 class ItemKit(models.Model):
     kit = models.ForeignKey(Kit, on_delete=models.CASCADE, related_name="itens")
     equipamento = models.ForeignKey(Equipamento, on_delete=models.PROTECT)
-    tipo = models.CharField(max_length=80)  # PDV, TOUCH, etc
+    tipo = models.ForeignKey(TipoEquipamento, on_delete=models.PROTECT)
     quantidade = models.PositiveIntegerField()
     requer_configuracao = models.BooleanField(
         default=False,
@@ -145,7 +145,7 @@ class ItemKit(models.Model):
 
     @property
     def nome_exibicao(self) -> str:
-        return f"{self.equipamento.nome} {self.tipo}".strip()
+        return f"{self.equipamento.nome} {self.tipo.nome}".strip()
 
     def __str__(self) -> str:
         return f"{self.nome_exibicao} ({self.quantidade})"
