@@ -2,7 +2,7 @@
 from django import forms
 from django.forms import inlineformset_factory
 
-from .models import Categoria, Equipamento, ItemKit, Kit, Loja, Projeto, Subprojeto
+from .models import Categoria, Equipamento, ItemKit, Kit, Loja, Projeto, Subprojeto, TipoEquipamento
 
 # ==========================
 # Tailwind helpers (MVP)
@@ -141,13 +141,69 @@ class KitForm(forms.ModelForm):
         apply_tailwind_styles(self)
 
 
+class ItemKitForm(forms.ModelForm):
+    class Meta:
+        model = ItemKit
+        fields = ["equipamento", "tipo", "quantidade", "requer_configuracao"]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # default: vazio (evita escolher tipo errado antes de selecionar equipamento)
+        self.fields["tipo"].queryset = TipoEquipamento.objects.none()
+
+        # Caso 1: edição (instance já tem equipamento)
+        equipamento = getattr(self.instance, "equipamento", None)
+        if equipamento is not None and getattr(equipamento, "id", None):
+            self.fields["tipo"].queryset = TipoEquipamento.objects.filter(
+                categoria=equipamento.categoria,
+                ativo=True,
+            ).order_by("nome")
+
+        # Caso 2: POST (usuário selecionou equipamento no form)
+        if self.data:
+            equipamento_key = f"{self.prefix}-equipamento"
+            equip_id = self.data.get(equipamento_key)
+            if equip_id:
+                try:
+                    equip = Equipamento.objects.select_related("categoria").get(id=int(equip_id))
+                    self.fields["tipo"].queryset = TipoEquipamento.objects.filter(
+                        categoria=equip.categoria,
+                        ativo=True,
+                    ).order_by("nome")
+                except (ValueError, Equipamento.DoesNotExist):
+                    pass
+
+        apply_tailwind_styles(self)
+
+
 # ==========================
 # Inline Formset (Kit -> ItemKit)
 # ==========================
 ItemKitFormSet = inlineformset_factory(
     parent_model=Kit,
     model=ItemKit,
+    form=ItemKitForm,
     fields=["equipamento", "tipo", "quantidade", "requer_configuracao"],
+    extra=1,
+    can_delete=True,
+)
+
+
+class TipoEquipamentoForm(forms.ModelForm):
+    class Meta:
+        model = TipoEquipamento
+        fields = ["codigo", "nome", "ativo"]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        apply_tailwind_styles(self)
+
+
+TipoEquipamentoFormSet = inlineformset_factory(
+    parent_model=Categoria,
+    model=TipoEquipamento,
+    fields=["codigo", "nome", "ativo"],
     extra=1,
     can_delete=True,
 )
