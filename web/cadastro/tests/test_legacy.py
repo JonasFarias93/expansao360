@@ -6,9 +6,8 @@ from django.core.management import call_command
 from django.db import IntegrityError
 from django.test import TestCase
 
+from cadastro.models import Categoria, Equipamento, ItemKit, Kit, Projeto, Subprojeto
 from cadastro.services.import_lojas import normalizar_loja_row
-
-from .models import Categoria, Equipamento, ItemKit, Kit, Projeto, Subprojeto
 
 
 class CadastroModelsTest(TestCase):

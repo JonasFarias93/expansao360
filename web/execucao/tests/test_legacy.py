@@ -18,7 +18,7 @@ from django.urls import reverse
 from django.utils import timezone
 from iam.models import Capability, UserCapability
 
-from .models import Chamado, EvidenciaChamado, InstalacaoItem
+from execucao.models import Chamado, EvidenciaChamado, InstalacaoItem
 
 
 def grant_cap(user, code: str) -> None:
