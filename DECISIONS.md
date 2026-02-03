@@ -334,3 +334,142 @@ mas no cadastro manual pode haver variações e erros de digitação.
 - UI pode evoluir para dropdown sem afetar importação.
 - Testes devem cobrir a normalização (quando aplicada).
 
+---
+## 2026-02-02 — Refinamento do Cadastro de Equipamentos (Registry)
+
+### Decisão
+O cadastro de **Equipamentos** será tratado como entidade de **Registry (Cadastro Mestre)**,
+com foco em padronização, rastreabilidade e uso no dia a dia operacional.
+
+O modelo deve representar:
+- O que o equipamento **é**
+- Como ele é **identificado**
+- Em quais contextos ele pode ser **utilizado**
+
+E **não**:
+- Onde ele está instalado atualmente
+- Eventos, histórico ou execução em campo
+
+---
+
+### Contexto
+O cadastro atual de Equipamentos atende o CRUD básico, mas não reflete totalmente
+o uso real no dia a dia operacional, gerando:
+- Campos ambíguos
+- Falta de validações importantes
+- Dificuldade de reutilização em operações (Chamados, Instalações, Kits)
+
+Assim como feito no refinamento de **Lojas**, queremos:
+- Tornar o cadastro mais explícito
+- Reduzir estados inválidos
+- Garantir que o modelo represente a realidade do negócio
+
+---
+
+### Diretrizes adotadas
+
+- Equipamento pertence ao **Registry**
+- Equipamento **não depende** de Chamado, Instalação ou Loja para existir
+- Identificação clara (ex: ativo, serial, tipo)
+- Campos obrigatórios devem refletir uso real, não conveniência técnica
+- Regras de negócio validadas **primeiro em testes**
+
+---
+
+### Consequências
+
+- Ajustes em:
+  - Model
+  - Form
+  - Testes
+  - UI (somente após validação de domínio)
+- Possível migração de dados
+- Commits pequenos e rastreáveis
+- Reuso do padrão já aplicado em Lojas
+---
+## 2026-02-02 — Padronização da estrutura de testes por camadas
+
+### Decisão
+Adotar uma estrutura de testes organizada por **camadas arquiteturais** (Domain, Application/Usecases e Interfaces),
+para melhorar legibilidade, escalabilidade e onboarding.
+
+Regras principais:
+- Testes de **Domain** e **Usecases** ficam em `tests/` (framework-agnostic).
+- Testes **Django/Web** ficam dentro de cada app Django, em `web/<app>/tests/`.
+- Testes de **CLI** e smoke ficam em `tests/cli/`.
+- A reorganização inicial será apenas de **movimentação/renomeação** (sem refatorar conteúdo),
+mantendo o suite 100% verde durante todo o processo.
+
+---
+
+### Contexto
+Atualmente os testes estão misturados entre:
+- arquivos únicos por app (`web/<app>/tests.py`)
+- testes do core em `tests/` com nomes variados
+- um caminho inconsistente em `tests/expansao360/domain/test/...`
+
+Mesmo com a suíte verde, a organização atual:
+- dificulta localizar responsabilidades
+- aumenta o custo de repetir padrões (ex.: Equipamentos, Kits, Chamados)
+- atrapalha manutenção e leitura rápida do projeto
+
+Queremos um layout onde seja possível entender o sistema “só olhando a árvore de testes”.
+
+---
+
+### Estrutura alvo
+
+#### 1) Domain (regras puras)
+`tests/domain/`
+- `tests/domain/value_objects/`
+- `tests/domain/entities/`
+- `tests/domain/contracts/`
+
+Regras:
+- sem Django
+- sem fixtures de banco
+- foco em invariantes e regras do domínio
+
+#### 2) Application / Usecases (orquestração)
+`tests/usecases/`
+- `tests/usecases/registry/`
+- `tests/usecases/operation/`
+
+Regras:
+- valida fluxo e coordenação
+- usa repositórios fake/in-memory quando necessário
+- não testa detalhes de UI/framework
+
+#### 3) Interfaces (Django Web)
+`web/<app>/tests/`
+- `test_models.py`
+- `test_forms.py`
+- `test_views.py` (ou `test_flows.py` quando fizer sentido)
+
+Regras:
+- testes Django ficam no app correspondente
+- arquivos menores e mais específicos (evitar `tests.py` gigante)
+
+#### 4) CLI e integração leve
+`tests/cli/`
+- `test_cli_smoke.py`
+- `test_cli_errors.py`
+
+---
+
+### Consequências
+- Melhor rastreabilidade por camada e responsabilidade
+- Facilita criação de novos módulos (ex.: Equipamentos) mantendo padrão consistente
+- Reduz “testes perdidos” e duplicidade conceitual
+- Exige ajuste de imports e caminhos, mas sem mudar lógica de testes nesta fase
+- Impõe disciplina: novos testes devem nascer no lugar correto
+
+---
+
+### Plano de adoção (incremental, com suíte verde)
+A mudança será feita em microtarefas, com commits pequenos:
+1) Criar diretórios e mover testes do Domain
+2) Mover testes de Usecases
+3) Organizar testes Django por app em `web/<app>/tests/`
+4) Mover testes de CLI para `tests/cli/`
+5) Ajustar `pytest`/imports e garantir `pytest` verde ao final de cada commit
