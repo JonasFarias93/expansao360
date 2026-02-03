@@ -473,3 +473,60 @@ A mudança será feita em microtarefas, com commits pequenos:
 3) Organizar testes Django por app em `web/<app>/tests/`
 4) Mover testes de CLI para `tests/cli/`
 5) Ajustar `pytest`/imports e garantir `pytest` verde ao final de cada commit
+
+---
+
+## 2026-02-03 — Código de Equipamento gerado automaticamente
+
+### Decisão
+O campo `Equipamento.codigo` passará a ser **gerado automaticamente** no momento do cadastro,
+para padronizar o Registry e garantir identificadores únicos e estáveis para busca, filtro e referência
+em estruturas como `ItemKit` e processos de Execução.
+
+Regras:
+- `codigo` é gerado se estiver vazio/ausente na criação.
+- O `codigo` é **normalizado** (trim + uppercase + underscore).
+- O `codigo` é **único**.
+- Em caso de colisão (ex.: dois equipamentos com mesmo nome), o sistema sufixa com `_2`, `_3`, etc.
+- O `codigo` é **imutável** após criado (não muda quando `nome` ou `categoria` mudar), evitando quebrar referências.
+
+O “tipo/variante” (ex.: Monitor LCD, Monitor Touch; Micro PDV, Micro Gerência) continua sendo definido
+no contexto do Kit via `ItemKit.tipo` (e não no `Equipamento`).
+
+### Contexto
+O fluxo real do dia a dia é:
+1) cadastrar Categoria (ex.: Monitores, Microcomputadores)
+2) cadastrar Equipamento genérico (ex.: Monitor, Microcomputador)
+3) no Kit, definir o tipo/variante (`ItemKit.tipo`) que orienta execução e checklist em campo
+
+Hoje o `codigo` é preenchido manualmente, o que tende a gerar inconsistências e dificulta padronização.
+Como o código será usado como chave de referência/consulta no dia a dia, ele precisa ser automático,
+único e estável.
+
+### Consequências
+- Model `Equipamento` terá lógica de geração/normalização de `codigo`.
+- O Form/UI não pedirá `codigo` no cadastro (campo oculto ou removido da tela).
+- Serão adicionados testes cobrindo geração automática, normalização, colisões e imutabilidade.
+- Migração pode ser necessária (dependendo de como o form/field está hoje).
+---
+## 2026-02-03 — Tipos de equipamento como cadastro mestre por categoria (Registry)
+
+### Decisão
+Criar um cadastro mestre de **Tipos de Equipamento** associado à **Categoria**.
+
+- Será criado o model `TipoEquipamento` associado a `Categoria` (1:N).
+- `ItemKit.tipo` deixará de ser texto e passará a referenciar `TipoEquipamento` via FK (`on_delete=PROTECT`).
+- O tipo será escolhido no cadastro de `ItemKit`, garantindo padronização e rastreabilidade.
+
+### Contexto
+O tipo hoje é um `CharField` em `ItemKit`, o que permite variações e inconsistências ("lcd", "LCD ", "Monitor LCD"),
+dificultando filtros, relatórios e histórico consistente.
+
+O fluxo real deseja rastreabilidade vinculada:
+Categoria → Equipamento → Tipo.
+
+### Consequências
+- Novo model e migração para substituir `ItemKit.tipo`.
+- Atualização de forms e UI para gerenciar tipos dentro da Categoria e selecionar tipo ao montar o Kit.
+- Atualização dos testes que hoje usam `tipo="..."` como texto.
+- Ganho de consistência e integridade referencial para histórico.
