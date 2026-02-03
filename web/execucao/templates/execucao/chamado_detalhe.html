@@ -1,160 +1,20 @@
 {% extends "base.html" %}
+{% load static %}
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'execucao/css/execucao.css' %}">
+{% endblock %}
 
 {% block content %}
 <div class="space-y-6">
 
-  <div class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-    <div>
-      <h1 class="text-xl font-semibold">
-        Chamado {{ chamado.protocolo }}
-      </h1>
+  {% include "execucao/components/_chamado_header.html" %}
 
-      <div class="text-sm text-gray-600 space-y-1">
-        <div>
-          <span class="font-medium">Loja:</span> {{ chamado.loja.codigo }} — {{ chamado.loja.nome }}
-        </div>
-        <div>
-          <span class="font-medium">Projeto:</span> {{ chamado.projeto.codigo }} — {{ chamado.projeto.nome }}
-          {% if chamado.subprojeto %}
-            / {{ chamado.subprojeto.codigo }} — {{ chamado.subprojeto.nome }}
-          {% endif %}
-        </div>
-          <div class="flex items-center gap-2">
-              <span class="font-medium">Status:</span>
+  {% include "execucao/components/_itens_execucao.html" %}
 
-              {% if chamado.status == "ABERTO" %}
-                <span class="inline-flex items-center rounded-full bg-slate-100 px-2 py-1 text-xs font-medium text-slate-700">
-                  Aberto
-                </span>
-              {% elif chamado.status == "EM_EXECUCAO" %}
-                <span class="inline-flex items-center rounded-full bg-blue-100 px-2 py-1 text-xs font-medium text-blue-700">
-                  Em execução
-                </span>
-              {% elif chamado.status == "FINALIZADO" %}
-                <span class="inline-flex items-center rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-700">
-                  Finalizado
-                </span>
-              {% else %}
-                <span class="inline-flex items-center rounded-full bg-amber-100 px-2 py-1 text-xs font-medium text-amber-700">
-                  {{ chamado.status }}
-                </span>
-              {% endif %}
-            </div>
-        <div class="pt-2 grid grid-cols-1 md:grid-cols-3 gap-2">
-          <div class="bg-gray-50 border rounded p-2">
-            <div class="text-xs text-gray-500">ServiceNow</div>
-            <div class="text-sm">{{ chamado.servicenow_numero|default:"—" }}</div>
-          </div>
-          <div class="bg-gray-50 border rounded p-2">
-            <div class="text-xs text-gray-500">Contabilidade</div>
-            <div class="text-sm">{{ chamado.contabilidade_numero|default:"—" }}</div>
-          </div>
-          <div class="bg-gray-50 border rounded p-2">
-            <div class="text-xs text-gray-500">NF Saída</div>
-            <div class="text-sm">{{ chamado.nf_saida_numero|default:"—" }}</div>
-          </div>
-        </div>
-
-      </div>
-    </div>
-
-    <div class="flex gap-2">
-      <a href="{% url 'execucao:historico' %}" class="px-4 py-2 border rounded">
-        Voltar
-      </a>
-
-      {% if not chamado.finalizado_em %}
-        <button form="form-itens" class="px-4 py-2 bg-blue-600 text-white rounded">
-          Salvar itens
-        </button>
-
-        <form method="post" action="{% url 'execucao:chamado_finalizar' chamado.id %}">
-          {% csrf_token %}
-          <button class="px-4 py-2 bg-green-600 text-white rounded">
-            Finalizar
-          </button>
-        </form>
-      {% else %}
-        <span class="px-4 py-2 bg-gray-100 text-gray-600 rounded border">
-          Chamado finalizado
-        </span>
-      {% endif %}
-    </div>
-  </div>
-
-  <div class="bg-white shadow rounded p-4">
-    <div class="flex items-center justify-between mb-3">
-      <h2 class="font-semibold">Itens de execução</h2>
-      <div class="text-sm text-gray-500">{{ itens|length }} item(ns)</div>
-    </div>
-
-    <form id="form-itens" method="post" action="{% url 'execucao:chamado_atualizar_itens' chamado.id %}">
-      {% csrf_token %}
-
-      <div class="space-y-3">
-        {% for item in itens %}
-          <div class="border rounded p-3">
-            <div class="flex flex-col gap-1 md:flex-row md:items-center md:justify-between">
-              <div class="font-medium">
-                {{ item.equipamento.nome }} — {{ item.tipo }}
-              </div>
-              <div class="text-sm text-gray-600">
-                Quantidade: <span class="font-medium">{{ item.quantidade }}</span>
-                {% if item.tem_ativo %}
-                  <span class="ml-2 inline-flex items-center px-2 py-0.5 text-xs rounded bg-orange-100 text-orange-800">
-                    Rastreável
-                  </span>
-                {% else %}
-                  <span class="ml-2 inline-flex items-center px-2 py-0.5 text-xs rounded bg-sky-100 text-sky-800">
-                    Contável
-                  </span>
-                {% endif %}
-              </div>
-            </div>
-
-            {% if item.tem_ativo %}
-              <div class="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div>
-                  <label class="block text-sm text-gray-600">Ativo</label>
-                  <input
-                    name="ativo_{{ item.id }}"
-                    value="{{ item.ativo }}"
-                    class="w-full border rounded px-3 py-2"
-                    {% if chamado.finalizado_em %}disabled{% endif %}
-                  />
-                </div>
-                <div>
-                  <label class="block text-sm text-gray-600">Número de Série</label>
-                  <input
-                    name="serie_{{ item.id }}"
-                    value="{{ item.numero_serie }}"
-                    class="w-full border rounded px-3 py-2"
-                    {% if chamado.finalizado_em %}disabled{% endif %}
-                  />
-                </div>
-              </div>
-            {% else %}
-              <div class="mt-3 flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  name="confirmado_{{ item.id }}"
-                  {% if item.confirmado %}checked{% endif %}
-                  {% if chamado.finalizado_em %}disabled{% endif %}
-                />
-                <span class="text-sm">Confirmado</span>
-              </div>
-            {% endif %}
-          </div>
-        {% endfor %}
-      </div>
-    </form>
-
-    {% if not itens %}
-      <div class="text-sm text-gray-600">
-        Nenhum item gerado para este chamado.
-      </div>
-    {% endif %}
-  </div>
+  {% include "execucao/components/_evidencias.html" %}
 
 </div>
+{% endblock %}
+{% block extra_js %}
+<script src="{% static 'execucao/js/chamado_detalhe.js' %}"></script>
 {% endblock %}

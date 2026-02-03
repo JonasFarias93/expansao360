@@ -1,3 +1,5 @@
+<!--historico.html-->
+
 {% extends "base.html" %}
 
 {% block title %}Histórico — EXPANSÃO360{% endblock %}
@@ -54,11 +56,10 @@
               <tr class="hover:bg-slate-50">
                 <td class="py-3 pr-4 font-medium">
                   <a
-                    href="{% url 'execucao:chamado_detalhe' c.id %}"
-                    class="text-indigo-600 hover:underline"
-                  >
-                    {{ c.protocolo }}
-                  </a>
+                      href="{% url 'execucao:chamado_detalhe' c.id %}"
+                      class="text-indigo-600 hover:underline">
+                      {{ c.protocolo|default:c.id }}
+                  </a>  
                 </td>
                 <td class="py-3 pr-4">{{ c.servicenow_numero|default:"-" }}</td>
                 <td class="py-3 pr-4">{{ c.contabilidade_numero|default:"-" }}</td>

@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="space-y-4">
+  <div class="flex items-center justify-between">
+    <h1 class="text-xl font-semibold">Projetos</h1>
+    <a href="{% url 'cadastro:projeto_create' %}" class="px-4 py-2 bg-blue-600 text-white rounded">Novo</a>
+  </div>
+
+  <div class="bg-white border rounded">
+    <table class="w-full text-sm">
+      <thead class="bg-gray-50">
+        <tr>
+          <th class="text-left p-2">Código</th>
+          <th class="text-left p-2">Nome</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for p in projetos %}
+        <tr class="border-t">
+          <td class="p-2 font-medium">{{ p.codigo }}</td>
+          <td class="p-2">{{ p.nome }}</td>
+        </tr>
+      {% empty %}
+        <tr><td class="p-4 text-gray-500" colspan="2">Nenhum projeto cadastrado.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

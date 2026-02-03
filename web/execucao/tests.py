@@ -1,12 +1,29 @@
-from cadastro.models import Categoria, Equipamento, ItemKit, Kit, Loja, Projeto, Subprojeto
+from __future__ import annotations
+
+from cadastro.models import (
+    Categoria,
+    Equipamento,
+    ItemKit,
+    Kit,
+    Loja,
+    Projeto,
+    Subprojeto,
+)
+from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db import IntegrityError
 from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
+from iam.models import Capability, UserCapability
 
 from .models import Chamado, EvidenciaChamado, InstalacaoItem
+
+
+def grant_cap(user, code: str) -> None:
+    cap, _ = Capability.objects.get_or_create(code=code)
+    UserCapability.objects.get_or_create(user=user, capability=cap)
 
 
 class ChamadoBaseTestCase(TestCase):
@@ -22,6 +39,24 @@ class ChamadoBaseTestCase(TestCase):
             nome="Sub 1",
         )
         self.kit = Kit.objects.create(nome="Kit PDV")
+
+
+class WebAuthBaseTestCase(ChamadoBaseTestCase):
+    """Base para testes web (client autenticado + capabilities)."""
+
+    def setUp(self) -> None:
+        super().setUp()
+        User = get_user_model()
+        self.user = User.objects.create_user(username="u1", password="x")
+        self.client.force_login(self.user)
+
+        # Capabilities necessárias para os endpoints que são POST e sensíveis.
+        # Ajuste aqui se você tiver separado por ação (ex.: upload vs editar_itens).
+        grant_cap(self.user, "execucao.chamado.editar_itens")
+        grant_cap(self.user, "execucao.evidencia.upload")
+        grant_cap(self.user, "execucao.evidencia.remover")
+        grant_cap(self.user, "execucao.item_configuracao.alterar_status")
+        grant_cap(self.user, "execucao.chamado.finalizar")
 
 
 class ChamadoGeracaoItensTest(ChamadoBaseTestCase):
@@ -215,7 +250,7 @@ class ChamadoProtocoloEReferenciasTest(ChamadoBaseTestCase):
             )
 
 
-class ChamadoStatusFlowWebTest(ChamadoBaseTestCase):
+class ChamadoStatusFlowWebTest(WebAuthBaseTestCase):
     def test_post_atualizar_itens_muda_status_para_em_execucao(self) -> None:
         equipamento = Equipamento.objects.create(
             codigo="CABO",
@@ -280,7 +315,7 @@ class EvidenciaChamadoModelTest(ChamadoBaseTestCase):
         self.assertTrue(evidencia.arquivo.name)
 
 
-class EvidenciaChamadoWebTest(ChamadoBaseTestCase):
+class EvidenciaChamadoWebTest(WebAuthBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
         self.chamado = Chamado.objects.create(
@@ -301,10 +336,16 @@ class EvidenciaChamadoWebTest(ChamadoBaseTestCase):
 
         resp = self.client.post(
             url,
-            data={"tipo": "CARTA_CONTEUDO", "descricao": "Carta assinada", "arquivo": arquivo},
+            data={
+                "tipo": "CARTA_CONTEUDO",
+                "descricao": "Carta assinada",
+                "arquivo": arquivo,
+            },
         )
 
         self.assertEqual(resp.status_code, 302)
+
+        self.chamado.refresh_from_db()
         self.assertEqual(self.chamado.evidencias.count(), 1)
         evidencia = self.chamado.evidencias.first()
         assert evidencia is not None

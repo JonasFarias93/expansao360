@@ -1,9 +1,9 @@
 # DECISIONS — EXPANSÃO360
 
-Este documento registra decisões técnicas e arquiteturais relevantes, com o objetivo de
-evitar ambiguidades, manter rastreabilidade e facilitar onboarding.
+Este documento registra decisões técnicas e arquiteturais relevantes do projeto,
+com o objetivo de evitar ambiguidades, manter rastreabilidade e facilitar onboarding.
 
-Formato recomendado:
+## Formato padrão de cada decisão
 - Data (YYYY-MM-DD)
 - Decisão
 - Contexto
@@ -31,7 +31,8 @@ sem poluir o cadastro mestre e sem perder histórico.
 ## 2026-01-20 — Estratégia de trabalho: microtarefas + disciplina de versionamento
 
 **Decisão**  
-O desenvolvimento seguirá por microtarefas com validação objetiva, usando branches e commits pequenos.
+O desenvolvimento seguirá por microtarefas com validação objetiva,
+usando branches e commits pequenos.
 
 **Contexto**  
 Queremos previsibilidade, rastreabilidade e redução de retrabalho.
@@ -39,7 +40,7 @@ Queremos previsibilidade, rastreabilidade e redução de retrabalho.
 **Consequências**  
 - Cada microtarefa deve resultar em um commit (quando aplicável).
 - Push frequente após validação.
-- Nomes de branches descritivos (ex: `docs/init`, `feat/...`, `fix/...`).
+- Branches com nomes descritivos (`docs/`, `feat/`, `fix/`).
 
 ---
 
@@ -54,325 +55,282 @@ Usaremos:
 Separar o que está pronto para release do que está em desenvolvimento reduz risco operacional.
 
 **Consequências**  
-- Mudanças entram via branches derivadas e são integradas em `develop`.
-- `main` recebe apenas conteúdo estável e controlado.
-
-
----
-
-## 2026-01-20 — Repositório stack-agnostic (sem framework definido)
-
-**Decisão**  
-O projeto permanecerá intencionalmente neutro quanto a stack e framework neste estágio inicial.
-
-**Contexto**  
-Durante a preparação do ambiente (Sprint 1), optou-se por evitar acoplamento prematuro a tecnologias
-específicas (ex: Django, FastAPI, Node, etc.), permitindo que decisões sejam tomadas com base
-em requisitos reais e não por conveniência inicial.
-
-**Consequências**  
-- `.gitignore` permanece genérico (Python / Node / OS).
-- Nenhuma estrutura de framework é criada antecipadamente.
-- A definição de stack será registrada explicitamente em decisão futura.
-
+- Mudanças entram via branches derivadas.
+- `main` recebe apenas conteúdo estável.
 
 ---
 
-## 2026-01-21 — Stack web definida: Django
+## 2026-01-20 — Repositório stack-agnostic (fase inicial)
 
 **Decisão**  
-A camada web do EXPANSÃO360 será implementada utilizando Django.
+O projeto permanecerá neutro quanto a stack e framework no estágio inicial.
 
 **Contexto**  
-Após a estabilização do core e da CLI, foi necessário definir um framework web
-para fornecer interface de usuário, autenticação, persistência e administração.
-Django foi escolhido pela maturidade, ecossistema, ORM integrado e velocidade
-de entrega para CRUDs e RBAC.
+Evitar acoplamento prematuro permite decisões baseadas em requisitos reais.
 
 **Consequências**  
-- O core permanece independente de framework.
-- Django atua apenas como camada de entrega (web/adapters).
-- Models Django não contêm regras de negócio.
+- `.gitignore` genérico
+- Nenhuma estrutura de framework antecipada
+- Stack definida posteriormente via ADR
+
+---
+
+## 2026-01-21 — Stack Web definida: Django
+
+**Decisão**  
+A camada Web será implementada em **Django**.
+
+**Contexto**  
+Após estabilização do core e da CLI, era necessário um framework maduro
+para UI, autenticação, ORM e velocidade de entrega.
+
+**Consequências**  
+- Core permanece independente
+- Django atua como adapter
+- Models Django não contêm regras de negócio
 
 ---
 
 ## 2026-01-21 — Nomenclatura em PT-BR no domínio
 
 **Decisão**  
-O domínio (core) e os casos de uso utilizarão nomenclatura em português (PT-BR).
-A camada web seguirá as convenções do framework (Django).
+O domínio e casos de uso utilizam nomenclatura em português (PT-BR).
 
 **Contexto**  
-Para reduzir carga cognitiva e facilitar entendimento das regras de negócio,
-optou-se por usar português no domínio, mantendo inglês apenas onde imposto
-por frameworks, bibliotecas ou padrões consolidados.
+Reduzir carga cognitiva e aproximar o código do negócio real.
 
 **Consequências**  
-- Entidades, casos de uso e mensagens do core usam PT-BR.
-- Infraestrutura e framework mantêm convenções originais.
-- Um glossário será mantido para garantir consistência terminológica.
-
+- Core em PT-BR
+- Framework/infra seguem convenções originais
+- Glossário mantido para consistência
 
 ---
 
-## 2026-01-21 — Entidade operacional “Chamado” substitui “Card”
+## 2026-01-21 — Entidade operacional “Chamado”
 
 **Decisão**  
-A entidade anteriormente referida como “Card” passa a se chamar **Chamado** no domínio do sistema.
+O termo **Chamado** substitui “Card” como entidade operacional.
 
 **Contexto**  
-O termo “Card” é genérico e pode causar ambiguidade com elementos visuais da interface.
-“Chamado” é um termo consolidado em contextos operacionais e de TI, representando uma
-unidade de trabalho com status, histórico e rastreabilidade.
+“Card” é ambíguo e visual. “Chamado” representa melhor uma unidade operacional.
 
 **Consequências**  
-- O domínio e os casos de uso passam a utilizar o termo “Chamado”.
-- A CLI e a Web expõem o conceito como “Chamado”.
-- Caso necessário, aliases temporários podem ser mantidos para compatibilidade.
+- Domínio, CLI e Web utilizam “Chamado”
+- Possíveis aliases temporários para compatibilidade
 
 ---
+
 ## 2026-01-21 — Equipamentos rastreáveis vs contáveis (`tem_ativo`)
 
 **Decisão**  
-Equipamentos passam a ser classificados como:
-- **Rastreáveis** (`tem_ativo=True`): exigem Ativo e Número de Série na execução.
-- **Contáveis** (`tem_ativo=False`): não possuem Ativo/Série, apenas confirmação e contagem.
+Equipamentos são classificados como:
+- **Rastreáveis** (`tem_ativo=True`)
+- **Contáveis** (`tem_ativo=False`)
 
 **Contexto**  
-Alguns itens (ex.: micro, monitor) exigem rastreabilidade individual,
-enquanto outros (ex.: hub USB, cabos) precisam apenas ser contabilizados
-para controle de consumo e estatísticas.
+Nem todos os itens exigem ativo/número de série.
 
 **Consequências**  
-- O cadastro do Equipamento define se ele é rastreável ou contável.
-- A execução (Chamado) valida campos obrigatórios conforme `tem_ativo`.
-- Relatórios podem diferenciar ativos físicos de consumíveis.
+- Execução valida campos conforme tipo
+- Relatórios diferenciam ativos e consumíveis
 
 ---
 
-## 2026-01-21 — Layout base web com Tailwind e estrutura de templates
+## 2026-01-21 — Layout base Web com Tailwind (CDN)
 
 **Decisão**  
-A camada web do EXPANSÃO360 adotará um layout base padronizado utilizando Tailwind CSS via CDN, com uma estrutura fixa de templates composta por base.html, partials/ e components/.
+Adotar Tailwind via CDN e estrutura base de templates (`base`, `partials`, `components`).
 
 **Contexto**  
-Com a estabilização do core e da CLI, iniciou-se a implementação da camada web em Django.
-Era necessário definir uma estrutura de layout consistente desde o início para evitar duplicação de HTML, decisões visuais ad-hoc e divergência entre apps (cadastro, execucao, iam).
-Além disso, optou-se por uma solução de baixo custo inicial para estilização, permitindo foco no fluxo e nas regras antes de investir em pipeline de build de frontend.
-
-**Consequências**
-- Todas as páginas web herdam de `base.html`.
-- Fragmentos reutilizáveis ficam concentrados em `partials/`.
-- Elementos de UI mais semânticos e reutilizáveis ficam em `components/`.
-- Tailwind via CDN reduz o custo inicial de setup.
-- O layout passa a ser tratado como decisão arquitetural explícita, evitando reavaliações constantes.
-
-
-
----
-
-
-## 2026-01-21 — Camada Web como adapter (UI e persistência)
-
-**Decisão**  
-A camada Web do EXPANSÃO360 será tratada exclusivamente como um adapter,
-responsável por interface de usuário, orquestração de casos de uso e persistência,
-sem conter regras de negócio do domínio.
-
-**Contexto**  
-Com a evolução do projeto, passaram a coexistir múltiplas interfaces
-(CLI e Web). Era necessário registrar explicitamente que o core de domínio
-permanece independente de frameworks, evitando que regras de negócio
-migrem para a camada web por conveniência.
+Padronizar UI desde o início sem custo de build frontend.
 
 **Consequências**  
-- Regras de negócio permanecem no core.
-- A Web (Django) atua apenas como camada de entrega.
-- CLI e Web compartilham o mesmo domínio e casos de uso.
-- Facilita testes, manutenção e evolução futura (API, mobile, etc.).
-
-
+- Layout tratado como decisão arquitetural
+- Evita HTML duplicado e decisões visuais ad-hoc
 
 ---
 
-## 2026-01-21 — Fluxo inverso de execução (Loja → Matriz) via novo Chamado
+## 2026-01-21 — Camada Web como adapter
 
 **Decisão**  
-Quando um Chamado finalizado precisar de correção operacional ou retorno de itens
-para a matriz, o sistema **não permitirá edição destrutiva do histórico**.
-Em vez disso, será criado **um novo Chamado**, representando o fluxo inverso
-(**Loja → Matriz**), vinculado ao Chamado original.
-
-Além disso, Chamados de retorno possuirão **regras específicas de finalização**,
-exigindo confirmação explícita do destino dos itens (retorno efetivo ou exceção).
-
----
+A Web atua apenas como adapter (UI + persistência + orquestração).
 
 **Contexto**  
-Chamados representam eventos operacionais e contábeis com impacto real
-(rastreabilidade, ativos, NF, contabilidade).
-Permitir reabertura ou edição direta de um Chamado finalizado quebraria:
-- rastreabilidade histórica
-- consistência contábil
-- auditoria de processos
-
-Na prática, quando um item apresenta problema após a execução
-(ex.: defeito, devolução, erro de envio),
-o processo correto é um **retorno físico e contábil** do item,
-que precisa ser registrado como **uma nova operação**.
-
-Adicionalmente, retornos podem:
-- demorar para acontecer
-- não acontecer (extravio, perda, descarte)
-- ficar esquecidos em status intermediário
-
-Era necessário garantir que o sistema:
-- evidencie retornos pendentes
-- force uma decisão explícita
-- evite chamados “abertos para sempre” sem resolução clara
-
----
+Evitar migração de regras de negócio para a camada Web.
 
 **Consequências**  
-
-### 1) Criação de novo Chamado
-- Chamados finalizados permanecem imutáveis.
-- Correções geram um **novo Chamado**.
-- O novo Chamado:
-  - representa o fluxo **Loja → Matriz**
-  - referencia explicitamente o Chamado de origem
+- Core independente
+- CLI e Web compartilham domínio
+- Facilita API e mobile no futuro
 
 ---
 
-### 2) Regra de finalização para Chamado de retorno
-Chamados do tipo **Loja → Matriz** **não podem ser finalizados automaticamente**.
+## 2026-01-21 — Fluxo inverso via novo Chamado (Loja → Matriz)
 
-Para finalizar, será obrigatório indicar **o desfecho dos itens**, com uma das opções:
+**Decisão**  
+Correções e retornos geram **novo Chamado**, nunca edição destrutiva.
 
-- **Retorno confirmado para a matriz**
-- **Não retornado (extravio / perda / descarte / exceção)**
+**Contexto**  
+Chamados representam eventos operacionais e contábeis reais.
 
-Essa decisão:
-- é explícita
-- é registrada
-- não pode ser omitida
-
----
-
-### 3) Auditoria e governança
-- Chamados de retorno pendentes ficam visíveis no sistema
-- Evita esquecimento de retornos abertos
-- Permite relatórios claros:
-  - itens retornados
-  - itens não retornados
-  - perdas / exceções operacionais
-
----
-
-### 4) Contabilidade e rastreabilidade
-- A contabilidade passa a ter dois registros claros:
-  - envio (Matriz → Loja)
-  - retorno ou baixa (Loja → Matriz)
-- O sistema mantém histórico completo, sem reprocessamento destrutivo.
-- A UI poderá exibir, no Chamado original, um atalho para o Chamado de retorno.
-
+**Consequências**  
+- Histórico imutável
+- Retornos exigem desfecho explícito
+- Auditoria e contabilidade preservadas
 
 ---
 
 ## 2026-01-22 — Evidências (anexos) por Chamado
 
 **Decisão**  
-O sistema permitirá o upload e a gestão de **evidências (anexos)** vinculadas a um Chamado,
-como forma de comprovação operacional e contábil.
-Essas evidências serão utilizadas tanto no fluxo normal
-(**Matriz → Loja**) quanto no fluxo inverso (**Loja → Matriz**).
-
----
+Evidências são entidades próprias vinculadas a Chamados.
 
 **Contexto**  
-Durante a execução e o retorno de itens, é comum a existência de documentos físicos,
-como:
-- Nota Fiscal (NF)
-- Carta de Conteúdo assinada na coleta
-- Outros documentos de exceção (extravio, perda, descarte)
-
-Nem toda operação gera NF, especialmente quando envolve itens contáveis
-(sem ativo), como teclados, mouses e suportes.
-Nesses casos, a **Carta de Conteúdo** é a evidência válida da movimentação.
-
-Era necessário que o sistema:
-- armazenasse essas evidências
-- mantivesse vínculo com o Chamado
-- evitasse esquecimento de operações pendentes
-- suportasse exceções sem perder rastreabilidade
-
----
+NF, Carta de Conteúdo e documentos de exceção são parte do processo real.
 
 **Consequências**  
-
-### 1) Evidências como entidade própria
-- Evidências serão registradas como entidades próprias,
-  vinculadas a um Chamado.
-- Cada evidência terá:
-  - tipo (ex.: NF, Carta de Conteúdo, Exceção)
-  - arquivo anexado
-  - data de registro
+- Finalização pode exigir evidência
+- Auditoria fortalecida
+- Modelo extensível (fotos, assinaturas, etc.)
 
 ---
 
-### 2) Tipos de evidência suportados
-Inicialmente, o sistema suportará:
-- NF de saída
-- NF de retorno
-- Carta de Conteúdo
-- Documento de exceção (extravio, perda, descarte)
-
----
-
-### 3) Regra de finalização com evidências
-- A finalização de um Chamado poderá exigir pelo menos uma evidência,
-  conforme o tipo de fluxo.
-- Para Chamados de retorno (Loja → Matriz),
-  será obrigatória a indicação explícita do desfecho:
-  - retorno confirmado
-  - não retornado (extravio / exceção)
-
----
-
-### 4) Governança e auditoria
-- Evidências ficam visíveis no detalhe do Chamado.
-- Evita Chamados finalizados sem comprovação.
-- Mantém histórico completo para auditoria e contabilidade.
-
----
-
-### 5) Evolução futura
-- O mecanismo de evidências poderá ser reutilizado
-  para fotos, assinaturas, termos ou outros documentos,
-  sem alteração do modelo conceitual.
-
-
-  ---
-
-## 2026-01-22 — Estratégia de Branches e Releases (Git)
+## 2026-01-22 — IAM mínimo por capabilities
 
 **Decisão**  
-Adotar duas branches principais com papéis bem definidos:
-- `develop`: branch de integração contínua
-- `main`: branch estável, utilizada exclusivamente para releases e tags
-
-As versões oficiais do projeto serão marcadas por **tags semânticas (SemVer)**,
-criadas apenas a partir da branch `main`.
+Adoção de **Capability-Based Access Control** na camada Web.
 
 **Contexto**  
-Até o momento, o projeto utilizava apenas a branch `develop`.
-Com a estabilização do core, da CLI e da Web (v0.2.0),
-tornou-se necessário formalizar um fluxo de versionamento e releases.
+Precisamos restringir ações sensíveis sem acoplar IAM ao domínio.
+
+**Consequências**  
+- Backend valida permissões
+- Templates apenas refletem
+- Core permanece permission-agnostic
+
+---
+
+## ADR — 2026-01-24 — CBVs + CapabilityRequiredMixin
+
+**Status:** Aceito  
+**Contexto:** Sprint 3 — Execução / Fluxo Inverso / IAM
+
+**Decisão**
+- Migrar views críticas para CBVs
+- Centralizar autorização em `CapabilityRequiredMixin`
 
 **Consequências**
-- Toda feature ou correção deve ser integrada primeiro em `develop`
-- A branch `main` representa sempre um estado estável e utilizável
-- Releases e tags são criados exclusivamente a partir da `main`
-- O histórico de versões passa a ser rastreável via GitHub Releases
-- O `STATUS.md` passa a registrar explicitamente os marcos versionados
+- Menos repetição
+- Padrão consistente
+- Migração incremental segura
+
+---
+
+## 2026-01-24 — Abertura de Chamado via UI
+
+**Decisão**  
+Chamados podem ser abertos via UI, gerando automaticamente Itens de Execução
+a partir do Kit (snapshot operacional).
+
+**Contexto**  
+Necessidade de testes end-to-end e uso real do sistema.
+
+**Consequências**  
+- Chamado nasce do Registry
+- Itens são imutáveis conceitualmente
+- Planejamento e execução ficam claramente separados
+
+---
+
+**Chamados sempre nascem como eventos operacionais derivados do Registry.**
+
+
+
+---
+
+## 2026-01-25 — Introdução de Subprojetos no Registry
+
+**Decisão**  
+Introduzir a entidade **Subprojeto** no **Registry (Cadastro Mestre)** como
+recorte organizacional obrigatório quando existente, vinculado a um **Projeto**,
+e referenciado por **Chamados** para fins de rastreabilidade, governança
+e consolidação histórica.
+
+**Contexto**  
+Projetos reais de expansão (especialmente *ROLLOUT* e *ADIÇÃO*) exigem
+segmentação operacional por linhas de entrega, fases, regiões ou áreas
+(ex.: Sala Sua Saúde, Impressoras, Tablets).
+
+Sem Subprojetos:
+- o histórico fica dependente de texto livre
+- dashboards exigem inferência ou regras frágeis
+- não há governança explícita sobre “para onde” a execução está indo
+
+A introdução de Subprojetos resolve esse problema sem violar o princípio
+central do sistema: **Registry define intenção, Operation registra execução**.
+
+**Consequências**
+- Subprojeto passa a ser uma entidade do **Registry**, nunca da Operation.
+- Todo Subprojeto pertence a exatamente um Projeto.
+- Projetos podem existir sem Subprojetos.
+- Quando um Projeto possuir Subprojetos cadastrados:
+  - Chamados **devem** referenciar um Subprojeto válido e ativo.
+- Alterações em Subprojetos (nome, status) **não afetam Chamados já existentes**.
+- Subprojetos não são deletados destrutivamente se houver Chamados associados;
+  apenas inativados ou encerrados.
+- Dashboards e relatórios passam a operar por `Projeto → Subprojeto`
+  sem inferência semântica.
+
+---
+## 2026-02-02 — Mapeamento operacional: “Filial” (base externa) como “Java” (UI) no Cadastro de Lojas
+
+**Decisão**  
+No cadastro de **Lojas (Registry)**, adotaremos a nomenclatura operacional utilizada no dia a dia:
+- Exibir **Filial** como **Java** na UI e na comunicação com usuários.
+- Exibir **Nome Filial** como **Nome loja** na UI.
+
+Para compatibilidade com a base externa, o sistema deve aceitar o layout:
+`Filial;Hist.;Nome Filial;Endereço;Bairro;Cidade;UF;Logomarca;Telefone;IP Banco 12`
+e mapear esses campos para os atributos internos do cadastro de loja.
+
+**Contexto**  
+A base de dados externa/legada fornece campos com nomenclatura “Filial” e “Nome Filial”.
+Na operação real, os usuários estão acostumados com os termos **Java** e **Nome loja**.
+Até aqui o cadastro foi simplificado para acelerar desenvolvimento, mas agora precisamos
+refinar para condizer com a realidade do dia a dia sem perder compatibilidade com a base.
+
+**Consequências**  
+- O importador/sincronização deve mapear explicitamente:
+  - `Filial` → identificador da loja (exibido como “Java”)
+  - `Nome Filial` → nome de exibição da loja (exibido como “Nome loja”)
+  - demais colunas conforme layout oficial
+- Templates e formulários devem refletir os labels operacionais (“Java”, “Nome loja”).
+- Testes devem validar o mapeamento do layout e o recebimento correto dos campos no cadastro.
+---
+## 2026-02-02 — Padronização de Logomarca no Cadastro de Lojas
+
+**Decisão**  
+Padronizar o campo **Logomarca** no cadastro de Lojas para reduzir inconsistência:
+- Normalizar valores para **maiúsculo** no salvamento.
+- (Opcional) Preferir seleção via dropdown (RAIA/DROGASIL) no cadastro manual.
+
+**Contexto**  
+O valor de Logomarca vem padronizado na base externa (ex.: RAIA, DROGASIL),
+mas no cadastro manual pode haver variações e erros de digitação.
+
+## 2026-02-02 — Padronização de Logomarca no Cadastro de Lojas
+
+**Decisão**  
+Padronizar o campo **Logomarca** no cadastro de Lojas para reduzir inconsistência:
+- Normalizar valores para **maiúsculo** no salvamento.
+- (Opcional) Preferir seleção via dropdown (RAIA/DROGASIL) no cadastro manual.
+
+**Contexto**  
+O valor de Logomarca vem padronizado na base externa (ex.: RAIA, DROGASIL),
+mas no cadastro manual pode haver variações e erros de digitação.
+
+**Consequências**  
+- Menos divergência de dados (RAIA/raia/RaIa).
+- UI pode evoluir para dropdown sem afetar importação.
+- Testes devem cobrir a normalização (quando aplicada).
 

@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Novo Kit — Cadastro{% endblock %}
+
+{% block content %}
+  <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 max-w-2xl">
+    <div class="flex items-center justify-between">
+      <div>
+        <div class="text-lg font-semibold">Novo kit</div>
+        <div class="text-sm text-slate-600">Crie o kit e depois adicione os itens.</div>
+      </div>
+      <a href="{% url 'registry:kit_list' %}" class="text-sm text-slate-600 hover:underline">Voltar</a>
+    </div>
+
+    <form method="post" class="mt-5 space-y-4">
+      {% csrf_token %}
+      {{ form.as_p }}
+
+      <div class="pt-2 flex justify-end gap-2">
+        <a href="{% url 'registry:kit_list' %}" class="px-4 py-2 border rounded-lg hover:bg-slate-50 text-sm">Cancelar</a>
+        <button class="px-4 py-2 rounded-lg bg-slate-900 text-white hover:bg-slate-800 text-sm">Criar kit</button>
+      </div>
+    </form>
+  </div>
+{% endblock %}
