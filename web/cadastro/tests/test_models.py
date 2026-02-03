@@ -2,7 +2,15 @@ from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 from django.test import TestCase
 
-from cadastro.models import Categoria, Equipamento, ItemKit, Kit, Projeto, Subprojeto
+from cadastro.models import (
+    Categoria,
+    Equipamento,
+    ItemKit,
+    Kit,
+    Projeto,
+    Subprojeto,
+    TipoEquipamento,
+)
 
 
 class CadastroModelsTest(TestCase):
@@ -91,3 +99,23 @@ class LojaModelCamposExtrasTest(TestCase):
         )
         with self.assertRaises(ValidationError):
             loja.full_clean()
+
+
+# ==========================
+# cadasto / Tipo Equipamento
+# ==========================
+
+
+class TipoEquipamentoModelTest(TestCase):
+    def test_tipo_equipamento_unico_por_categoria_codigo(self) -> None:
+        cat = Categoria.objects.create(nome="Monitores")
+
+        TipoEquipamento.objects.create(categoria=cat, codigo="LCD", nome="LCD")
+
+        with self.assertRaises(IntegrityError):
+            TipoEquipamento.objects.create(categoria=cat, codigo="LCD", nome="LCD duplicado")
+
+    def test_tipo_equipamento_str(self) -> None:
+        cat = Categoria.objects.create(nome="Monitores")
+        t = TipoEquipamento.objects.create(categoria=cat, codigo="TOUCH", nome="Touch")
+        self.assertIn("Touch", str(t))
