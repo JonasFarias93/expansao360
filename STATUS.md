@@ -13,6 +13,13 @@ Esta sprint foca exclusivamente em:
 - redução de atrito na execução
 - comunicação visual de status e permissões
 
+### Entregas já realizadas na Sprint 4
+- Importação idempotente de Lojas (CSV/XLSX)
+- Padronização do cadastro de Lojas conforme base externa
+- Normalização de campos operacionais (UF, Logomarca, Java)
+- Ajustes de UX no cadastro e listagem de Lojas
+- Testes automatizados cobrindo importação e normalização
+
 ---
 
 ## Sprint Anterior
@@ -60,37 +67,6 @@ com testes automatizados e separação clara entre core, CLI e Web.
   - histórico
   - detalhe
   - edição de Chamados
-
----
-
-## Histórico (Sprint 0)
-
-### Fundação do Git
-- [x] Criação do repositório remoto
-- [x] Clone do repositório no WSL
-- [x] Configuração de identidade Git
-- [x] Criação da branch `develop`
-- [x] Criação da branch `docs/init`
-
-### Documentação Base
-- [x] README.md — Visão geral e objetivo do projeto
-- [x] ARCHITECTURE.md — Arquitetura e camadas conceituais
-- [x] DECISIONS.md — Registro de decisões técnicas
-
----
-
-## Planejamento — Sprint 4
-
-### UI / Fluxo Operacional
-- [ ] UI dedicada para fluxo inverso
-- [ ] Status operacional explícito (`EM_EXECUCAO`)
-- [ ] Upload de evidências com feedback visual
-- [ ] Estados vazios e mensagens orientativas
-
-### Views / Web
-- [ ] Views mais semânticas e específicas
-- [ ] Mensagens claras de permissão (IAM → UX)
-- [ ] Ajustes de navegação e legibilidade
 
 ---
 
