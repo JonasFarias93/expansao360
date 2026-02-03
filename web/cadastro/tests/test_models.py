@@ -49,10 +49,27 @@ class CadastroModelsTest(TestCase):
 
     def test_itemkit_unico_por_kit_equipamento_tipo(self) -> None:
         kit = Kit.objects.create(nome="Kit PDV")
-        ItemKit.objects.create(kit=kit, equipamento=self.equip_micro, tipo="PDV", quantidade=1)
+
+        tipo_pdv = TipoEquipamento.objects.create(
+            categoria=self.categoria,
+            codigo="PDV",
+            nome="PDV",
+        )
+
+        ItemKit.objects.create(
+            kit=kit,
+            equipamento=self.equip_micro,
+            tipo=tipo_pdv,
+            quantidade=1,
+        )
 
         with self.assertRaises(IntegrityError):
-            ItemKit.objects.create(kit=kit, equipamento=self.equip_micro, tipo="PDV", quantidade=2)
+            ItemKit.objects.create(
+                kit=kit,
+                equipamento=self.equip_micro,
+                tipo=tipo_pdv,
+                quantidade=2,
+            )
 
     def test_subprojeto_unico_por_projeto_codigo(self) -> None:
         projeto = Projeto.objects.create(codigo="P1", nome="Projeto 1")
