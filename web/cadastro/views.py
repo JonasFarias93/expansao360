@@ -9,12 +9,14 @@ from django.views.generic import CreateView, ListView, TemplateView, UpdateView
 from iam.mixins import CapabilityRequiredMixin
 
 from .forms import (
+    CategoriaForm,
     EquipamentoForm,
     ItemKitFormSet,
     KitForm,
     LojaForm,
     ProjetoForm,
     SubprojetoForm,
+    TipoEquipamentoFormSet,
 )
 from .models import Categoria, Equipamento, Kit, Loja, Projeto, Subprojeto
 
@@ -232,6 +234,67 @@ class CategoriaCreateQuickView(CapabilityRequiredMixin, View):
 
         sep = "&" if "?" in next_url else "?"
         return redirect(f"{next_url}{sep}categoria={categoria.id}")
+
+
+# -----------------------
+# CATEGORIAS (CRUD + tipos inline)
+# -----------------------
+class CategoriaListView(CapabilityRequiredMixin, ListView):
+    model = Categoria
+    template_name = "cadastro/categorias_list.html"
+    context_object_name = "categorias"
+    ordering = ["nome"]
+    required_capability = "cadastro.visualizar"
+
+
+class CategoriaCreateView(CapabilityRequiredMixin, CreateView):
+    model = Categoria
+    form_class = CategoriaForm
+    template_name = "cadastro/categorias_form.html"
+    required_capability = "cadastro.editar"
+
+    def get_success_url(self):
+        # após criar, já vai pra edição (pra cadastrar tipos)
+        return reverse_lazy("registry:categoria_update", kwargs={"pk": self.object.pk})
+
+    def form_valid(self, form):
+        messages.success(self.request, "Categoria criada. Agora cadastre os tipos.")
+        return super().form_valid(form)
+
+
+class CategoriaUpdateView(CapabilityRequiredMixin, UpdateView):
+    model = Categoria
+    form_class = CategoriaForm
+    template_name = "cadastro/categorias_update.html"
+    success_url = reverse_lazy("registry:categoria_list")
+    required_capability = "cadastro.editar"
+
+    def get(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        form = self.get_form()
+        formset = TipoEquipamentoFormSet(instance=self.object)
+        return render(
+            request,
+            self.template_name,
+            {"form": form, "formset": formset, "categoria": self.object},
+        )
+
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        form = self.get_form()
+        formset = TipoEquipamentoFormSet(request.POST, instance=self.object)
+
+        if form.is_valid() and formset.is_valid():
+            form.save()
+            formset.save()
+            messages.success(request, "Categoria e tipos atualizados com sucesso.")
+            return redirect(self.success_url)
+
+        return render(
+            request,
+            self.template_name,
+            {"form": form, "formset": formset, "categoria": self.object},
+        )
 
 
 # -----------------------

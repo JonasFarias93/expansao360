@@ -1,3 +1,5 @@
+import re
+
 from django.core.exceptions import ValidationError
 from django.db import models
 
@@ -13,13 +15,29 @@ class Categoria(models.Model):
         return self.nome
 
 
+def _normalize_code(value: str) -> str:
+    """
+    Gera um código interno estável:
+    - trim
+    - uppercase
+    - espaços/traços -> underscore
+    - remove caracteres inválidos (mantém A-Z, 0-9, _)
+    """
+    value = (value or "").strip().upper()
+    value = re.sub(r"[\s\-]+", "_", value)
+    value = re.sub(r"[^A-Z0-9_]", "", value)
+    value = re.sub(r"_+", "_", value).strip("_")
+    return value
+
+
 class TipoEquipamento(models.Model):
     categoria = models.ForeignKey(
-        Categoria,
+        "Categoria",
         on_delete=models.PROTECT,
         related_name="tipos",
     )
-    codigo = models.CharField(max_length=50)
+    # ✅ agora pode ficar vazio; o model gera automaticamente
+    codigo = models.CharField(max_length=50, blank=True)
     nome = models.CharField(max_length=80)
     ativo = models.BooleanField(default=True)
 
@@ -27,6 +45,31 @@ class TipoEquipamento(models.Model):
         verbose_name = "Tipo de Equipamento"
         verbose_name_plural = "Tipos de Equipamento"
         unique_together = ("categoria", "codigo")
+
+    def save(self, *args, **kwargs):  # type: ignore[override]
+        self.nome = (self.nome or "").strip()
+
+        # gera código se vazio
+        if not (self.codigo or "").strip():
+            base = _normalize_code(self.nome)
+            base = base or "TIPO"
+
+            code = base
+            i = 2
+            while (
+                TipoEquipamento.objects.filter(categoria=self.categoria, codigo=code)
+                .exclude(pk=self.pk)
+                .exists()
+            ):
+                code = f"{base}_{i}"
+                i += 1
+
+            self.codigo = code
+        else:
+            # se vier preenchido (admin/API), normaliza
+            self.codigo = _normalize_code(self.codigo)
+
+        super().save(*args, **kwargs)
 
     def __str__(self) -> str:
         return f"{self.nome} ({self.codigo})"

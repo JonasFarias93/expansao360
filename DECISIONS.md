@@ -4,529 +4,399 @@ Este documento registra decisões técnicas e arquiteturais relevantes do projet
 com o objetivo de evitar ambiguidades, manter rastreabilidade e facilitar onboarding.
 
 ## Formato padrão de cada decisão
-- Data (YYYY-MM-DD)
-- Decisão
-- Contexto
-- Consequências
+
+* Data (YYYY-MM-DD)
+* Decisão
+* Contexto
+* Consequências
 
 ---
 
 ## 2026-01-20 — Separação conceitual: Registry x Operation
 
-**Decisão**  
+**Decisão**
 O sistema será modelado com duas camadas conceituais principais:
-- **Registry (Cadastro Mestre)**: define “o que existe” e “como deve ser”
-- **Operation (Execução de Campo)**: registra “o que foi executado”, com rastreabilidade e histórico
 
-**Contexto**  
+* **Registry (Cadastro Mestre)**: define “o que existe” e “como deve ser”
+* **Operation (Execução de Campo)**: registra “o que foi executado”, com rastreabilidade e histórico
+
+**Contexto**
 Precisamos garantir governança sobre padrões e, ao mesmo tempo, registrar a execução real em campo
 sem poluir o cadastro mestre e sem perder histórico.
 
-**Consequências**  
-- Operation referencia Registry; Registry não depende de Operation.
-- O domínio será desenhado para suportar auditoria e evolução segura.
+**Consequências**
+
+* Operation referencia Registry; Registry não depende de Operation.
+* O domínio será desenhado para suportar auditoria e evolução segura.
 
 ---
 
 ## 2026-01-20 — Estratégia de trabalho: microtarefas + disciplina de versionamento
 
-**Decisão**  
+**Decisão**
 O desenvolvimento seguirá por microtarefas com validação objetiva,
 usando branches e commits pequenos.
 
-**Contexto**  
+**Contexto**
 Queremos previsibilidade, rastreabilidade e redução de retrabalho.
 
-**Consequências**  
-- Cada microtarefa deve resultar em um commit (quando aplicável).
-- Push frequente após validação.
-- Branches com nomes descritivos (`docs/`, `feat/`, `fix/`).
+**Consequências**
+
+* Cada microtarefa deve resultar em um commit (quando aplicável).
+* Push frequente após validação.
+* Branches com nomes descritivos (`docs/`, `feat/`, `fix/`).
 
 ---
 
 ## 2026-01-20 — Branches base: main / develop
 
-**Decisão**  
+**Decisão**
 Usaremos:
-- `main` para estabilidade e releases
-- `develop` para integração contínua
 
-**Contexto**  
+* `main` para estabilidade e releases
+* `develop` para integração contínua
+
+**Contexto**
 Separar o que está pronto para release do que está em desenvolvimento reduz risco operacional.
 
-**Consequências**  
-- Mudanças entram via branches derivadas.
-- `main` recebe apenas conteúdo estável.
+**Consequências**
+
+* Mudanças entram via branches derivadas.
+* `main` recebe apenas conteúdo estável.
 
 ---
 
 ## 2026-01-20 — Repositório stack-agnostic (fase inicial)
 
-**Decisão**  
+**Decisão**
 O projeto permanecerá neutro quanto a stack e framework no estágio inicial.
 
-**Contexto**  
+**Contexto**
 Evitar acoplamento prematuro permite decisões baseadas em requisitos reais.
 
-**Consequências**  
-- `.gitignore` genérico
-- Nenhuma estrutura de framework antecipada
-- Stack definida posteriormente via ADR
+**Consequências**
+
+* `.gitignore` genérico
+* Nenhuma estrutura de framework antecipada
+* Stack definida posteriormente via ADR
 
 ---
 
 ## 2026-01-21 — Stack Web definida: Django
 
-**Decisão**  
+**Decisão**
 A camada Web será implementada em **Django**.
 
-**Contexto**  
+**Contexto**
 Após estabilização do core e da CLI, era necessário um framework maduro
 para UI, autenticação, ORM e velocidade de entrega.
 
-**Consequências**  
-- Core permanece independente
-- Django atua como adapter
-- Models Django não contêm regras de negócio
+**Consequências**
+
+* Core permanece independente
+* Django atua como adapter
+* Models Django não contêm regras de negócio
 
 ---
 
 ## 2026-01-21 — Nomenclatura em PT-BR no domínio
 
-**Decisão**  
+**Decisão**
 O domínio e casos de uso utilizam nomenclatura em português (PT-BR).
 
-**Contexto**  
+**Contexto**
 Reduzir carga cognitiva e aproximar o código do negócio real.
 
-**Consequências**  
-- Core em PT-BR
-- Framework/infra seguem convenções originais
-- Glossário mantido para consistência
+**Consequências**
+
+* Core em PT-BR
+* Framework/infra seguem convenções originais
+* Glossário mantido para consistência
 
 ---
 
 ## 2026-01-21 — Entidade operacional “Chamado”
 
-**Decisão**  
+**Decisão**
 O termo **Chamado** substitui “Card” como entidade operacional.
 
-**Contexto**  
+**Contexto**
 “Card” é ambíguo e visual. “Chamado” representa melhor uma unidade operacional.
 
-**Consequências**  
-- Domínio, CLI e Web utilizam “Chamado”
-- Possíveis aliases temporários para compatibilidade
+**Consequências**
+
+* Domínio, CLI e Web utilizam “Chamado”
+* Possíveis aliases temporários para compatibilidade
 
 ---
 
 ## 2026-01-21 — Equipamentos rastreáveis vs contáveis (`tem_ativo`)
 
-**Decisão**  
+**Decisão**
 Equipamentos são classificados como:
-- **Rastreáveis** (`tem_ativo=True`)
-- **Contáveis** (`tem_ativo=False`)
 
-**Contexto**  
+* **Rastreáveis** (`tem_ativo=True`)
+* **Contáveis** (`tem_ativo=False`)
+
+**Contexto**
 Nem todos os itens exigem ativo/número de série.
 
-**Consequências**  
-- Execução valida campos conforme tipo
-- Relatórios diferenciam ativos e consumíveis
+**Consequências**
+
+* Execução valida campos conforme tipo
+* Relatórios diferenciam ativos e consumíveis
 
 ---
 
 ## 2026-01-21 — Layout base Web com Tailwind (CDN)
 
-**Decisão**  
+**Decisão**
 Adotar Tailwind via CDN e estrutura base de templates (`base`, `partials`, `components`).
 
-**Contexto**  
+**Contexto**
 Padronizar UI desde o início sem custo de build frontend.
 
-**Consequências**  
-- Layout tratado como decisão arquitetural
-- Evita HTML duplicado e decisões visuais ad-hoc
+**Consequências**
+
+* Layout tratado como decisão arquitetural
+* Evita HTML duplicado e decisões visuais ad-hoc
 
 ---
 
 ## 2026-01-21 — Camada Web como adapter
 
-**Decisão**  
+**Decisão**
 A Web atua apenas como adapter (UI + persistência + orquestração).
 
-**Contexto**  
+**Contexto**
 Evitar migração de regras de negócio para a camada Web.
 
-**Consequências**  
-- Core independente
-- CLI e Web compartilham domínio
-- Facilita API e mobile no futuro
+**Consequências**
+
+* Core independente
+* CLI e Web compartilham domínio
+* Facilita API e mobile no futuro
 
 ---
 
 ## 2026-01-21 — Fluxo inverso via novo Chamado (Loja → Matriz)
 
-**Decisão**  
+**Decisão**
 Correções e retornos geram **novo Chamado**, nunca edição destrutiva.
 
-**Contexto**  
+**Contexto**
 Chamados representam eventos operacionais e contábeis reais.
 
-**Consequências**  
-- Histórico imutável
-- Retornos exigem desfecho explícito
-- Auditoria e contabilidade preservadas
+**Consequências**
+
+* Histórico imutável
+* Retornos exigem desfecho explícito
+* Auditoria e contabilidade preservadas
 
 ---
 
 ## 2026-01-22 — Evidências (anexos) por Chamado
 
-**Decisão**  
+**Decisão**
 Evidências são entidades próprias vinculadas a Chamados.
 
-**Contexto**  
+**Contexto**
 NF, Carta de Conteúdo e documentos de exceção são parte do processo real.
 
-**Consequências**  
-- Finalização pode exigir evidência
-- Auditoria fortalecida
-- Modelo extensível (fotos, assinaturas, etc.)
+**Consequências**
+
+* Finalização pode exigir evidência
+* Auditoria fortalecida
+* Modelo extensível (fotos, assinaturas, etc.)
 
 ---
 
 ## 2026-01-22 — IAM mínimo por capabilities
 
-**Decisão**  
+**Decisão**
 Adoção de **Capability-Based Access Control** na camada Web.
 
-**Contexto**  
+**Contexto**
 Precisamos restringir ações sensíveis sem acoplar IAM ao domínio.
 
-**Consequências**  
-- Backend valida permissões
-- Templates apenas refletem
-- Core permanece permission-agnostic
+**Consequências**
+
+* Backend valida permissões
+* Templates apenas refletem
+* Core permanece permission-agnostic
 
 ---
 
 ## ADR — 2026-01-24 — CBVs + CapabilityRequiredMixin
 
-**Status:** Aceito  
+**Status:** Aceito
 **Contexto:** Sprint 3 — Execução / Fluxo Inverso / IAM
 
 **Decisão**
-- Migrar views críticas para CBVs
-- Centralizar autorização em `CapabilityRequiredMixin`
+
+* Migrar views críticas para CBVs
+* Centralizar autorização em `CapabilityRequiredMixin`
 
 **Consequências**
-- Menos repetição
-- Padrão consistente
-- Migração incremental segura
+
+* Menos repetição
+* Padrão consistente
+* Migração incremental segura
 
 ---
 
 ## 2026-01-24 — Abertura de Chamado via UI
 
-**Decisão**  
+**Decisão**
 Chamados podem ser abertos via UI, gerando automaticamente Itens de Execução
 a partir do Kit (snapshot operacional).
 
-**Contexto**  
+**Contexto**
 Necessidade de testes end-to-end e uso real do sistema.
 
-**Consequências**  
-- Chamado nasce do Registry
-- Itens são imutáveis conceitualmente
-- Planejamento e execução ficam claramente separados
+**Consequências**
 
----
-
-**Chamados sempre nascem como eventos operacionais derivados do Registry.**
-
-
+* Chamado nasce do Registry
+* Itens são imutáveis conceitualmente
+* Planejamento e execução ficam claramente separados
 
 ---
 
 ## 2026-01-25 — Introdução de Subprojetos no Registry
 
-**Decisão**  
+**Decisão**
 Introduzir a entidade **Subprojeto** no **Registry (Cadastro Mestre)** como
-recorte organizacional obrigatório quando existente, vinculado a um **Projeto**,
-e referenciado por **Chamados** para fins de rastreabilidade, governança
-e consolidação histórica.
+recorte organizacional obrigatório quando existente.
 
-**Contexto**  
-Projetos reais de expansão (especialmente *ROLLOUT* e *ADIÇÃO*) exigem
-segmentação operacional por linhas de entrega, fases, regiões ou áreas
-(ex.: Sala Sua Saúde, Impressoras, Tablets).
-
-Sem Subprojetos:
-- o histórico fica dependente de texto livre
-- dashboards exigem inferência ou regras frágeis
-- não há governança explícita sobre “para onde” a execução está indo
-
-A introdução de Subprojetos resolve esse problema sem violar o princípio
-central do sistema: **Registry define intenção, Operation registra execução**.
+**Contexto**
+Projetos reais de expansão exigem segmentação operacional por linhas de entrega.
 
 **Consequências**
-- Subprojeto passa a ser uma entidade do **Registry**, nunca da Operation.
-- Todo Subprojeto pertence a exatamente um Projeto.
-- Projetos podem existir sem Subprojetos.
-- Quando um Projeto possuir Subprojetos cadastrados:
-  - Chamados **devem** referenciar um Subprojeto válido e ativo.
-- Alterações em Subprojetos (nome, status) **não afetam Chamados já existentes**.
-- Subprojetos não são deletados destrutivamente se houver Chamados associados;
-  apenas inativados ou encerrados.
-- Dashboards e relatórios passam a operar por `Projeto → Subprojeto`
-  sem inferência semântica.
+
+* Subprojeto pertence ao Registry
+* Chamados referenciam Subprojeto quando existir
+* Subprojetos não são deletados destrutivamente
 
 ---
-## 2026-02-02 — Mapeamento operacional: “Filial” (base externa) como “Java” (UI) no Cadastro de Lojas
 
-**Decisão**  
-No cadastro de **Lojas (Registry)**, adotaremos a nomenclatura operacional utilizada no dia a dia:
-- Exibir **Filial** como **Java** na UI e na comunicação com usuários.
-- Exibir **Nome Filial** como **Nome loja** na UI.
+## 2026-02-02 — Mapeamento operacional: “Filial” como “Java” no Cadastro de Lojas
 
-Para compatibilidade com a base externa, o sistema deve aceitar o layout:
-`Filial;Hist.;Nome Filial;Endereço;Bairro;Cidade;UF;Logomarca;Telefone;IP Banco 12`
-e mapear esses campos para os atributos internos do cadastro de loja.
+**Decisão**
+Exibir **Filial** como **Java** e **Nome Filial** como **Nome loja** na UI,
+mantendo compatibilidade com base externa.
 
-**Contexto**  
-A base de dados externa/legada fornece campos com nomenclatura “Filial” e “Nome Filial”.
-Na operação real, os usuários estão acostumados com os termos **Java** e **Nome loja**.
-Até aqui o cadastro foi simplificado para acelerar desenvolvimento, mas agora precisamos
-refinar para condizer com a realidade do dia a dia sem perder compatibilidade com a base.
+**Contexto**
+Alinhar o sistema à linguagem operacional do dia a dia sem quebrar integrações.
 
-**Consequências**  
-- O importador/sincronização deve mapear explicitamente:
-  - `Filial` → identificador da loja (exibido como “Java”)
-  - `Nome Filial` → nome de exibição da loja (exibido como “Nome loja”)
-  - demais colunas conforme layout oficial
-- Templates e formulários devem refletir os labels operacionais (“Java”, “Nome loja”).
-- Testes devem validar o mapeamento do layout e o recebimento correto dos campos no cadastro.
+**Consequências**
+
+* Importador mapeia campos explicitamente
+* UI usa labels operacionais
+* Testes cobrem o mapeamento
+
 ---
-## 2026-02-02 — Padronização de Logomarca no Cadastro de Lojas
-
-**Decisão**  
-Padronizar o campo **Logomarca** no cadastro de Lojas para reduzir inconsistência:
-- Normalizar valores para **maiúsculo** no salvamento.
-- (Opcional) Preferir seleção via dropdown (RAIA/DROGASIL) no cadastro manual.
-
-**Contexto**  
-O valor de Logomarca vem padronizado na base externa (ex.: RAIA, DROGASIL),
-mas no cadastro manual pode haver variações e erros de digitação.
 
 ## 2026-02-02 — Padronização de Logomarca no Cadastro de Lojas
 
-**Decisão**  
-Padronizar o campo **Logomarca** no cadastro de Lojas para reduzir inconsistência:
-- Normalizar valores para **maiúsculo** no salvamento.
-- (Opcional) Preferir seleção via dropdown (RAIA/DROGASIL) no cadastro manual.
+**Decisão**
+Padronizar o campo **Logomarca**:
 
-**Contexto**  
-O valor de Logomarca vem padronizado na base externa (ex.: RAIA, DROGASIL),
-mas no cadastro manual pode haver variações e erros de digitação.
+* Normalizar para maiúsculo
+* Preferir dropdown no cadastro manual
 
-**Consequências**  
-- Menos divergência de dados (RAIA/raia/RaIa).
-- UI pode evoluir para dropdown sem afetar importação.
-- Testes devem cobrir a normalização (quando aplicada).
+**Contexto**
+Evitar divergências (RAIA/raia/RaIa).
+
+**Consequências**
+
+* Menos inconsistência
+* UI mais segura
+* Testes de normalização
 
 ---
+
 ## 2026-02-02 — Refinamento do Cadastro de Equipamentos (Registry)
 
-### Decisão
-O cadastro de **Equipamentos** será tratado como entidade de **Registry (Cadastro Mestre)**,
-com foco em padronização, rastreabilidade e uso no dia a dia operacional.
+**Decisão**
+Equipamentos são tratados como entidade de **Registry**, focados em padronização
+e reutilização operacional.
 
-O modelo deve representar:
-- O que o equipamento **é**
-- Como ele é **identificado**
-- Em quais contextos ele pode ser **utilizado**
+**Contexto**
+CRUD atual não reflete uso real nem validações necessárias.
 
-E **não**:
-- Onde ele está instalado atualmente
-- Eventos, histórico ou execução em campo
+**Consequências**
 
----
-
-### Contexto
-O cadastro atual de Equipamentos atende o CRUD básico, mas não reflete totalmente
-o uso real no dia a dia operacional, gerando:
-- Campos ambíguos
-- Falta de validações importantes
-- Dificuldade de reutilização em operações (Chamados, Instalações, Kits)
-
-Assim como feito no refinamento de **Lojas**, queremos:
-- Tornar o cadastro mais explícito
-- Reduzir estados inválidos
-- Garantir que o modelo represente a realidade do negócio
+* Ajustes em model, form, testes e UI
+* Possível migração de dados
+* Reuso do padrão aplicado em Lojas
 
 ---
 
-### Diretrizes adotadas
-
-- Equipamento pertence ao **Registry**
-- Equipamento **não depende** de Chamado, Instalação ou Loja para existir
-- Identificação clara (ex: ativo, serial, tipo)
-- Campos obrigatórios devem refletir uso real, não conveniência técnica
-- Regras de negócio validadas **primeiro em testes**
-
----
-
-### Consequências
-
-- Ajustes em:
-  - Model
-  - Form
-  - Testes
-  - UI (somente após validação de domínio)
-- Possível migração de dados
-- Commits pequenos e rastreáveis
-- Reuso do padrão já aplicado em Lojas
----
 ## 2026-02-02 — Padronização da estrutura de testes por camadas
 
-### Decisão
-Adotar uma estrutura de testes organizada por **camadas arquiteturais** (Domain, Application/Usecases e Interfaces),
-para melhorar legibilidade, escalabilidade e onboarding.
+**Decisão**
+Organizar testes por camadas arquiteturais (Domain, Usecases, Interfaces).
 
-Regras principais:
-- Testes de **Domain** e **Usecases** ficam em `tests/` (framework-agnostic).
-- Testes **Django/Web** ficam dentro de cada app Django, em `web/<app>/tests/`.
-- Testes de **CLI** e smoke ficam em `tests/cli/`.
-- A reorganização inicial será apenas de **movimentação/renomeação** (sem refatorar conteúdo),
-mantendo o suite 100% verde durante todo o processo.
+**Contexto**
+A organização atual dificulta leitura, manutenção e escalabilidade.
 
----
+**Consequências**
 
-### Contexto
-Atualmente os testes estão misturados entre:
-- arquivos únicos por app (`web/<app>/tests.py`)
-- testes do core em `tests/` com nomes variados
-- um caminho inconsistente em `tests/expansao360/domain/test/...`
-
-Mesmo com a suíte verde, a organização atual:
-- dificulta localizar responsabilidades
-- aumenta o custo de repetir padrões (ex.: Equipamentos, Kits, Chamados)
-- atrapalha manutenção e leitura rápida do projeto
-
-Queremos um layout onde seja possível entender o sistema “só olhando a árvore de testes”.
-
----
-
-### Estrutura alvo
-
-#### 1) Domain (regras puras)
-`tests/domain/`
-- `tests/domain/value_objects/`
-- `tests/domain/entities/`
-- `tests/domain/contracts/`
-
-Regras:
-- sem Django
-- sem fixtures de banco
-- foco em invariantes e regras do domínio
-
-#### 2) Application / Usecases (orquestração)
-`tests/usecases/`
-- `tests/usecases/registry/`
-- `tests/usecases/operation/`
-
-Regras:
-- valida fluxo e coordenação
-- usa repositórios fake/in-memory quando necessário
-- não testa detalhes de UI/framework
-
-#### 3) Interfaces (Django Web)
-`web/<app>/tests/`
-- `test_models.py`
-- `test_forms.py`
-- `test_views.py` (ou `test_flows.py` quando fizer sentido)
-
-Regras:
-- testes Django ficam no app correspondente
-- arquivos menores e mais específicos (evitar `tests.py` gigante)
-
-#### 4) CLI e integração leve
-`tests/cli/`
-- `test_cli_smoke.py`
-- `test_cli_errors.py`
-
----
-
-### Consequências
-- Melhor rastreabilidade por camada e responsabilidade
-- Facilita criação de novos módulos (ex.: Equipamentos) mantendo padrão consistente
-- Reduz “testes perdidos” e duplicidade conceitual
-- Exige ajuste de imports e caminhos, mas sem mudar lógica de testes nesta fase
-- Impõe disciplina: novos testes devem nascer no lugar correto
-
----
-
-### Plano de adoção (incremental, com suíte verde)
-A mudança será feita em microtarefas, com commits pequenos:
-1) Criar diretórios e mover testes do Domain
-2) Mover testes de Usecases
-3) Organizar testes Django por app em `web/<app>/tests/`
-4) Mover testes de CLI para `tests/cli/`
-5) Ajustar `pytest`/imports e garantir `pytest` verde ao final de cada commit
+* Estrutura clara por responsabilidade
+* Facilita onboarding
+* Impõe disciplina para novos testes
 
 ---
 
 ## 2026-02-03 — Código de Equipamento gerado automaticamente
 
-### Decisão
-O campo `Equipamento.codigo` passará a ser **gerado automaticamente** no momento do cadastro,
-para padronizar o Registry e garantir identificadores únicos e estáveis para busca, filtro e referência
-em estruturas como `ItemKit` e processos de Execução.
+**Decisão**
+O campo `Equipamento.codigo` passa a ser gerado automaticamente,
+único, normalizado e imutável.
 
-Regras:
-- `codigo` é gerado se estiver vazio/ausente na criação.
-- O `codigo` é **normalizado** (trim + uppercase + underscore).
-- O `codigo` é **único**.
-- Em caso de colisão (ex.: dois equipamentos com mesmo nome), o sistema sufixa com `_2`, `_3`, etc.
-- O `codigo` é **imutável** após criado (não muda quando `nome` ou `categoria` mudar), evitando quebrar referências.
+**Contexto**
+Evitar inconsistência e erro humano em identificadores usados no dia a dia.
 
-O “tipo/variante” (ex.: Monitor LCD, Monitor Touch; Micro PDV, Micro Gerência) continua sendo definido
-no contexto do Kit via `ItemKit.tipo` (e não no `Equipamento`).
+**Consequências**
 
-### Contexto
-O fluxo real do dia a dia é:
-1) cadastrar Categoria (ex.: Monitores, Microcomputadores)
-2) cadastrar Equipamento genérico (ex.: Monitor, Microcomputador)
-3) no Kit, definir o tipo/variante (`ItemKit.tipo`) que orienta execução e checklist em campo
+* Lógica no model
+* Campo oculto na UI
+* Testes de geração, colisão e imutabilidade
 
-Hoje o `codigo` é preenchido manualmente, o que tende a gerar inconsistências e dificulta padronização.
-Como o código será usado como chave de referência/consulta no dia a dia, ele precisa ser automático,
-único e estável.
-
-### Consequências
-- Model `Equipamento` terá lógica de geração/normalização de `codigo`.
-- O Form/UI não pedirá `codigo` no cadastro (campo oculto ou removido da tela).
-- Serão adicionados testes cobrindo geração automática, normalização, colisões e imutabilidade.
-- Migração pode ser necessária (dependendo de como o form/field está hoje).
 ---
-## 2026-02-03 — Tipos de equipamento como cadastro mestre por categoria (Registry)
 
-### Decisão
-Criar um cadastro mestre de **Tipos de Equipamento** associado à **Categoria**.
+## 2026-02-03 — Tipos de Equipamento como cadastro mestre por categoria
 
-- Será criado o model `TipoEquipamento` associado a `Categoria` (1:N).
-- `ItemKit.tipo` deixará de ser texto e passará a referenciar `TipoEquipamento` via FK (`on_delete=PROTECT`).
-- O tipo será escolhido no cadastro de `ItemKit`, garantindo padronização e rastreabilidade.
+**Decisão**
+Criar `TipoEquipamento` como entidade de Registry vinculada à Categoria,
+substituindo texto livre em `ItemKit.tipo`.
 
-### Contexto
-O tipo hoje é um `CharField` em `ItemKit`, o que permite variações e inconsistências ("lcd", "LCD ", "Monitor LCD"),
-dificultando filtros, relatórios e histórico consistente.
+**Contexto**
+Texto livre gera inconsistência e dificulta histórico.
 
-O fluxo real deseja rastreabilidade vinculada:
-Categoria → Equipamento → Tipo.
+**Consequências**
 
-### Consequências
-- Novo model e migração para substituir `ItemKit.tipo`.
-- Atualização de forms e UI para gerenciar tipos dentro da Categoria e selecionar tipo ao montar o Kit.
-- Atualização dos testes que hoje usam `tipo="..."` como texto.
-- Ganho de consistência e integridade referencial para histórico.
+* Novo model e migração
+* Forms e testes atualizados
+* Integridade referencial garantida
+
+---
+
+## ADR — 2026-02-03 — Padronização de códigos (internos vs externos)
+
+**Status:** Proposto
+
+**Decisão**
+Diferenciar:
+
+* **Códigos externos** (ex.: Loja/Java) — manuais/importados
+* **Códigos internos** (ex.: Equipamento, TipoEquipamento) — automáticos
+
+**Contexto**
+Evitar confusão entre identificadores operacionais e internos do Registry.
+
+**Consequências**
+
+* UI trata códigos conforme tipo
+* Testes específicos por categoria
+* Maior clareza e segurança para integrações

@@ -124,15 +124,30 @@ class LojaModelCamposExtrasTest(TestCase):
 
 
 class TipoEquipamentoModelTest(TestCase):
-    def test_tipo_equipamento_unico_por_categoria_codigo(self) -> None:
+    def test_codigo_gerado_automaticamente_quando_vazio(self) -> None:
         cat = Categoria.objects.create(nome="Monitores")
+        t = TipoEquipamento.objects.create(categoria=cat, nome="Touch")
+        self.assertEqual(t.codigo, "TOUCH")
 
-        TipoEquipamento.objects.create(categoria=cat, codigo="LCD", nome="LCD")
-
-        with self.assertRaises(IntegrityError):
-            TipoEquipamento.objects.create(categoria=cat, codigo="LCD", nome="LCD duplicado")
-
-    def test_tipo_equipamento_str(self) -> None:
+    def test_codigo_sufixa_quando_colisao_na_mesma_categoria(self) -> None:
         cat = Categoria.objects.create(nome="Monitores")
-        t = TipoEquipamento.objects.create(categoria=cat, codigo="TOUCH", nome="Touch")
+        t1 = TipoEquipamento.objects.create(categoria=cat, nome="LCD")
+        t2 = TipoEquipamento.objects.create(categoria=cat, nome="LCD")
+        self.assertEqual(t1.codigo, "LCD")
+        self.assertEqual(t2.codigo, "LCD_2")
+
+    def test_mesmo_nome_em_categorias_diferentes_pode_repetir_codigo(self) -> None:
+        c1 = Categoria.objects.create(nome="Monitores")
+        c2 = Categoria.objects.create(nome="Microcomputadores")
+
+        t1 = TipoEquipamento.objects.create(categoria=c1, nome="PDV")
+        t2 = TipoEquipamento.objects.create(categoria=c2, nome="PDV")
+
+        self.assertEqual(t1.codigo, "PDV")
+        self.assertEqual(t2.codigo, "PDV")
+
+    def test_str_mostra_nome_e_codigo(self) -> None:
+        cat = Categoria.objects.create(nome="Monitores")
+        t = TipoEquipamento.objects.create(categoria=cat, nome="Touch")
         self.assertIn("Touch", str(t))
+        self.assertIn("TOUCH", str(t))

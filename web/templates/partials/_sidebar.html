@@ -36,48 +36,57 @@
     </div>
 
     <a
-      href="{% url 'cadastro:home' %}"
+      href="{% url 'registry:home' %}"
       class="block px-3 py-2 rounded-lg hover:bg-slate-800 transition-colors
-             {% if request.resolver_match.namespace == 'cadastro' and request.resolver_match.url_name == 'home' %}bg-slate-800{% endif %}"
+             {% if request.resolver_match.namespace == 'registry' and request.resolver_match.url_name == 'home' %}bg-slate-800{% endif %}"
     >
       Home do Cadastro
     </a>
 
     <a
-      href="{% url 'cadastro:loja_list' %}"
+      href="{% url 'registry:loja_list' %}"
       class="block px-3 py-2 rounded-lg hover:bg-slate-800 transition-colors
-             {% if request.resolver_match.namespace == 'cadastro' and request.resolver_match.url_name == 'loja_list' %}bg-slate-800{% endif %}"
+             {% if request.resolver_match.namespace == 'registry' and request.resolver_match.url_name == 'loja_list' %}bg-slate-800{% endif %}"
     >
       Lojas
     </a>
 
     <a
-      href="{% url 'cadastro:projeto_list' %}"
+      href="{% url 'registry:categoria_list' %}"
       class="block px-3 py-2 rounded-lg hover:bg-slate-800 transition-colors
-             {% if request.resolver_match.namespace == 'cadastro' and request.resolver_match.url_name == 'projeto_list' %}bg-slate-800{% endif %}"
+             {% if request.resolver_match.namespace == 'registry' and request.resolver_match.url_name == 'categoria_list' %}bg-slate-800{% endif %}"
+    >
+      Categorias
+    </a>
+
+    <a
+      href="{% url 'registry:projeto_list' %}"
+      class="block px-3 py-2 rounded-lg hover:bg-slate-800 transition-colors
+             {% if request.resolver_match.namespace == 'registry' and request.resolver_match.url_name == 'projeto_list' %}bg-slate-800{% endif %}"
     >
       Projetos
     </a>
+
     <a
-      href="{% url 'cadastro:subprojeto_list' %}"
+      href="{% url 'registry:subprojeto_list' %}"
       class="block px-3 py-2 rounded-lg hover:bg-slate-800 transition-colors
-         {% if request.resolver_match.namespace == 'cadastro' and request.resolver_match.url_name == 'subprojeto_list' %}bg-slate-800{% endif %}"
+             {% if request.resolver_match.namespace == 'registry' and request.resolver_match.url_name == 'subprojeto_list' %}bg-slate-800{% endif %}"
     >
       Subprojetos
     </a>
 
     <a
-      href="{% url 'cadastro:equipamento_list' %}"
+      href="{% url 'registry:equipamento_list' %}"
       class="block px-3 py-2 rounded-lg hover:bg-slate-800 transition-colors
-             {% if request.resolver_match.namespace == 'cadastro' and request.resolver_match.url_name == 'equipamento_list' %}bg-slate-800{% endif %}"
+             {% if request.resolver_match.namespace == 'registry' and request.resolver_match.url_name == 'equipamento_list' %}bg-slate-800{% endif %}"
     >
       Equipamentos
     </a>
 
     <a
-      href="{% url 'cadastro:kit_list' %}"
+      href="{% url 'registry:kit_list' %}"
       class="block px-3 py-2 rounded-lg hover:bg-slate-800 transition-colors
-             {% if request.resolver_match.namespace == 'cadastro' and request.resolver_match.url_name == 'kit_list' %}bg-slate-800{% endif %}"
+             {% if request.resolver_match.namespace == 'registry' and request.resolver_match.url_name == 'kit_list' %}bg-slate-800{% endif %}"
     >
       Kits
     </a>

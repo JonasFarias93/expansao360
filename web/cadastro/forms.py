@@ -193,7 +193,7 @@ ItemKitFormSet = inlineformset_factory(
 class TipoEquipamentoForm(forms.ModelForm):
     class Meta:
         model = TipoEquipamento
-        fields = ["codigo", "nome", "ativo"]
+        fields = ["nome", "ativo"]  # ✅ sem codigo
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -203,7 +203,8 @@ class TipoEquipamentoForm(forms.ModelForm):
 TipoEquipamentoFormSet = inlineformset_factory(
     parent_model=Categoria,
     model=TipoEquipamento,
-    fields=["codigo", "nome", "ativo"],
-    extra=1,
+    form=TipoEquipamentoForm,
+    fields=["nome", "ativo"],
+    extra=0,
     can_delete=True,
 )

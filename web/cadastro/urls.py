@@ -19,6 +19,8 @@ urlpatterns = [
     path("kits/", views.KitListView.as_view(), name="kit_list"),
     # Equipamento
     path("equipamentos/", views.EquipamentoListView.as_view(), name="equipamento_list"),
+    # Categorias
+    path("categorias/", views.CategoriaListView.as_view(), name="categoria_list"),
     # ======================
     # CADASTROS (novo)
     # ======================
@@ -39,6 +41,8 @@ urlpatterns = [
         views.EquipamentoCreateView.as_view(),
         name="equipamento_create",
     ),
+    # Categorias
+    path("categorias/novo/", views.CategoriaCreateView.as_view(), name="categoria_create"),
     # ======================
     # EDIÇÃO
     # ======================
@@ -58,6 +62,9 @@ urlpatterns = [
         "equipamentos/<int:pk>/editar/",
         views.EquipamentoUpdateView.as_view(),
         name="equipamento_update",
+    ),
+    path(
+        "categorias/<int:pk>/editar/", views.CategoriaUpdateView.as_view(), name="categoria_update"
     ),
     # ======================
     # CATEGORIAS (quick-create)
