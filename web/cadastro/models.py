@@ -13,6 +13,25 @@ class Categoria(models.Model):
         return self.nome
 
 
+class TipoEquipamento(models.Model):
+    categoria = models.ForeignKey(
+        Categoria,
+        on_delete=models.PROTECT,
+        related_name="tipos",
+    )
+    codigo = models.CharField(max_length=50)
+    nome = models.CharField(max_length=80)
+    ativo = models.BooleanField(default=True)
+
+    class Meta:
+        verbose_name = "Tipo de Equipamento"
+        verbose_name_plural = "Tipos de Equipamento"
+        unique_together = ("categoria", "codigo")
+
+    def __str__(self) -> str:
+        return f"{self.nome} ({self.codigo})"
+
+
 class Equipamento(models.Model):
     codigo = models.CharField(max_length=50, unique=True)  # MICRO, MONITOR
     nome = models.CharField(max_length=120)  # Micro, Monitor
