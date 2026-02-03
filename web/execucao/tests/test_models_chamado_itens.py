@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from cadastro.models import Equipamento, ItemKit
+from cadastro.models import Equipamento, ItemKit, TipoEquipamento
 
 from execucao.models import Chamado, InstalacaoItem
 
@@ -10,6 +10,7 @@ from ._base import ChamadoBaseTestCase
 class ChamadoGeracaoItensTest(ChamadoBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
+
         self.micro = Equipamento.objects.create(
             codigo="MICRO",
             nome="Micro",
@@ -23,16 +24,27 @@ class ChamadoGeracaoItensTest(ChamadoBaseTestCase):
             tem_ativo=False,
         )
 
+        self.tipo_pdv = TipoEquipamento.objects.create(
+            categoria=self.categoria,
+            codigo="PDV",
+            nome="PDV",
+        )
+        self.tipo_usb = TipoEquipamento.objects.create(
+            categoria=self.categoria,
+            codigo="USB",
+            nome="USB",
+        )
+
         ItemKit.objects.create(
             kit=self.kit,
             equipamento=self.micro,
-            tipo="PDV",
+            tipo=self.tipo_pdv,
             quantidade=1,
         )
         ItemKit.objects.create(
             kit=self.kit,
             equipamento=self.hub,
-            tipo="USB",
+            tipo=self.tipo_usb,
             quantidade=2,
         )
 
