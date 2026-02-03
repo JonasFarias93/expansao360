@@ -1,5 +1,7 @@
 # web/cadastro/views.py
 from django.contrib import messages
+from django.db.models import IntegerField
+from django.db.models.functions import Cast
 from django.shortcuts import redirect, render
 from django.urls import reverse, reverse_lazy
 from django.views import View
@@ -29,8 +31,23 @@ class LojaListView(CapabilityRequiredMixin, ListView):
     model = Loja
     template_name = "cadastro/lojas_list.html"
     context_object_name = "lojas"
-    ordering = ["codigo"]
     required_capability = "cadastro.visualizar"
+
+    def get_paginate_by(self, queryset):
+        per_page = self.request.GET.get("per_page", "25")
+        if per_page == "all":
+            return 5000
+        try:
+            n = int(per_page)
+        except ValueError:
+            return 25
+        return max(10, min(n, 200))  # mínimo 10, máximo 200
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        return qs.annotate(codigo_int=Cast("codigo", IntegerField())).order_by(
+            "codigo_int", "codigo"
+        )
 
 
 class LojaCreateView(CapabilityRequiredMixin, CreateView):
