@@ -1,0 +1,97 @@
+
+
+<div class="bg-white shadow rounded p-4 border hover:bg-gray-50 transition-colors">
+  <div class="flex items-start justify-between gap-4">
+    <div class="min-w-0">
+      <div class="flex items-center gap-2">
+        <h3 class="font-semibold truncate">
+          <a
+            href="{% url 'execucao:chamado_detalhe' chamado.id %}"
+            class="text-indigo-600 hover:underline"
+          >
+            Chamado {{ chamado.protocolo|default:chamado.id }}
+          </a>
+        </h3>
+
+        {# Badge de status (mesma lógica do detalhe/histórico) #}
+        {% if chamado.status == "ABERTO" %}
+          <span class="inline-flex items-center rounded-full bg-slate-100 px-2 py-1 text-xs font-medium text-slate-700">
+            Aberto
+          </span>
+        {% elif chamado.status == "EM_EXECUCAO" %}
+          <span class="inline-flex items-center rounded-full bg-blue-100 px-2 py-1 text-xs font-medium text-blue-700">
+            Em execução
+          </span>
+        {% elif chamado.status == "FINALIZADO" %}
+          <span class="inline-flex items-center rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-700">
+            Finalizado
+          </span>
+        {% else %}
+          <span class="inline-flex items-center rounded-full bg-amber-100 px-2 py-1 text-xs font-medium text-amber-700">
+            {{ chamado.status }}
+          </span>
+        {% endif %}
+      </div>
+
+      <div class="mt-2 text-sm text-gray-600 space-y-1">
+        <div class="truncate">
+          <span class="font-medium">Loja:</span>
+          {% if chamado.loja %}
+            {{ chamado.loja.codigo|default:chamado.loja }} — {{ chamado.loja.nome|default:"" }}
+          {% else %}
+            —
+          {% endif %}
+        </div>
+
+        <div class="truncate">
+          <span class="font-medium">Projeto:</span>
+          {% if chamado.projeto %}
+            {{ chamado.projeto.codigo|default:chamado.projeto }} — {{ chamado.projeto.nome|default:"" }}
+          {% else %}
+            —
+          {% endif %}
+          {% if chamado.subprojeto %}
+            / {{ chamado.subprojeto.codigo|default:chamado.subprojeto }} — {{ chamado.subprojeto.nome|default:"" }}
+          {% endif %}
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-2">
+          <div class="bg-gray-50 border rounded p-2">
+            <div class="text-xs text-gray-500">ServiceNow</div>
+            <div class="text-sm truncate">{{ chamado.servicenow_numero|default:"—" }}</div>
+          </div>
+          <div class="bg-gray-50 border rounded p-2">
+            <div class="text-xs text-gray-500">Contabilidade</div>
+            <div class="text-sm truncate">{{ chamado.contabilidade_numero|default:"—" }}</div>
+          </div>
+          <div class="bg-gray-50 border rounded p-2">
+            <div class="text-xs text-gray-500">NF Saída</div>
+            <div class="text-sm truncate">{{ chamado.nf_saida_numero|default:"—" }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="flex flex-col items-end gap-2 shrink-0">
+      {# CTA simples (não muda regra de negócio) #}
+      <a
+        href="{% url 'execucao:chamado_detalhe' chamado.id %}"
+        class="px-3 py-2 border rounded hover:bg-white text-sm"
+      >
+        Abrir
+      </a>
+
+      {# Info auxiliar: criado/finalizado (se existir no objeto) #}
+      {% if chamado.criado_em %}
+        <div class="text-xs text-gray-500">
+          Criado: {{ chamado.criado_em|date:"d/m/Y H:i" }}
+        </div>
+      {% endif %}
+      {% if chamado.finalizado_em %}
+        <div class="text-xs text-gray-500">
+          Finalizado: {{ chamado.finalizado_em|date:"d/m/Y H:i" }}
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>

@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="max-w-xl space-y-4">
+  <h1 class="text-xl font-semibold">Novo Subprojeto</h1>
+  <form method="post" class="space-y-3">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <div class="flex gap-2">
+      <button class="px-4 py-2 bg-blue-600 text-white rounded">Salvar</button>
+      <a href="{% url 'cadastro:subprojeto_list' %}" class="px-4 py-2 border rounded">Cancelar</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

@@ -5,11 +5,81 @@
   </div>
 
   <nav class="p-4 space-y-1">
+    <div class="text-xs uppercase text-slate-400 mb-2">Execução</div>
+
     <a
-      href="/execucao/historico/"
-      class="block px-3 py-2 rounded-lg hover:bg-slate-800"
+      href="{% url 'execucao:fila' %}"
+      class="block px-3 py-2 rounded-lg hover:bg-slate-800 transition-colors
+             {% if request.resolver_match.namespace == 'execucao' and request.resolver_match.url_name == 'fila' %}bg-slate-800{% endif %}"
+    >
+      Fila Operacional
+    </a>
+
+    <a
+      href="{% url 'execucao:historico' %}"
+      class="block px-3 py-2 rounded-lg hover:bg-slate-800 transition-colors
+             {% if request.resolver_match.namespace == 'execucao' and request.resolver_match.url_name == 'historico' %}bg-slate-800{% endif %}"
     >
       Histórico de Chamados
+    </a>
+
+    <a
+      href="{% url 'execucao:chamado_create' %}"
+      class="block px-3 py-2 rounded-lg hover:bg-slate-800 transition-colors
+             {% if request.resolver_match.namespace == 'execucao' and request.resolver_match.url_name == 'chamado_create' %}bg-slate-800{% endif %}"
+    >
+      Abrir Chamado
+    </a>
+
+    <div class="pt-3 mt-3 border-t border-slate-700 text-xs uppercase text-slate-400">
+      Cadastro
+    </div>
+
+    <a
+      href="{% url 'cadastro:home' %}"
+      class="block px-3 py-2 rounded-lg hover:bg-slate-800 transition-colors
+             {% if request.resolver_match.namespace == 'cadastro' and request.resolver_match.url_name == 'home' %}bg-slate-800{% endif %}"
+    >
+      Home do Cadastro
+    </a>
+
+    <a
+      href="{% url 'cadastro:loja_list' %}"
+      class="block px-3 py-2 rounded-lg hover:bg-slate-800 transition-colors
+             {% if request.resolver_match.namespace == 'cadastro' and request.resolver_match.url_name == 'loja_list' %}bg-slate-800{% endif %}"
+    >
+      Lojas
+    </a>
+
+    <a
+      href="{% url 'cadastro:projeto_list' %}"
+      class="block px-3 py-2 rounded-lg hover:bg-slate-800 transition-colors
+             {% if request.resolver_match.namespace == 'cadastro' and request.resolver_match.url_name == 'projeto_list' %}bg-slate-800{% endif %}"
+    >
+      Projetos
+    </a>
+    <a
+      href="{% url 'cadastro:subprojeto_list' %}"
+      class="block px-3 py-2 rounded-lg hover:bg-slate-800 transition-colors
+         {% if request.resolver_match.namespace == 'cadastro' and request.resolver_match.url_name == 'subprojeto_list' %}bg-slate-800{% endif %}"
+    >
+      Subprojetos
+    </a>
+
+    <a
+      href="{% url 'cadastro:equipamento_list' %}"
+      class="block px-3 py-2 rounded-lg hover:bg-slate-800 transition-colors
+             {% if request.resolver_match.namespace == 'cadastro' and request.resolver_match.url_name == 'equipamento_list' %}bg-slate-800{% endif %}"
+    >
+      Equipamentos
+    </a>
+
+    <a
+      href="{% url 'cadastro:kit_list' %}"
+      class="block px-3 py-2 rounded-lg hover:bg-slate-800 transition-colors
+             {% if request.resolver_match.namespace == 'cadastro' and request.resolver_match.url_name == 'kit_list' %}bg-slate-800{% endif %}"
+    >
+      Kits
     </a>
 
     <div class="pt-3 mt-3 border-t border-slate-700 text-xs uppercase text-slate-400">
@@ -18,7 +88,7 @@
 
     <a
       href="/admin/"
-      class="block px-3 py-2 rounded-lg hover:bg-slate-800"
+      class="block px-3 py-2 rounded-lg hover:bg-slate-800 transition-colors"
     >
       Django Admin
     </a>

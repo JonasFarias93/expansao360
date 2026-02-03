@@ -81,3 +81,7 @@ web/media/
 media/
 **/media/
 **/evidencias/
+web/db.sqlite3.bak
+
+# Imports lojas e cadastros.
+data/

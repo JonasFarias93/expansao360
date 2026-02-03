@@ -2,93 +2,226 @@
 
 ## Visão Geral
 
-O EXPANSÃO360 é um sistema orientado a processos de expansão e operação de campo.
-O princípio central é separar claramente:
+O **EXPANSÃO360** é um sistema orientado a processos de expansão e operação de campo,
+desenhado para garantir **padronização, rastreabilidade e governança**.
 
-- **Cadastro administrativo (mestre / estático)**: define o que existe e como deve ser.
-- **Operação de campo (transacional / execução)**: registra o que foi executado, com rastreabilidade e histórico.
+O princípio arquitetural central é a **separação rigorosa entre planejamento e execução**:
 
-Essa separação reduz ambiguidade, melhora governança e permite evolução do sistema com segurança.
+- **Registry (Cadastro Mestre)** → define *o que existe* e *como deve ser*
+- **Operation (Execução de Campo)** → registra *o que aconteceu de fato*
+
+Essa separação evita ambiguidade, preserva histórico
+e permite evolução segura do sistema.
+
+---
 
 ## Camadas Conceituais
 
 ### 1) Registry (Cadastro Mestre)
-Responsável por manter entidades "fonte da verdade" do planejamento e padronização.
 
-Exemplos típicos:
-- Lojas / locais
-- Projetos / iniciativas
-- Padrões, layouts, checklists e regras
-- Materiais e componentes aprovados
+Responsável por manter entidades que funcionam como **fonte da verdade** do planejamento.
 
-Características:
-- Alterações são controladas (governança)
-- Dados são relativamente estáveis
-- Versionamento e auditoria são importantes
+**Exemplos:**
+- Lojas
+- Projetos
+- Subprojetos
+- Equipamentos
+- Kits e composição de itens
+
+**Características:**
+- Dados relativamente estáveis
+- Alterações controladas
+- Impactam apenas execuções futuras
+- Não possuem histórico operacional
+
+> Registry **não depende** de Operation.
+
+---
 
 ### 2) Operation (Execução de Campo)
-Responsável por registrar eventos e evidências do que aconteceu na prática.
 
-Exemplos típicos:
-- Montagens realizadas
-- Inspeções / validações
-- Evidências (fotos, anexos, assinaturas)
-- Ocorrências e retrabalhos
+Responsável por registrar **eventos operacionais reais**,
+com histórico imutável e rastreabilidade completa.
 
-Características:
+**Exemplos:**
+- Chamados
+- Itens de execução
+- Evidências (NF, carta de conteúdo, exceções)
+- Fluxos de envio e retorno
+
+**Características:**
 - Alto volume transacional
-- Histórico e rastreabilidade são essenciais
-- Permite reprocessamento e auditoria
+- Histórico imutável
+- Auditoria e rastreabilidade são essenciais
+- Suporte explícito a exceções
 
-## Diretrizes de Arquitetura
+> Operation **referencia** Registry, nunca o contrário.
 
-### Separação de responsabilidades
-- Registry não depende de Operation para existir.
-- Operation referencia Registry (nunca o contrário).
+---
 
-### Modelo em camadas (visão lógica)
-- **Domain**: regras de negócio puras (entidades, value objects, políticas)
-- **Application**: casos de uso (orquestração, comandos/queries)
-- **Infrastructure**: banco, filas, storage, integrações externas
-- **Interfaces**: API/CLI/UI (entrada do sistema)
+## Entidade Central: Chamado
+
+O **Chamado** é a unidade central da execução operacional.
+
+Ele representa:
+- uma operação real
+- com contexto organizacional
+- com itens, status e evidências
+- com impacto operacional e contábil
+
+### Tipos de Chamado
+- **ENVIO** → Matriz → Loja
+- **RETORNO** → Loja → Matriz (fluxo inverso)
 
 ### Princípios
-- Código limpo e modular
+- Chamados **finalizados são imutáveis**
+- Correções geram **novo Chamado**
+- Fluxo inverso nunca edita histórico existente
+
+---
+
+## Geração de Itens de Execução
+
+Ao criar um Chamado:
+- um **snapshot operacional** é gerado
+- cada Item do Kit gera um Item de Execução
+- alterações futuras no Kit **não afetam** Chamados já criados
+
+Isso garante:
+- rastreabilidade
+- consistência histórica
+- auditoria confiável
+
+---
+
+## Modelo em Camadas (Visão Lógica)
+
+┌────────────────────┐
+│ Interfaces │ → Web / CLI / (futuras APIs)
+└─────────▲──────────┘
+│
+┌─────────┴──────────┐
+│ Application │ → Casos de uso / orquestração
+└─────────▲──────────┘
+│
+┌─────────┴──────────┐
+│ Domain │ → Regras de negócio puras
+└────────────────────┘
+
+
+---
+
+## Core de Domínio
+
+O **core** do EXPANSÃO360:
+
+- é independente de framework
+- concentra regras de negócio
+- não conhece UI, banco ou permissões
+- é validado via testes automatizados (TDD)
+
+Exemplos de regras no core:
+- validação de finalização de Chamado
+- regras de rastreabilidade (`tem_ativo`)
+- fluxo inverso e exceções
+
+---
+
+## Adapters / Interfaces
+
+### CLI
+- Interface de linha de comando
+- Compartilha o mesmo domínio
+- Útil para testes, simulações e apresentação
+
+---
+
+### Web (Django)
+
+A camada Web atua como **adapter de entrega**, não como domínio.
+
+Apps principais:
+- `cadastro` → Registry
+- `execucao` → Operation
+- `iam` → Identidade e permissões
+
+**Diretrizes:**
+- Models Django **não contêm regras de negócio**
+- Views orquestram casos de uso
+- Templates apenas apresentam estado resolvido
+- Django Admin é ferramenta técnica, não operacional
+
+---
+
+## IAM (Autorização)
+
+O sistema adota um modelo **mínimo e explícito** de autorização:
+
+- Baseado em **capabilities**
+- Enforcement ocorre na camada Web
+- O domínio permanece permission-agnostic
+
+Exemplos:
+- `execucao.chamado.finalizar`
+- `execucao.evidencia.upload`
+- `cadastro.editar`
+
+---
+
+## UI Web (Templates)
+
+A UI é tratada como **adapter de apresentação**.
+
+### Estrutura
+
+templates/
+├── base.html
+├── partials/
+│ ├── _sidebar.html
+│ ├── _messages.html
+│ └── ...
+├── cadastro/
+├── execucao/
+│ └── components/
+└── iam/
+
+
+**Diretrizes:**
+- Templates não contêm regra de negócio
+- Componentes são reutilizáveis
+- Estados vazios e mensagens são explícitos
+- Tailwind via CDN (setup leve)
+
+---
+
+## Princípios Arquiteturais
+
+- Separação clara de responsabilidades
+- Histórico nunca é destruído
+- Fluxos explícitos (direto e inverso)
 - Mudanças pequenas e rastreáveis
-- Commits pequenos e descritivos
-- Decisões arquiteturais registradas em `DECISIONS.md`
+- Decisões registradas em `DECISIONS.md`
 
-## Fora de escopo (por enquanto)
-- Detalhes de stack (linguagem/framework) antes da decisão formal
-- Estrutura de pastas definitiva antes do primeiro esqueleto do app
-- Regras de autorização e perfis (será definido após o fluxo base)
+---
 
-## Implementação Atual (Core + Adapters)
+## Fora de Escopo (por enquanto)
 
-O EXPANSÃO360 adota uma arquitetura em camadas, onde o **core de domínio**
-permanece independente de frameworks e interfaces. As interfaces (CLI/Web)
-atuam como **adapters**, responsáveis por entrada, apresentação e orquestração,
-sem concentrar regras de negócio.
+- APIs públicas
+- Integrações corporativas
+- Hardening de infraestrutura
+- Multitenancy
+- Mobile / offline-first
 
-### Core
-- Regras de negócio puras (Domain / Application)
-- Entidades como Chamado, Equipamento e Kit
-- Casos de uso validados via testes (TDD)
+Esses pontos serão abordados conforme a maturidade do produto.
 
-### Adapters / Interfaces
+---
 
-#### CLI
-- Interface de linha de comando para operações do sistema
-- Não depende da camada Web
+## Conclusão
 
-#### Web (Django)
-A camada Web é implementada com Django, organizada em apps:
+O EXPANSÃO360 é projetado para **resistir ao tempo**:
+- sem atalhos destrutivos
+- sem acoplamento prematuro
+- com rastreabilidade como princípio, não como feature
 
-- `cadastro`: Registry (Cadastro Mestre)
-- `execucao`: Operation (Chamados e execução)
-- `iam`: Identidade, autenticação e permissões (em evolução)
-
-Diretrizes:
-- A Web atua como camada de entrega e persistência.
-- Models Django **não** contêm regras de negócio do core.
-- A UI Web é tratada como adapter: entrada, apresentação e orquestração.
+A arquitetura privilegia clareza, governança
+e evolução contínua com baixo risco.

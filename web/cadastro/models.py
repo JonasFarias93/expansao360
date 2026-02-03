@@ -1,3 +1,4 @@
+from django.core.exceptions import ValidationError
 from django.db import models
 
 
@@ -28,12 +29,44 @@ class Equipamento(models.Model):
 
 
 class Loja(models.Model):
-    codigo = models.CharField(max_length=50, unique=True)
-    nome = models.CharField(max_length=120)
+    codigo = models.CharField(max_length=50, unique=True)  # UI: "Java"
+    nome = models.CharField(max_length=120)  # UI: "Nome loja"
+
+    hist = models.CharField(max_length=50, blank=True, default="")
+    endereco = models.CharField(max_length=255, blank=True, default="")
+    bairro = models.CharField(max_length=120, blank=True, default="")
+    cidade = models.CharField(max_length=120, blank=True, default="")
+    uf = models.CharField(max_length=2, blank=True, default="")
+    logomarca = models.CharField(max_length=80, blank=True, default="")
+    telefone = models.CharField(max_length=60, blank=True, default="")
+    ip_banco_12 = models.GenericIPAddressField(null=True, blank=True)
 
     class Meta:
         verbose_name = "Loja"
         verbose_name_plural = "Lojas"
+
+    def clean(self):
+        super().clean()
+        # validação apenas (normalização fica no save)
+        if self.uf and len(self.uf.strip()) != 2:
+            raise ValidationError({"uf": "UF deve ter 2 caracteres."})
+
+    def save(self, *args, **kwargs):  # type: ignore[override]
+        # normalizações leves e seguras (sempre aplicadas)
+        self.codigo = (self.codigo or "").strip()
+        self.nome = (self.nome or "").strip()
+
+        self.hist = (self.hist or "").strip()
+        self.endereco = (self.endereco or "").strip()
+        self.bairro = (self.bairro or "").strip()
+        self.cidade = (self.cidade or "").strip()
+        self.logomarca = (self.logomarca or "").strip().upper()
+        self.telefone = (self.telefone or "").strip()
+
+        if self.uf:
+            self.uf = self.uf.strip().upper()
+
+        super().save(*args, **kwargs)
 
     def __str__(self) -> str:
         return f"{self.codigo} - {self.nome}"
@@ -81,6 +114,10 @@ class ItemKit(models.Model):
     equipamento = models.ForeignKey(Equipamento, on_delete=models.PROTECT)
     tipo = models.CharField(max_length=80)  # PDV, TOUCH, etc
     quantidade = models.PositiveIntegerField()
+    requer_configuracao = models.BooleanField(
+        default=False,
+        help_text="Define se este item exige configuração técnica neste kit.",
+    )
 
     class Meta:
         verbose_name = "Item do Kit"

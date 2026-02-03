@@ -1,11 +1,65 @@
 # STATUS — EXPANSÃO360
 
 ## Sprint Atual
-**Sprint 2 — Cadastro e Execução Base (Web + CLI)**
+**Sprint 4 — UX Operacional & Views**
 
-Objetivo desta sprint:
-Consolidar o cadastro mestre (Registry) e a execução base (Chamado),
+🎯 **Objetivo da Sprint**  
+Evoluir a **experiência operacional** do sistema,
+refinando UI, views e feedbacks visuais,
+**sem alterações no core de domínio**.
+
+Esta sprint foca exclusivamente em:
+- clareza operacional
+- redução de atrito na execução
+- comunicação visual de status e permissões
+
+---
+
+## Sprint Anterior
+**Sprint 3 — Fluxo Inverso e Evolução Operacional**  
+📌 **Status:** ✅ Concluída  
+🏷 **Release:** v0.3.0
+
+🎯 **Objetivo da Sprint**  
+Consolidar o **core operacional** do EXPANSÃO360,
+incluindo fluxo inverso, evidências, regras de exceção
+e IAM mínimo por capability.
+
+### Entregas
+- Chamado com suporte a:
+  - fluxo direto (Matriz → Loja)
+  - fluxo inverso (Loja → Matriz)
+- Regras completas de finalização e retorno
+- Modelo de itens operacionais com rastreabilidade
+- Evidências associadas à execução (anexos)
+- IAM mínimo baseado em capabilities
+- Views Web funcionais para execução operacional
+- Testes automatizados cobrindo regras críticas
+
+Encerramento formal do release **v0.3.0**.
+
+---
+
+## Sprint 2
+**Sprint 2 — Cadastro e Execução Base (Web + CLI)**  
+📌 **Status:** ✅ Concluída
+
+🎯 **Objetivo da Sprint**  
+Consolidar o **Cadastro Mestre (Registry)** e a
+**Execução Base (Operation)**,
 com testes automatizados e separação clara entre core, CLI e Web.
+
+### Principais Entregas
+- Core de domínio independente de framework
+- CLI funcional para Registry e Operation
+- Camada Web (Django) para:
+  - Cadastro administrativo
+  - Execução operacional
+- Entidade Chamado com workflow e validações
+- UI Web inicial para:
+  - histórico
+  - detalhe
+  - edição de Chamados
 
 ---
 
@@ -25,163 +79,23 @@ com testes automatizados e separação clara entre core, CLI e Web.
 
 ---
 
-## Progresso Atual
+## Planejamento — Sprint 4
 
-### Core + CLI
-- [x] Core de domínio implementado
-- [x] Casos de uso testados (TDD)
-- [x] CLI funcional para Location e Mount
-- [x] Persistência local (arquivo JSON)
+### UI / Fluxo Operacional
+- [ ] UI dedicada para fluxo inverso
+- [ ] Status operacional explícito (`EM_EXECUCAO`)
+- [ ] Upload de evidências com feedback visual
+- [ ] Estados vazios e mensagens orientativas
 
-### Web (Django)
-
-#### Cadastro (Registry)
-- [x] Categoria
-- [x] Equipamento (com regra `tem_ativo`)
-- [x] Loja
-- [x] Projeto / Subprojeto
-- [x] Kit / ItemKit (equipamento + tipo + quantidade)
-- [x] Admin configurado
-- [x] Migrations aplicadas
-- [x] Testes de integridade do cadastro
-
-#### Execução (Operation)
-- [x] Entidade Chamado
-- [x] Protocolo único automático (`EX360-YYYYMMDD-XXXXXX`)
-- [x] Referências externas únicas (ServiceNow, Contabilidade, NF)
-- [x] Campo de auditoria `finalizado_em`
-- [x] Validação de finalização do Chamado
-- [x] Geração de itens de execução a partir do Kit
-- [x] Snapshot de `tem_ativo` por item
-- [x] Admin com busca e filtros aprimorados
-- [x] Testes automatizados do app `execucao`
-
-#### UI / Layout Web
-- [x] Layout base (`base.html`)
-- [x] Estrutura de templates (`partials/`, `components/`)
-- [x] Tailwind CSS via CDN
-- [x] Página de histórico de Chamados (Histórico v1)
-- [x] Página de detalhe do Chamado
-- [x] Edição de itens do Chamado
-- [x] Badges de status (Aberto / Em execução / Finalizado)
-
-
+### Views / Web
+- [ ] Views mais semânticas e específicas
+- [ ] Mensagens claras de permissão (IAM → UX)
+- [ ] Ajustes de navegação e legibilidade
 
 ---
 
-## Marcos e Planejamento
-
-### Concluído
-- **Dia 1–8 — Execução Web v1**
-  - Core e CLI estáveis (TDD)
-  - Chamado com:
-    - protocolo automático
-    - itens de execução
-    - validações de finalização
-    - workflow de status
-  - UI Web:
-    - histórico de chamados
-    - detalhe do chamado
-    - edição de itens
-    - badges de status
-  - ADRs fundamentais definidos
-  - Documentação alinhada ao código
-
-
----
-
-### Planejamento (Dias Restantes)
-
-- **Dia 9 — Planejamento técnico**
-  - ADR de evidências/anexos por Chamado
-  - Atualização de STATUS e REQUIREMENTS
-
-- **Dia 10 — Feature: Anexos (backend)**
-  - Model de evidências por Chamado
-  - Upload e persistência de arquivos
-  - Listagem e download
-  - Testes (TDD)
-
-- **Dia 11 — Feature: Anexos (UI)**
-  - Upload de NF e Carta de Conteúdo
-  - Visualização de evidências no Chamado
-  - Validações básicas (tipo e tamanho)
-
-- **Dia 12 — Regras de evidência**
-  - Exigência de evidência na finalização
-  - Suporte a exceções (extravio / não retornado)
-  - Testes de cenários operacionais
-
-- **Dia 13 — Fluxo inverso (Loja → Matriz)**
-  - Chamado de retorno vinculado ao original
-  - Regras específicas de finalização
-  - Integração com evidências
-
-- **Dia 14 — IAM mínimo**
-  - Permissões para ações sensíveis
-  - UI condicionada por permissão
-
-- **Dias 15–16 — Buffer**
-  - UX, robustez, revisão final e documentação
-  
----
-
-## Em Andamento
-- [x] Validações finais da execução:
-  - exigir Ativo + Série quando `tem_ativo=True`
-  - exigir confirmação quando `tem_ativo=False`
-- [x] Controle de status do Chamado (ABERTO → EM_EXECUCAO → FINALIZADO)
-- [ ] Permissões e perfis (IAM)
-- [ ] Fluxo inverso de execução (Loja → Matriz)
-- [ ] Regras de finalização para retorno (retornado / não retornado)
-
-
-## Observações
-- O core permanece independente de framework.
-- Django atua como camada de entrega e persistência.
-- Toda regra de negócio é validada via testes.
-- Fluxos operacionais críticos são registrados via ADR.
----
-
-
-## Marcos (Releases)
-
-### v0.2.0 — Web v1 (Registry + Chamado)
-📅 2026-01-22
-
-- Primeira versão utilizável end-to-end
-- Core + CLI estáveis
-- Cadastro completo (Registry)
-- Execução operacional com Chamado, workflow e validações
-- UI Web funcional para histórico, detalhe e edição
-- Base arquitetural e ADRs consolidados
-
-Commit: `bed1c61`
-
----
-
-## Próximo Marco (Planejado)
-
-### v0.3.0 — Evidências e Regras de Finalização
-
-Objetivo:
-Adicionar suporte a evidências (anexos) por Chamado e formalizar
-as regras operacionais de finalização, mantendo rastreabilidade e governança.
-
-Escopo previsto:
-- Model de Evidência associado ao Chamado
-- Upload, listagem e download de anexos
-- Validações de tipo e tamanho de arquivo
-- Exigência de evidência para finalização do Chamado
-- Suporte a exceções operacionais (extravio / não retornado)
-- Integração das regras com o workflow de status
-- Testes automatizados cobrindo cenários operacionais
-
-Fora de escopo deste release:
-- IAM completo (perfis e permissões avançadas)
-- Fluxo inverso de execução (Loja → Matriz)
-
-📌 A criação da tag `v0.3.0` ocorrerá somente após a entrega completa
-do escopo definido acima.
-
-
+## Observações Arquiteturais
+- O core permanece **independente de framework**.
+- Django atua exclusivamente como **camada de entrega**.
+- Nenhuma regra de negócio será adicionada na Sprint 4.
+- Evoluções estruturais exigem **ADR explícita**.
