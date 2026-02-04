@@ -1,14 +1,14 @@
 # DECISIONS — EXPANSÃO360
 
-Este documento registra decisões técnicas e arquiteturais relevantes do projeto,
-com o objetivo de evitar ambiguidades, manter rastreabilidade e facilitar onboarding.
+Este documento registra decisões técnicas e arquiteturais relevantes do projeto, com o objetivo de evitar ambiguidades, manter rastreabilidade e facilitar onboarding.
 
 ## Formato padrão de cada decisão
 
-* Data (YYYY-MM-DD)
-* Decisão
-* Contexto
-* Consequências
+* **Data** (YYYY-MM-DD)
+* **Decisão**
+* **Contexto**
+* **Consequências**
+* **Status** (opcional: Proposto | Aceito | Deprecado)
 
 ---
 
@@ -17,12 +17,11 @@ com o objetivo de evitar ambiguidades, manter rastreabilidade e facilitar onboar
 **Decisão**
 O sistema será modelado com duas camadas conceituais principais:
 
-* **Registry (Cadastro Mestre)**: define “o que existe” e “como deve ser”
-* **Operation (Execução de Campo)**: registra “o que foi executado”, com rastreabilidade e histórico
+* **Registry (Cadastro Mestre):** define “o que existe” e “como deve ser”
+* **Operation (Execução de Campo):** registra “o que foi executado”, com rastreabilidade e histórico
 
 **Contexto**
-Precisamos garantir governança sobre padrões e, ao mesmo tempo, registrar a execução real em campo
-sem poluir o cadastro mestre e sem perder histórico.
+Precisamos garantir governança sobre padrões e, ao mesmo tempo, registrar a execução real em campo sem poluir o cadastro mestre e sem perder histórico.
 
 **Consequências**
 
@@ -34,8 +33,7 @@ sem poluir o cadastro mestre e sem perder histórico.
 ## 2026-01-20 — Estratégia de trabalho: microtarefas + disciplina de versionamento
 
 **Decisão**
-O desenvolvimento seguirá por microtarefas com validação objetiva,
-usando branches e commits pequenos.
+O desenvolvimento seguirá por microtarefas com validação objetiva, usando branches e commits pequenos.
 
 **Contexto**
 Queremos previsibilidade, rastreabilidade e redução de retrabalho.
@@ -76,9 +74,9 @@ Evitar acoplamento prematuro permite decisões baseadas em requisitos reais.
 
 **Consequências**
 
-* `.gitignore` genérico
-* Nenhuma estrutura de framework antecipada
-* Stack definida posteriormente via ADR
+* `.gitignore` genérico.
+* Nenhuma estrutura de framework antecipada.
+* Stack definida posteriormente via decisão formal.
 
 ---
 
@@ -88,14 +86,13 @@ Evitar acoplamento prematuro permite decisões baseadas em requisitos reais.
 A camada Web será implementada em **Django**.
 
 **Contexto**
-Após estabilização do core e da CLI, era necessário um framework maduro
-para UI, autenticação, ORM e velocidade de entrega.
+Após estabilização do core e da CLI, era necessário um framework maduro para UI, autenticação, ORM e velocidade de entrega.
 
 **Consequências**
 
-* Core permanece independente
-* Django atua como adapter
-* Models Django não contêm regras de negócio
+* Core permanece independente.
+* Django atua como adapter.
+* Models Django não contêm regras de negócio (apenas validações e consistência de dados).
 
 ---
 
@@ -109,9 +106,9 @@ Reduzir carga cognitiva e aproximar o código do negócio real.
 
 **Consequências**
 
-* Core em PT-BR
-* Framework/infra seguem convenções originais
-* Glossário mantido para consistência
+* Core em PT-BR.
+* Framework/infra seguem convenções originais.
+* Glossário mantido para consistência.
 
 ---
 
@@ -125,8 +122,8 @@ O termo **Chamado** substitui “Card” como entidade operacional.
 
 **Consequências**
 
-* Domínio, CLI e Web utilizam “Chamado”
-* Possíveis aliases temporários para compatibilidade
+* Domínio, CLI e Web utilizam “Chamado”.
+* Possíveis aliases temporários para compatibilidade (se necessário).
 
 ---
 
@@ -143,8 +140,8 @@ Nem todos os itens exigem ativo/número de série.
 
 **Consequências**
 
-* Execução valida campos conforme tipo
-* Relatórios diferenciam ativos e consumíveis
+* Execução valida campos conforme tipo.
+* Relatórios diferenciam ativos e consumíveis.
 
 ---
 
@@ -158,24 +155,24 @@ Padronizar UI desde o início sem custo de build frontend.
 
 **Consequências**
 
-* Layout tratado como decisão arquitetural
-* Evita HTML duplicado e decisões visuais ad-hoc
+* UI padronizada desde o início.
+* Evita HTML duplicado e decisões visuais ad-hoc.
 
 ---
 
 ## 2026-01-21 — Camada Web como adapter
 
 **Decisão**
-A Web atua apenas como adapter (UI + persistência + orquestração).
+A Web atua apenas como adapter (UI + persistência + orquestração), preservando regras de negócio fora da camada de entrega.
 
 **Contexto**
 Evitar migração de regras de negócio para a camada Web.
 
 **Consequências**
 
-* Core independente
-* CLI e Web compartilham domínio
-* Facilita API e mobile no futuro
+* Core independente.
+* CLI e Web compartilham domínio.
+* Facilita API e mobile no futuro.
 
 ---
 
@@ -189,9 +186,9 @@ Chamados representam eventos operacionais e contábeis reais.
 
 **Consequências**
 
-* Histórico imutável
-* Retornos exigem desfecho explícito
-* Auditoria e contabilidade preservadas
+* Histórico imutável.
+* Retornos exigem desfecho explícito.
+* Auditoria e contabilidade preservadas.
 
 ---
 
@@ -205,9 +202,9 @@ NF, Carta de Conteúdo e documentos de exceção são parte do processo real.
 
 **Consequências**
 
-* Finalização pode exigir evidência
-* Auditoria fortalecida
-* Modelo extensível (fotos, assinaturas, etc.)
+* Finalização pode exigir evidência.
+* Auditoria fortalecida.
+* Modelo extensível (fotos, assinaturas, etc.).
 
 ---
 
@@ -221,78 +218,77 @@ Precisamos restringir ações sensíveis sem acoplar IAM ao domínio.
 
 **Consequências**
 
-* Backend valida permissões
-* Templates apenas refletem
-* Core permanece permission-agnostic
+* Backend valida permissões.
+* Templates apenas refletem.
+* Core permanece permission-agnostic.
 
 ---
 
-## ADR — 2026-01-24 — CBVs + CapabilityRequiredMixin
+## 2026-01-24 — Padronização de CBVs + `CapabilityRequiredMixin`
 
 **Status:** Aceito
-**Contexto:** Sprint 3 — Execução / Fluxo Inverso / IAM
 
 **Decisão**
 
-* Migrar views críticas para CBVs
-* Centralizar autorização em `CapabilityRequiredMixin`
+* Migrar views críticas para CBVs.
+* Centralizar autorização em `CapabilityRequiredMixin`.
+
+**Contexto**
+Sprint 3 — Execução / Fluxo inverso / IAM.
 
 **Consequências**
 
-* Menos repetição
-* Padrão consistente
-* Migração incremental segura
+* Menos repetição.
+* Padrão consistente.
+* Migração incremental segura.
 
 ---
 
-## 2026-01-24 — Abertura de Chamado via UI
+## 2026-01-24 — Abertura de Chamado via UI (snapshot operacional)
 
 **Decisão**
-Chamados podem ser abertos via UI, gerando automaticamente Itens de Execução
-a partir do Kit (snapshot operacional).
+Chamados podem ser abertos via UI, gerando automaticamente Itens de Execução a partir do Kit (snapshot operacional).
 
 **Contexto**
 Necessidade de testes end-to-end e uso real do sistema.
 
 **Consequências**
 
-* Chamado nasce do Registry
-* Itens são imutáveis conceitualmente
-* Planejamento e execução ficam claramente separados
+* Chamado nasce do Registry.
+* Itens de execução são tratados como imutáveis conceitualmente (histórico).
+* Planejamento e execução ficam claramente separados.
 
 ---
 
 ## 2026-01-25 — Introdução de Subprojetos no Registry
 
 **Decisão**
-Introduzir a entidade **Subprojeto** no **Registry (Cadastro Mestre)** como
-recorte organizacional obrigatório quando existente.
+Introduzir a entidade **Subprojeto** no **Registry (Cadastro Mestre)** como recorte organizacional quando aplicável.
 
 **Contexto**
 Projetos reais de expansão exigem segmentação operacional por linhas de entrega.
 
 **Consequências**
 
-* Subprojeto pertence ao Registry
-* Chamados referenciam Subprojeto quando existir
-* Subprojetos não são deletados destrutivamente
+* Subprojeto pertence ao Registry.
+* Chamados referenciam Subprojeto quando existir.
+* Subprojetos não são deletados destrutivamente (preservar histórico).
 
 ---
 
 ## 2026-02-02 — Mapeamento operacional: “Filial” como “Java” no Cadastro de Lojas
 
 **Decisão**
-Exibir **Filial** como **Java** e **Nome Filial** como **Nome loja** na UI,
-mantendo compatibilidade com base externa.
+Exibir **Filial** como **Java** e **Nome Filial** como **Nome loja** na UI, mantendo compatibilidade com base externa.
 
 **Contexto**
 Alinhar o sistema à linguagem operacional do dia a dia sem quebrar integrações.
 
 **Consequências**
 
-* Importador mapeia campos explicitamente
-* UI usa labels operacionais
-* Testes cobrem o mapeamento
+* Importador mapeia campos explicitamente.
+* UI usa labels operacionais.
+* Testes cobrem o mapeamento.
 
 ---
 
@@ -301,34 +297,33 @@ Alinhar o sistema à linguagem operacional do dia a dia sem quebrar integraçõe
 **Decisão**
 Padronizar o campo **Logomarca**:
 
-* Normalizar para maiúsculo
-* Preferir dropdown no cadastro manual
+* Normalizar para maiúsculo.
+* Preferir dropdown no cadastro manual.
 
 **Contexto**
 Evitar divergências (RAIA/raia/RaIa).
 
 **Consequências**
 
-* Menos inconsistência
-* UI mais segura
-* Testes de normalização
+* Menos inconsistência.
+* UI mais segura.
+* Testes de normalização.
 
 ---
 
 ## 2026-02-02 — Refinamento do Cadastro de Equipamentos (Registry)
 
 **Decisão**
-Equipamentos são tratados como entidade de **Registry**, focados em padronização
-e reutilização operacional.
+Equipamentos são tratados como entidade de **Registry**, focados em padronização e reutilização operacional.
 
 **Contexto**
-CRUD atual não reflete uso real nem validações necessárias.
+CRUD inicial não refletia uso real nem validações necessárias.
 
 **Consequências**
 
-* Ajustes em model, form, testes e UI
-* Possível migração de dados
-* Reuso do padrão aplicado em Lojas
+* Ajustes em model, form, testes e UI.
+* Possível migração de dados.
+* Reuso do padrão aplicado em Lojas.
 
 ---
 
@@ -338,127 +333,215 @@ CRUD atual não reflete uso real nem validações necessárias.
 Organizar testes por camadas arquiteturais (Domain, Usecases, Interfaces).
 
 **Contexto**
-A organização atual dificulta leitura, manutenção e escalabilidade.
+A organização anterior dificultava leitura, manutenção e escalabilidade.
 
 **Consequências**
 
-* Estrutura clara por responsabilidade
-* Facilita onboarding
-* Impõe disciplina para novos testes
+* Estrutura clara por responsabilidade.
+* Facilita onboarding.
+* Impõe disciplina para novos testes.
 
 ---
 
 ## 2026-02-03 — Código de Equipamento gerado automaticamente
 
 **Decisão**
-O campo `Equipamento.codigo` passa a ser gerado automaticamente,
-único, normalizado e imutável.
+O campo `Equipamento.codigo` passa a ser gerado automaticamente, único, normalizado e imutável.
 
 **Contexto**
 Evitar inconsistência e erro humano em identificadores usados no dia a dia.
 
 **Consequências**
 
-* Lógica no model
-* Campo oculto na UI
-* Testes de geração, colisão e imutabilidade
+* Lógica no model.
+* Campo oculto/derivado na UI quando aplicável.
+* Testes de geração, colisão e imutabilidade.
 
 ---
 
 ## 2026-02-03 — Tipos de Equipamento como cadastro mestre por categoria
 
 **Decisão**
-Criar `TipoEquipamento` como entidade de Registry vinculada à Categoria,
-substituindo texto livre em `ItemKit.tipo`.
+Criar `TipoEquipamento` como entidade de Registry vinculada à Categoria, substituindo texto livre em itens do Kit.
 
 **Contexto**
 Texto livre gera inconsistência e dificulta histórico.
 
 **Consequências**
 
-* Novo model e migração
-* Forms e testes atualizados
-* Integridade referencial garantida
+* Novo model e migração.
+* Forms e testes atualizados.
+* Integridade referencial garantida.
 
 ---
 
-## ADR — 2026-02-03 — Padronização de códigos (internos vs externos)
+## 2026-02-03 — Padronização de códigos (internos vs externos)
 
 **Status:** Proposto
 
 **Decisão**
 Diferenciar:
 
-* **Códigos externos** (ex.: Loja/Java) — manuais/importados
-* **Códigos internos** (ex.: Equipamento, TipoEquipamento) — automáticos
+* **Códigos externos** (ex.: Loja/Java) — manuais/importados.
+* **Códigos internos** (ex.: Equipamento, TipoEquipamento) — automáticos.
 
 **Contexto**
 Evitar confusão entre identificadores operacionais e internos do Registry.
 
 **Consequências**
 
-* UI trata códigos conforme tipo
-* Testes específicos por categoria
-* Maior clareza e segurança para integrações
+* UI trata códigos conforme tipo.
+* Testes específicos por categoria.
+* Maior clareza e segurança para integrações.
+
 ---
 
 ## 2026-02-03 — Cadastro mestre de Kit e KitItem (Registry)
 
 **Decisão**
 Adicionar entidades de cadastro mestre:
-- **Kit**: conjunto padronizado usado em fluxos operacionais
-- **KitItem**: itens que compõem um Kit, com quantidade e ordenação
+
+* **Kit:** conjunto padronizado usado em fluxos operacionais.
+* **KitItem:** itens que compõem um Kit, com quantidade e ordenação.
 
 **Contexto**
-Precisamos representar kits padronizados para apoiar o fluxo de chamados, garantindo governança e reutilização.
-Como é informação relativamente estável e de referência, pertence ao **Registry** e não à camada Operation.
+Precisamos representar kits padronizados para apoiar o fluxo de chamados, garantindo governança e reutilização. Como é informação relativamente estável e de referência, pertence ao **Registry**.
 
 **Consequências**
-- Operation poderá referenciar Kit (no futuro) sem criar dependência inversa.
-- Validaremos unicidade de código de Kit e integridade de KitItem (quantidade mínima, ordenação).
-- CRUD será exposto via Django (camada de entrega), sem regras de negócio dentro de views/models além de validações simples.
+
+* Operation poderá referenciar Kit (no futuro) sem criar dependência inversa.
+* Validamos integridade de KitItem (quantidade mínima, ordenação).
+* CRUD exposto via Django (camada de entrega), mantendo regras de negócio fora de views.
 
 ---
 
-## 2026-02-03 — Configuração (IP) é decisão do Chamado, não do Kit
+## 2026-02-03 — Configuração (ex.: IP) é decisão do Chamado, não do Kit
+
+**Status:** Aceito (ajuste de entendimento)
 
 **Decisão**
-A necessidade de configuração (ex: exigir IP) será definida na execução do Chamado, e não imposta pelo cadastro de Kit/ItemKit.
+A necessidade de configuração operacional (ex.: exigir IP) é decidida na execução do **Chamado** e não imposta pelo cadastro de Kit/KitItem.
 
 **Contexto**
-No cadastro atual, `ItemKit.requer_configuracao` define itens que exigem configuração. Porém, a regra de negócio exige que a configuração seja decidida no momento de montagem/execução do Chamado (pode variar por loja, cenário e orientação da OPF).
+No cadastro, um kit pode sugerir que um item costuma precisar de configuração, mas a obrigatoriedade varia por cenário/loja/orientação e deve ser avaliada no momento da execução.
 
 **Consequências**
-- `InstalacaoItem` passa a ter o campo `deve_configurar` (bool).
-- Campos operacionais como `ip` ficam na execução.
-- O cadastro pode opcionalmente manter um campo de sugestão (`sugere_configuracao`) sem caráter obrigatório.
-- A validação de finalização exigirá configuração somente quando `deve_configurar=True`.
 
+* Campo operacional `deve_configurar` vive na execução.
+* Campos operacionais como `ip` ficam na execução.
+* O cadastro pode manter campo de sugestão (`sugere_configuracao`) sem caráter obrigatório.
+* A validação de finalização exige configuração somente quando `deve_configurar=True`.
 
 ---
 
 ## 2026-02-03 — Gate de NF e critérios de fechamento do Chamado
 
 **Decisão**
-O Chamado só será liberado para NF quando todos os itens rastreáveis estiverem bipados e todos os itens contáveis confirmados. O fechamento do Chamado exigirá número de NF e confirmação de coleta.
+O Chamado só será liberado para NF quando todos os itens rastreáveis estiverem bipados e todos os itens contáveis confirmados. O fechamento do Chamado exige NF e confirmação de coleta quando aplicável.
 
 **Contexto**
-A emissão da NF de saída depende da bipagem completa do kit e da conferência dos itens na caixa. Além disso, o Chamado não pode ser encerrado sem NF e sem confirmação de coleta pela transportadora.
+A emissão da NF de saída depende da bipagem completa do kit e da conferência dos itens. Além disso, o Chamado não pode ser encerrado sem evidências mínimas do processo.
 
 **Consequências**
-- Implementar método/flag de liberação para NF no `Chamado`.
-- Incluir campos: `nf_pedido_numero`, `nf_saida_numero` (já existe), e controle de coleta (`coleta_solicitada_em`, `coleta_confirmada_em`).
-- `finalizar()` passa a validar NF e coleta para ENVIO.
+
+* Implementar método/flag de liberação para NF no `Chamado`.
+* Campos de NF e controle de coleta conforme fluxo.
+* `finalizar()` valida pré-condições do status (ex.: ENVIO).
 
 ---
+
 ## 2026-02-03 — `InstalacaoItem` referencia `TipoEquipamento` via FK
 
 **Decisão**
 Alterar `InstalacaoItem.tipo` de string para `ForeignKey` para `TipoEquipamento`.
 
 **Contexto**
-`ItemKit.tipo` já é FK para `TipoEquipamento`, mas a execução armazenava esse dado como texto. Para garantir consistência, filtros e regras estáveis, a execução deve referenciar o mesmo cadastro mestre.
+Itens de cadastro e execução precisam referenciar o mesmo cadastro mestre para consistência, filtros e regras estáveis.
 
 **Consequências**
-- Migração de schema e ajuste na criação de itens (`gerar_itens_de_instalacao`).
-- Ajuste de telas/serialização onde `tipo` era tratado como string.
+
+* Migração de schema e ajuste na criação de itens.
+* Ajuste de telas/serialização onde `tipo` era tratado como string.
+
+---
+
+## 2026-02-04 — Tipos de equipamento só existem no contexto de uma Categoria
+
+**Status:** Aceito
+
+**Decisão**
+O cadastro de **TipoEquipamento** deve acontecer exclusivamente **dentro do fluxo de Categoria** (inline no update da Categoria). Não haverá criação “solta” de Tipo sem Categoria.
+
+**Contexto**
+Tipos sem Categoria (ou categorias sem tipos mínimos) geram selects vazios e inconsistência na abertura de Chamados. Como `TipoEquipamento` é um cadastro mestre, ele deve ser governado por Categoria para garantir consistência do Registry.
+
+**Consequências**
+
+* UI: fluxo padrão é **criar Categoria → cadastrar Tipos** (na mesma tela).
+* Evita cadastro de Tipo sem Categoria e reduz “tipos vazios” no Chamado.
+* Testes de view devem cobrir: atualização de Categoria com formset de Tipos e validações mínimas.
+* Qualquer shortcut (quick-create) deve garantir Categoria persistida antes de permitir Tipos.
+
+---
+
+## Decisões pendentes de implementação
+
+Esta seção lista decisões **já registradas** neste documento que ainda não foram totalmente implementadas no código. O objetivo é dar visibilidade e evitar esquecimento, sem criar novas regras.
+
+### 1) Padronização de códigos (internos vs externos)
+
+* **Referência:** 2026-02-03 — Padronização de códigos (internos vs externos)
+* **Status atual:** Proposto
+* **Pendente:**
+
+  * Consolidar comportamento na UI (inputs, readonly, hints)
+  * Garantir cobertura de testes para cada tipo de código
+
+### 2) Tipos de equipamento governados por Categoria
+
+* **Referência:** 2026-02-04 — Tipos de equipamento só existem no contexto de uma Categoria
+* **Status atual:** Aceito
+* **Pendente:**
+
+  * Garantir que não exista fluxo de criação de Tipo fora da Categoria
+  * Adicionar validação mínima (Categoria com ao menos 1 Tipo ativo, quando aplicável)
+  * Testes de view cobrindo atualização de Categoria + Tipos
+
+### 3) Consolidação de itens duplicados na edição de Kit (UX)
+
+* **Referência:** Discussão técnica (ainda sem ADR)
+* **Status atual:** Em avaliação
+* **Pendente:**
+
+  * Decidir entre bloquear duplicidade ou fazer merge automático de quantidades
+  * Caso aceito, registrar ADR específica
+  * Implementar testes de formset para edição de Kit
+
+  
+---
+## 2026-02-04 — Adoção de testes JavaScript com Jest
+
+**Decisão**  
+Adotar Jest + jsdom para testes de JavaScript no frontend.
+
+**Contexto**  
+Lógicas críticas em formulários dinâmicos não podem ser validadas apenas
+por testes backend.
+
+**Consequências**  
+- Introdução de Node/npm como dependência de desenvolvimento
+- Testes JS isolados da stack Python
+
+---
+## 2026-02-04 — Testes de JavaScript com Jest
+
+**Decisão**
+Adotar Jest + jsdom para testar JS puro do frontend (formsets dinâmicos).
+
+**Contexto**
+O bug do “tipo vazio” em linhas adicionadas dinamicamente não era coberto por testes backend.
+
+**Consequências**
+- Node/npm passam a ser dependência de desenvolvimento
+- Testes JS ficam próximos aos arquivos estáticos do app
+- Makefile integra `pytest` + `jest`

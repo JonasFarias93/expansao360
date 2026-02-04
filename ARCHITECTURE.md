@@ -225,3 +225,12 @@ O EXPANSÃO360 é projetado para **resistir ao tempo**:
 
 A arquitetura privilegia clareza, governança
 e evolução contínua com baixo risco.
+
+---
+## Testes JavaScript
+
+O projeto utiliza Jest + jsdom para validar comportamentos críticos de
+JavaScript puro (sem framework), especialmente em formulários dinâmicos.
+
+Os testes ficam próximos aos arquivos estáticos de cada app Django e são
+executados via `npm run test:js`, integrados ao Makefile.

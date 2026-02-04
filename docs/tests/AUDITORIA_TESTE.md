@@ -226,3 +226,14 @@ Criar ADR apenas se decidir:
 ---
 
 **Status geral:** suíte saudável, rápida, com pouquíssima dívida técnica em testes.
+
+---
+
+## Testes JavaScript (Frontend)
+
+- Local: `web/cadastro/static/cadastro/js/__tests__/`
+- Runner: Jest (jsdom)
+- Comandos:
+  - `npm run test:js`
+  - `npm run test:js:watch`
+  - `make test` (roda Python + JS)
