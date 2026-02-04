@@ -1,8 +1,20 @@
 # web/cadastro/forms.py
+from __future__ import annotations
+
 from django import forms
 from django.forms import inlineformset_factory
+from django.urls import reverse_lazy
 
-from .models import Categoria, Equipamento, ItemKit, Kit, Loja, Projeto, Subprojeto, TipoEquipamento
+from .models import (
+    Categoria,
+    Equipamento,
+    ItemKit,
+    Kit,
+    Loja,
+    Projeto,
+    Subprojeto,
+    TipoEquipamento,
+)
 
 # ==========================
 # Tailwind helpers (MVP)
@@ -27,6 +39,7 @@ def apply_tailwind_styles(form: forms.Form) -> None:
             widget.attrs["class"] = BASE_CHECKBOX_CSS
             continue
 
+        # ✅ Python 3.10+: `isinstance` aceita `X | Y`
         if isinstance(widget, forms.Select | forms.SelectMultiple):
             widget.attrs["class"] = BASE_SELECT_CSS
             continue
@@ -149,30 +162,48 @@ class ItemKitForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+        self.fields["equipamento"].widget.attrs.update(
+            {
+                "hx-get": reverse_lazy("registry:ajax_tipos_por_equipamento"),
+                "hx-trigger": "change",
+                "hx-target": f"#id_{self.prefix}-tipo",
+                "hx-swap": "innerHTML",
+            }
+        )
+
         # default: vazio (evita escolher tipo errado antes de selecionar equipamento)
         self.fields["tipo"].queryset = TipoEquipamento.objects.none()
+
+        def _set_tipos_por_equipamento(equip: Equipamento | None) -> None:
+            """
+            TipoEquipamento pertence a Categoria, então filtramos por:
+              equipamento.categoria -> tipos ativos
+            """
+            if not equip or not getattr(equip, "categoria_id", None):
+                self.fields["tipo"].queryset = TipoEquipamento.objects.none()
+                return
+
+            self.fields["tipo"].queryset = TipoEquipamento.objects.filter(
+                categoria_id=equip.categoria_id,
+                ativo=True,
+            ).order_by("nome")
 
         # Caso 1: edição (instance já tem equipamento)
         equipamento = getattr(self.instance, "equipamento", None)
         if equipamento is not None and getattr(equipamento, "id", None):
-            self.fields["tipo"].queryset = TipoEquipamento.objects.filter(
-                categoria=equipamento.categoria,
-                ativo=True,
-            ).order_by("nome")
+            _set_tipos_por_equipamento(equipamento)
 
         # Caso 2: POST (usuário selecionou equipamento no form)
         if self.data:
             equipamento_key = f"{self.prefix}-equipamento"
             equip_id = self.data.get(equipamento_key)
+
             if equip_id:
                 try:
                     equip = Equipamento.objects.select_related("categoria").get(id=int(equip_id))
-                    self.fields["tipo"].queryset = TipoEquipamento.objects.filter(
-                        categoria=equip.categoria,
-                        ativo=True,
-                    ).order_by("nome")
+                    _set_tipos_por_equipamento(equip)
                 except (ValueError, Equipamento.DoesNotExist):
-                    pass
+                    self.fields["tipo"].queryset = TipoEquipamento.objects.none()
 
         apply_tailwind_styles(self)
 
