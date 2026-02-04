@@ -76,7 +76,7 @@ class Chamado(models.Model):
                     {"chamado_origem": "Chamado não pode ser origem de si mesmo."}
                 )
 
-            # garante origem finalizada (se objeto ainda não carregado, busca)
+            # garante origem finalizada
             origem = self.chamado_origem
             if origem and origem.status != self.Status.FINALIZADO:
                 raise ValidationError(
@@ -93,38 +93,86 @@ class Chamado(models.Model):
     # geração de itens do chamado
     # -------------------------
     def gerar_itens_de_instalacao(self) -> None:
+        """
+        Gera itens do chamado a partir do kit.
+        - Itens rastreáveis (equipamento.tem_ativo=True): explode em linhas unitárias para bipagem.
+        - Itens contáveis (equipamento.tem_ativo=False): cria linha agregada com quantidade.
+        """
         if self.itens.exists():
             return
 
         for item_kit in self.kit.itens.select_related("equipamento").all():
             eq = item_kit.equipamento
 
-            # rastreável: explode em linhas unitárias para permitir bipagem por unidade
             if eq.tem_ativo:
+                # rastreável: 1 linha por unidade
                 for _ in range(item_kit.quantidade):
                     InstalacaoItem.objects.create(
                         chamado=self,
                         equipamento=eq,
-                        tipo=item_kit.tipo,
+                        tipo=str(item_kit.tipo),
                         quantidade=1,
                         tem_ativo=True,
+                        # compatibilidade: persistimos info do kit,
+                        # mas obrigatoriedade é via deve_configurar.
                         requer_configuracao=item_kit.requer_configuracao,
                     )
             else:
-                # contável: uma linha com quantidade agregada
+                # contável: 1 linha agregada
                 InstalacaoItem.objects.create(
                     chamado=self,
                     equipamento=eq,
-                    tipo=item_kit.tipo,
+                    tipo=str(item_kit.tipo),
                     quantidade=item_kit.quantidade,
                     tem_ativo=False,
                     requer_configuracao=item_kit.requer_configuracao,
                 )
 
+    def pode_liberar_nf(self) -> bool:
+        """
+        Gate de NF (ENVIO):
+        - precisa ter itens gerados
+        - todo item rastreável (tem_ativo=True) deve ter ativo + numero_serie
+        - todo item contável (tem_ativo=False) deve estar confirmado
+        Configuração (IP) NÃO entra neste gate.
+        """
+        if self.tipo != self.Tipo.ENVIO:
+            return False
+
+        qs = self.itens.all()
+        if not qs.exists():
+            return False
+
+        for item in qs:
+            if item.tem_ativo:
+                if not (item.ativo or "").strip() or not (item.numero_serie or "").strip():
+                    return False
+            else:
+                if not item.confirmado:
+                    return False
+
+        return True
+
     # ----------
     # finalizar
     # ----------
     def finalizar(self) -> None:
+        """
+        Finaliza o chamado aplicando regras de validação.
+
+        ENVIO:
+        - Itens rastreáveis: exige ativo + número de série.
+        - Itens contáveis: exige confirmado=True.
+        - Configuração: EXIGIDA APENAS quando item.deve_configurar=True
+          (decisão operacional do chamado), exigindo:
+            - status_configuracao=CONFIGURADO
+            - ip preenchido
+
+        RETORNO:
+        - Exige desfecho (status_retorno).
+        - NAO_RETORNADO exige motivo.
+        - RETORNADO rastreável exige ativo + número de série.
+        """
         if self.status == self.Status.FINALIZADO:
             raise ValidationError("Chamado já está finalizado.")
 
@@ -139,27 +187,32 @@ class Chamado(models.Model):
         # ==========================
         if self.tipo == self.Tipo.ENVIO:
             for item in itens:
-                # regra: se requer configuração, precisa estar CONFIGURADO
-                if (
-                    item.requer_configuracao
-                    and item.status_configuracao != StatusConfiguracao.CONFIGURADO
-                ):
-                    erros.append(
-                        "Não é possível finalizar: "
-                        f"'{item.equipamento.nome} {item.tipo}' ainda não foi marcado como "
-                        "CONFIGURADO."
-                    )
+                # ✅ NOVA REGRA:
+                # configuração é decisão do chamado (deve_configurar),
+                # não obrigatoriamente do cadastro (requer_configuracao).
+                if item.deve_configurar:
+                    if item.status_configuracao != StatusConfiguracao.CONFIGURADO:
+                        erros.append(
+                            "Não é possível finalizar: "
+                            f"'{item.equipamento.nome} {item.tipo}' ainda não foi marcado como "
+                            "CONFIGURADO."
+                        )
+                    if not item.ip:
+                        erros.append(
+                            "Não é possível finalizar: "
+                            f"'{item.equipamento.nome} {item.tipo}' exige IP (configuração)."
+                        )
 
                 # regra: se rastreável, exige ativo e número de série
                 if item.tem_ativo:
-                    if not item.ativo.strip() or not item.numero_serie.strip():
+                    if not (item.ativo or "").strip() or not (item.numero_serie or "").strip():
                         erros.append(
                             "Item rastreável "
                             f"'{item.equipamento.nome} {item.tipo}' "
                             "exige Ativo e Número de Série."
                         )
-                # regra: se contável, exige confirmação
                 else:
+                    # regra: se contável, exige confirmação
                     if not item.confirmado:
                         erros.append(
                             f"Item contável '{item.equipamento.nome} {item.tipo}' "
@@ -171,28 +224,23 @@ class Chamado(models.Model):
         # ==========================
         elif self.tipo == self.Tipo.RETORNO:
             for item in itens:
-                # regra: todo item precisa de desfecho
                 if not item.status_retorno:
                     erros.append(
                         f"Defina o desfecho de retorno para '{item.equipamento.nome} {item.tipo}'."
                     )
                     continue
 
-                # regra: NAO_RETORNADO exige motivo
                 if item.status_retorno == item.StatusRetorno.NAO_RETORNADO:
-                    if not item.motivo_nao_retorno.strip():
+                    if not (item.motivo_nao_retorno or "").strip():
                         erros.append(
                             "Informe o motivo do não retorno para "
                             f"'{item.equipamento.nome} {item.tipo}'."
                         )
-
-                    # não exige ativo/série em não-retorno
                     continue
 
-                # regra: RETORNADO — se rastreável, exige ativo e número de série
                 if item.status_retorno == item.StatusRetorno.RETORNADO:
                     if item.tem_ativo:
-                        if not item.ativo.strip() or not item.numero_serie.strip():
+                        if not (item.ativo or "").strip() or not (item.numero_serie or "").strip():
                             erros.append(
                                 "Item rastreável retornado "
                                 f"'{item.equipamento.nome} {item.tipo}' "
@@ -205,7 +253,6 @@ class Chamado(models.Model):
         if erros:
             raise ValidationError(erros)
 
-        # finaliza
         self.status = self.Status.FINALIZADO
         self.finalizado_em = timezone.now()
         self.save(update_fields=["status", "finalizado_em"])
@@ -214,23 +261,19 @@ class Chamado(models.Model):
     # salvar / gerar protocolo
     # -----------------------
     def save(self, *args, **kwargs):  # type: ignore[override]
-        # se já tem protocolo, salva normal
         if self.protocolo:
             return super().save(*args, **kwargs)
 
         data = timezone.now().strftime("%Y%m%d")
 
-        # tenta algumas vezes evitar colisão do unique
         for _ in range(5):
             self.protocolo = f"EX360-{data}-{secrets.token_hex(3).upper()}"
             try:
                 with transaction.atomic():
                     return super().save(*args, **kwargs)
             except IntegrityError:
-                # colisão do unique, tenta de novo
                 self.protocolo = ""
 
-        # se falhar várias vezes, deixa o erro subir (melhor do que salvar inconsistente)
         return super().save(*args, **kwargs)
 
 
@@ -251,10 +294,20 @@ class InstalacaoItem(models.Model):
     tem_ativo = models.BooleanField()
     confirmado = models.BooleanField(default=False)
 
+    # compatibilidade com o kit (pode virar "sugere_configuracao" no futuro)
     requer_configuracao = models.BooleanField(
         default=False,
-        help_text="Define se o item necessita de configuração técnica após instalação.",
+        help_text="(Compat) Informação vinda do kit. A obrigatoriedade é decidida no chamado.",
     )
+
+    # decisão do chamado
+    deve_configurar = models.BooleanField(
+        default=False,
+        help_text="Decisão do chamado: este item deve ser configurado?",
+    )
+
+    # IP (somente quando deve_configurar=True)
+    ip = models.GenericIPAddressField(null=True, blank=True)
 
     status_configuracao = models.CharField(
         max_length=20,
