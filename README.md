@@ -37,7 +37,7 @@ O foco do sistema é **rastreabilidade, consistência e evolução segura** dos 
 * Registro de **Evidências** (NF, Carta de Conteúdo, exceções)
 * IAM mínimo baseado em **capabilities**
 * Camada Web (Django) funcional
-* CLI funcional (modo apresentação)
+* CLI **experimental** como interface de referência do core
 * Testes automatizados e hooks de qualidade (ruff, black, pre-commit)
 
 ---
@@ -119,13 +119,34 @@ conda activate expansao360
 
 ---
 
-## CLI (interface de referência / demonstração)
+## CLI (experimental / interface de referência)
+
+A CLI existe como **interface de referência** para demonstrar o core em camadas
+(Domain / Application / Infrastructure) funcionando **sem a camada Web**.
+
+> **Status:** experimental
+>
+> A CLI pode não refletir todas as regras, fluxos e validações do sistema Web (Django).
+> O produto principal e a fonte da verdade operacional/administrativa é a **camada Web**.
+
+Use a CLI quando for útil para:
+
+* validações rápidas do core
+* demonstrações e experimentos locais
+* testes manuais fora do contexto Web
 
 ```bash
 python -m expansao360 --help
 python -m expansao360 location --help
 python -m expansao360 mount --help
 ```
+
+### Nota sobre futuras integrações (APIs)
+
+Integrações externas (ex.: transportadoras, sistemas parceiros) devem ser implementadas
+como **adapters (APIs/serviços)** consumindo os mesmos **use cases** do core.
+
+A existência do CLI **não é pré-requisito** para APIs.
 
 ---
 

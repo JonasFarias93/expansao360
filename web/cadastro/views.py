@@ -1,27 +1,68 @@
 # web/cadastro/views.py
+
 from django.contrib import messages
 from django.db.models import IntegerField
 from django.db.models.functions import Cast
-from django.shortcuts import redirect, render
+from django.http import JsonResponse
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
 from django.views import View
+from django.views.decorators.http import require_GET
 from django.views.generic import CreateView, ListView, TemplateView, UpdateView
 from iam.mixins import CapabilityRequiredMixin
 
 from .forms import (
+    CategoriaForm,
     EquipamentoForm,
     ItemKitFormSet,
     KitForm,
     LojaForm,
     ProjetoForm,
     SubprojetoForm,
+    TipoEquipamentoFormSet,
 )
-from .models import Categoria, Equipamento, Kit, Loja, Projeto, Subprojeto
+from .models import Categoria, Equipamento, Kit, Loja, Projeto, Subprojeto, TipoEquipamento
 
 
-class CadastroHomeView(CapabilityRequiredMixin, TemplateView):
+class CadastroHomeView(TemplateView):
     template_name = "cadastro/home.html"
-    required_capability = "cadastro.visualizar"
+
+
+# ============================
+# AJAX: TIPOS POR EQUIPAMENTO
+# ============================
+
+
+@require_GET
+def tipos_por_equipamento(request):
+    equipamento_id = (request.GET.get("equipamento_id") or "").strip()
+
+    # compat antigo: ?equipamento=123
+    if not equipamento_id:
+        equipamento_id = (request.GET.get("equipamento") or "").strip()
+
+    # compat formset: ?itens-0-equipamento=123
+    if not equipamento_id:
+        for k, v in request.GET.items():
+            if k.endswith("-equipamento"):
+                equipamento_id = (v or "").strip()
+                break
+
+    if not equipamento_id.isdigit():
+        return JsonResponse([], safe=False)
+
+    equipamento = get_object_or_404(
+        Equipamento.objects.select_related("categoria"),
+        pk=int(equipamento_id),
+    )
+
+    tipos = (
+        TipoEquipamento.objects.filter(categoria=equipamento.categoria, disponivel=True)
+        .order_by("nome")
+        .values("id", "nome")
+    )
+
+    return JsonResponse(list(tipos), safe=False)
 
 
 # -----------------------
@@ -235,6 +276,66 @@ class CategoriaCreateQuickView(CapabilityRequiredMixin, View):
 
 
 # -----------------------
+# CATEGORIAS (CRUD + tipos inline)
+# -----------------------
+class CategoriaListView(CapabilityRequiredMixin, ListView):
+    model = Categoria
+    template_name = "cadastro/categorias_list.html"
+    context_object_name = "categorias"
+    ordering = ["nome"]
+    required_capability = "cadastro.visualizar"
+
+
+class CategoriaCreateView(CapabilityRequiredMixin, CreateView):
+    model = Categoria
+    form_class = CategoriaForm
+    template_name = "cadastro/categorias_form.html"
+    required_capability = "cadastro.editar"
+
+    def get_success_url(self):
+        return reverse_lazy("registry:categoria_update", kwargs={"pk": self.object.pk})
+
+    def form_valid(self, form):
+        messages.success(self.request, "Categoria criada. Agora cadastre os tipos.")
+        return super().form_valid(form)
+
+
+class CategoriaUpdateView(CapabilityRequiredMixin, UpdateView):
+    model = Categoria
+    form_class = CategoriaForm
+    template_name = "cadastro/categorias_update.html"
+    success_url = reverse_lazy("registry:categoria_list")
+    required_capability = "cadastro.editar"
+
+    def get(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        form = self.get_form()
+        formset = TipoEquipamentoFormSet(instance=self.object)
+        return render(
+            request,
+            self.template_name,
+            {"form": form, "formset": formset, "categoria": self.object},
+        )
+
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        form = self.get_form()
+        formset = TipoEquipamentoFormSet(request.POST, instance=self.object)
+
+        if form.is_valid() and formset.is_valid():
+            form.save()
+            formset.save()
+            messages.success(request, "Categoria e tipos atualizados com sucesso.")
+            return redirect(self.success_url)
+
+        return render(
+            request,
+            self.template_name,
+            {"form": form, "formset": formset, "categoria": self.object},
+        )
+
+
+# -----------------------
 # KITS (com itens inline)
 # -----------------------
 class KitListView(CapabilityRequiredMixin, ListView):
@@ -252,7 +353,6 @@ class KitCreateView(CapabilityRequiredMixin, CreateView):
     required_capability = "cadastro.editar"
 
     def get_success_url(self):
-        # após criar, já vai pra tela de editar (pra adicionar itens)
         return reverse_lazy("registry:kit_update", kwargs={"pk": self.object.pk})
 
     def form_valid(self, form):

@@ -1,4 +1,7 @@
+{# web/cadastro/templates/cadastro/equipamentos_create.html #}
 {% extends "base.html" %}
+{% load static %}
+
 {% block title %}Novo Equipamento — Cadastro{% endblock %}
 
 {% block content %}
@@ -20,11 +23,18 @@
       <div>
         <div class="flex items-center justify-between">
           {{ form.categoria.label_tag }}
-          <button type="button" id="btn-open-modal" class="text-sm text-indigo-600 hover:underline">
+          <button
+            type="button"
+            id="btn-open-modal"
+            data-modal="categoria"
+            class="text-sm text-indigo-600 hover:underline"
+          >
             + Nova categoria
           </button>
         </div>
+
         {{ form.categoria }}
+
         {% if form.categoria.errors %}
           <div class="text-sm text-red-600 mt-1">{{ form.categoria.errors }}</div>
         {% endif %}
@@ -40,57 +50,56 @@
       </div>
 
       <div class="pt-2 flex justify-end gap-2">
-        <a href="{% url 'registry:equipamento_list' %}" class="px-4 py-2 border rounded-lg hover:bg-slate-50 text-sm">Cancelar</a>
-        <button class="px-4 py-2 rounded-lg bg-slate-900 text-white hover:bg-slate-800 text-sm">Salvar</button>
+        <a
+          href="{% url 'registry:equipamento_list' %}"
+          class="px-4 py-2 border rounded-lg hover:bg-slate-50 text-sm"
+        >
+          Cancelar
+        </a>
+        <button class="px-4 py-2 rounded-lg bg-slate-900 text-white hover:bg-slate-800 text-sm">
+          Salvar
+        </button>
       </div>
     </form>
   </div>
 
   {# Modal simples #}
-  <div id="modal" class="fixed inset-0 hidden items-center justify-center bg-black/50 p-4">
+  <div id="modal" class="fixed inset-0 hidden items-center justify-center bg-black/50 p-4" aria-hidden="true">
     <div class="bg-white rounded-2xl w-full max-w-md p-5 border border-slate-200 shadow">
       <div class="flex items-center justify-between">
         <div class="font-semibold">Nova categoria</div>
-        <button type="button" id="btn-close-modal" class="text-slate-500 hover:text-slate-900">✕</button>
+        <button type="button" id="btn-close-modal" class="text-slate-500 hover:text-slate-900" aria-label="Fechar">
+          ✕
+        </button>
       </div>
 
       <form method="post" action="{% url 'registry:categoria_create_quick' %}" class="mt-4 space-y-3">
         {% csrf_token %}
         <input type="hidden" name="next" value="{{ request.path }}">
+
         <div>
           <label class="block text-sm text-slate-700 mb-1">Nome</label>
-          <input name="nome" class="w-full rounded-lg border border-slate-300 px-3 py-2" placeholder="Ex: Periféricos" required />
+          <input
+            name="nome"
+            class="w-full rounded-lg border border-slate-300 px-3 py-2"
+            placeholder="Ex: Periféricos"
+            required
+          />
         </div>
+
         <div class="flex justify-end gap-2 pt-2">
-          <button type="button" id="btn-cancel" class="px-4 py-2 border rounded-lg hover:bg-slate-50 text-sm">Cancelar</button>
-          <button class="px-4 py-2 rounded-lg bg-slate-900 text-white hover:bg-slate-800 text-sm">Salvar</button>
+          <button type="button" id="btn-cancel" class="px-4 py-2 border rounded-lg hover:bg-slate-50 text-sm">
+            Cancelar
+          </button>
+          <button class="px-4 py-2 rounded-lg bg-slate-900 text-white hover:bg-slate-800 text-sm">
+            Salvar
+          </button>
         </div>
       </form>
     </div>
   </div>
+{% endblock %}
 
-  <script>
-    const modal = document.getElementById("modal");
-    const openBtn = document.getElementById("btn-open-modal");
-    const closeBtn = document.getElementById("btn-close-modal");
-    const cancelBtn = document.getElementById("btn-cancel");
-
-    function openModal() {
-      modal.classList.remove("hidden");
-      modal.classList.add("flex");
-    }
-
-    function closeModal() {
-      modal.classList.add("hidden");
-      modal.classList.remove("flex");
-    }
-
-    openBtn?.addEventListener("click", openModal);
-    closeBtn?.addEventListener("click", closeModal);
-    cancelBtn?.addEventListener("click", closeModal);
-
-    modal?.addEventListener("click", (e) => {
-      if (e.target === modal) closeModal();
-    });
-  </script>
+{% block extra_js %}
+  <script src="{% static 'cadastro/js/equipamentos_create.js' %}"></script>
 {% endblock %}

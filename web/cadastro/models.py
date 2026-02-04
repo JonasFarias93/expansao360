@@ -1,3 +1,6 @@
+# web/cadastro/models.py
+import re
+
 from django.core.exceptions import ValidationError
 from django.db import models
 
@@ -13,10 +16,29 @@ class Categoria(models.Model):
         return self.nome
 
 
+def _normalize_code(value: str) -> str:
+    """
+    Gera um código interno estável:
+    - trim
+    - uppercase
+    - espaços/traços -> underscore
+    - remove caracteres inválidos (mantém A-Z, 0-9, _)
+    """
+    value = (value or "").strip().upper()
+    value = re.sub(r"[\s\-]+", "_", value)
+    value = re.sub(r"[^A-Z0-9_]", "", value)
+    value = re.sub(r"_+", "_", value).strip("_")
+    return value
+
+
 class Equipamento(models.Model):
     codigo = models.CharField(max_length=50, unique=True)  # MICRO, MONITOR
     nome = models.CharField(max_length=120)  # Micro, Monitor
-    categoria = models.ForeignKey(Categoria, on_delete=models.PROTECT, related_name="equipamentos")
+    categoria = models.ForeignKey(
+        Categoria,
+        on_delete=models.PROTECT,
+        related_name="equipamentos",
+    )
     tem_ativo = models.BooleanField(default=True)
     configuravel = models.BooleanField(default=False)
 
@@ -25,6 +47,60 @@ class Equipamento(models.Model):
         verbose_name_plural = "Equipamentos"
 
     def __str__(self) -> str:
+        return f"{self.nome} ({self.codigo})"
+
+
+class TipoEquipamento(models.Model):
+    categoria = models.ForeignKey(
+        Categoria,
+        on_delete=models.PROTECT,
+        related_name="tipos",
+    )
+    # pode ficar vazio; o model gera automaticamente
+    codigo = models.CharField(max_length=50, blank=True)
+    nome = models.CharField(max_length=80)
+    disponivel = models.BooleanField(default=True)
+
+    class Meta:
+        verbose_name = "Tipo de Equipamento"
+        verbose_name_plural = "Tipos de Equipamento"
+        unique_together = ("categoria", "codigo")
+
+    def clean(self):
+        super().clean()
+        self.nome = (self.nome or "").strip()
+        self.save_normalize_only()
+
+    def save_normalize_only(self):
+        # normalização simples, sem bater no banco
+        self.codigo = (self.codigo or "").strip().upper()
+        self.nome = (self.nome or "").strip()
+
+    def save(self, *args, **kwargs):  # type: ignore[override]
+        self.nome = (self.nome or "").strip()
+
+        # gera código se vazio
+        if not (self.codigo or "").strip():
+            base = _normalize_code(self.nome) or "TIPO"
+
+            code = base
+            i = 2
+            while (
+                TipoEquipamento.objects.filter(categoria=self.categoria, codigo=code)
+                .exclude(pk=self.pk)
+                .exists()
+            ):
+                code = f"{base}_{i}"
+                i += 1
+
+            self.codigo = code
+        else:
+            self.codigo = _normalize_code(self.codigo)
+
+        super().save(*args, **kwargs)
+
+    def __str__(self) -> str:
+        # ex: "PINPAD (PINPAD)" ou "PINPAD (PINPAD_2)"
         return f"{self.nome} ({self.codigo})"
 
 
@@ -47,12 +123,10 @@ class Loja(models.Model):
 
     def clean(self):
         super().clean()
-        # validação apenas (normalização fica no save)
         if self.uf and len(self.uf.strip()) != 2:
             raise ValidationError({"uf": "UF deve ter 2 caracteres."})
 
     def save(self, *args, **kwargs):  # type: ignore[override]
-        # normalizações leves e seguras (sempre aplicadas)
         self.codigo = (self.codigo or "").strip()
         self.nome = (self.nome or "").strip()
 
@@ -111,8 +185,8 @@ class Kit(models.Model):
 
 class ItemKit(models.Model):
     kit = models.ForeignKey(Kit, on_delete=models.CASCADE, related_name="itens")
-    equipamento = models.ForeignKey(Equipamento, on_delete=models.PROTECT)
-    tipo = models.CharField(max_length=80)  # PDV, TOUCH, etc
+    equipamento = models.ForeignKey("Equipamento", on_delete=models.PROTECT)
+    tipo = models.ForeignKey("TipoEquipamento", on_delete=models.PROTECT)
     quantidade = models.PositiveIntegerField()
     requer_configuracao = models.BooleanField(
         default=False,
@@ -126,7 +200,7 @@ class ItemKit(models.Model):
 
     @property
     def nome_exibicao(self) -> str:
-        return f"{self.equipamento.nome} {self.tipo}".strip()
+        return f"{self.equipamento.nome} {self.tipo.nome}".strip()
 
     def __str__(self) -> str:
         return f"{self.nome_exibicao} ({self.quantidade})"

@@ -1,0 +1,12 @@
+{
+  "private": true,
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0"
+  },
+  "scripts": {
+    "test": "npm run test:js",
+    "test:js": "jest",
+    "test:js:watch": "jest --watch"
+  }
+}
