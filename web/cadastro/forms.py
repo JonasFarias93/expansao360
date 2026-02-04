@@ -185,7 +185,7 @@ class ItemKitForm(forms.ModelForm):
 
             self.fields["tipo"].queryset = TipoEquipamento.objects.filter(
                 categoria_id=equip.categoria_id,
-                ativo=True,
+                disponivel=True,
             ).order_by("nome")
 
         # Caso 1: edição (instance já tem equipamento)
@@ -224,7 +224,7 @@ ItemKitFormSet = inlineformset_factory(
 class TipoEquipamentoForm(forms.ModelForm):
     class Meta:
         model = TipoEquipamento
-        fields = ["nome", "ativo"]  # ✅ sem codigo
+        fields = ["nome", "disponivel"]  # ✅ sem codigo
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -235,7 +235,7 @@ TipoEquipamentoFormSet = inlineformset_factory(
     parent_model=Categoria,
     model=TipoEquipamento,
     form=TipoEquipamentoForm,
-    fields=["nome", "ativo"],
+    fields=["nome", "disponivel"],
     extra=0,
     can_delete=True,
 )

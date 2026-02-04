@@ -59,7 +59,7 @@ class TipoEquipamento(models.Model):
     # pode ficar vazio; o model gera automaticamente
     codigo = models.CharField(max_length=50, blank=True)
     nome = models.CharField(max_length=80)
-    ativo = models.BooleanField(default=True)
+    disponivel = models.BooleanField(default=True)
 
     class Meta:
         verbose_name = "Tipo de Equipamento"

@@ -42,7 +42,9 @@
         <div class="mt-3">
           {{ formset.management_form }}
 
-          <div id="itens-container" class="space-y-3">
+          <div id="itens-container" 
+          class="space-y-3" 
+          data-tipos-url="{% url 'registry:ajax_tipos_por_equipamento' %}">
             {% for f in formset %}
               <div class="border rounded-xl p-4 bg-slate-50">
                 {# CRÍTICO: garante que o update reconheça o item existente (form-0-id) #}
@@ -133,8 +135,8 @@
   </div>
 {% endblock %}
 
-{# Se o base.html tiver block extra_js, já deixamos aqui pronto.
-   Se ainda não tiver, por enquanto você pode ignorar este bloco e depois a gente ajusta o base. #}
 {% block extra_js %}
+  <script src="{% static 'cadastro/js/tipos_formset.js' %}"></script>
   <script src="{% static 'cadastro/js/kits_formset.js' %}"></script>
 {% endblock %}
+

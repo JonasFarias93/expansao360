@@ -15,7 +15,7 @@ from .models import (
 class TipoEquipamentoInline(admin.TabularInline):
     model = TipoEquipamento
     extra = 1
-    fields = ("nome", "ativo", "codigo")
+    fields = ("nome", "disponivel", "codigo")
     readonly_fields = ("codigo",)
 
 
@@ -27,8 +27,8 @@ class CategoriaAdmin(admin.ModelAdmin):
 
 @admin.register(TipoEquipamento)
 class TipoEquipamentoAdmin(admin.ModelAdmin):
-    list_display = ("categoria", "nome", "codigo", "ativo")
-    list_filter = ("categoria", "ativo")
+    list_display = ("categoria", "nome", "codigo", "disponivel")
+    list_filter = ("categoria", "disponivel")
     search_fields = ("nome", "codigo", "categoria__nome")
 
 
@@ -36,7 +36,7 @@ class TipoEquipamentoAdmin(admin.ModelAdmin):
 class EquipamentoAdmin(admin.ModelAdmin):
     list_display = ("codigo", "nome", "categoria", "tem_ativo", "configuravel")
     list_filter = ("categoria", "tem_ativo", "configuravel")
-    search_fields = ("codigo", "nome")
+    search_fields = ("ativo", "nome")
 
 
 @admin.register(Loja)

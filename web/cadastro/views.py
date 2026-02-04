@@ -3,10 +3,9 @@
 from django.contrib import messages
 from django.db.models import IntegerField
 from django.db.models.functions import Cast
-from django.http import HttpResponse
-from django.shortcuts import redirect, render
+from django.http import JsonResponse
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
-from django.utils.html import escape
 from django.views import View
 from django.views.decorators.http import require_GET
 from django.views.generic import CreateView, ListView, TemplateView, UpdateView
@@ -36,33 +35,34 @@ class CadastroHomeView(TemplateView):
 
 @require_GET
 def tipos_por_equipamento(request):
-    equipamento_id = (request.GET.get("equipamento") or "").strip()
+    equipamento_id = (request.GET.get("equipamento_id") or "").strip()
 
-    # Suporte a formset (form-0-equipamento, form-1-equipamento, ...)
+    # compat antigo: ?equipamento=123
+    if not equipamento_id:
+        equipamento_id = (request.GET.get("equipamento") or "").strip()
+
+    # compat formset: ?itens-0-equipamento=123
     if not equipamento_id:
         for k, v in request.GET.items():
             if k.endswith("-equipamento"):
                 equipamento_id = (v or "").strip()
                 break
 
-    options = ['<option value="">---------</option>']
-
     if not equipamento_id.isdigit():
-        return HttpResponse("".join(options))
+        return JsonResponse([], safe=False)
 
-    try:
-        equipamento = Equipamento.objects.select_related("categoria").get(pk=int(equipamento_id))
-    except Equipamento.DoesNotExist:
-        return HttpResponse("".join(options))
-
-    tipos = TipoEquipamento.objects.filter(categoria=equipamento.categoria, ativo=True).order_by(
-        "nome"
+    equipamento = get_object_or_404(
+        Equipamento.objects.select_related("categoria"),
+        pk=int(equipamento_id),
     )
 
-    for t in tipos:
-        options.append(f'<option value="{t.pk}">{escape(str(t))}</option>')
+    tipos = (
+        TipoEquipamento.objects.filter(categoria=equipamento.categoria, disponivel=True)
+        .order_by("nome")
+        .values("id", "nome")
+    )
 
-    return HttpResponse("".join(options))
+    return JsonResponse(list(tipos), safe=False)
 
 
 # -----------------------

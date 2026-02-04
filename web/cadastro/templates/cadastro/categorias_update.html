@@ -47,7 +47,7 @@
             </p>
 
             <p class="text-xs text-slate-500 mt-2">
-              <strong>Ativo</strong>: disponível para uso em novos kits.<br />
+              <strong>Disponível</strong>: aparece para uso em novos kits.<br />
               <strong>Remover</strong>: apaga o tipo se ele <u>não estiver em uso</u>.
             </p>
           </div>
@@ -80,11 +80,11 @@
                 </div>
 
                 <div class="col-span-6 md:col-span-2">
-                  {{ f.ativo.label_tag }}
+                  {{ f.disponivel.label_tag }}
                   <div class="mt-2">
-                    {{ f.ativo }}
+                    {{ f.disponivel }}
                   </div>
-                  <div class="text-sm text-red-600 mt-1">{{ f.ativo.errors }}</div>
+                  <div class="text-sm text-red-600 mt-1">{{ f.disponivel.errors }}</div>
                 </div>
 
                 <div class="col-span-6 md:col-span-2">
@@ -122,9 +122,9 @@
               </div>
 
               <div class="col-span-6 md:col-span-2">
-                {{ formset.empty_form.ativo.label_tag }}
+                {{ formset.empty_form.disponivel.label_tag }}
                 <div class="mt-2">
-                  {{ formset.empty_form.ativo }}
+                  {{ formset.empty_form.disponivel }}
                 </div>
               </div>
 
