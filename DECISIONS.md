@@ -400,3 +400,65 @@ Evitar confusão entre identificadores operacionais e internos do Registry.
 * UI trata códigos conforme tipo
 * Testes específicos por categoria
 * Maior clareza e segurança para integrações
+---
+
+## 2026-02-03 — Cadastro mestre de Kit e KitItem (Registry)
+
+**Decisão**
+Adicionar entidades de cadastro mestre:
+- **Kit**: conjunto padronizado usado em fluxos operacionais
+- **KitItem**: itens que compõem um Kit, com quantidade e ordenação
+
+**Contexto**
+Precisamos representar kits padronizados para apoiar o fluxo de chamados, garantindo governança e reutilização.
+Como é informação relativamente estável e de referência, pertence ao **Registry** e não à camada Operation.
+
+**Consequências**
+- Operation poderá referenciar Kit (no futuro) sem criar dependência inversa.
+- Validaremos unicidade de código de Kit e integridade de KitItem (quantidade mínima, ordenação).
+- CRUD será exposto via Django (camada de entrega), sem regras de negócio dentro de views/models além de validações simples.
+
+---
+
+## 2026-02-03 — Configuração (IP) é decisão do Chamado, não do Kit
+
+**Decisão**
+A necessidade de configuração (ex: exigir IP) será definida na execução do Chamado, e não imposta pelo cadastro de Kit/ItemKit.
+
+**Contexto**
+No cadastro atual, `ItemKit.requer_configuracao` define itens que exigem configuração. Porém, a regra de negócio exige que a configuração seja decidida no momento de montagem/execução do Chamado (pode variar por loja, cenário e orientação da OPF).
+
+**Consequências**
+- `InstalacaoItem` passa a ter o campo `deve_configurar` (bool).
+- Campos operacionais como `ip` ficam na execução.
+- O cadastro pode opcionalmente manter um campo de sugestão (`sugere_configuracao`) sem caráter obrigatório.
+- A validação de finalização exigirá configuração somente quando `deve_configurar=True`.
+
+
+---
+
+## 2026-02-03 — Gate de NF e critérios de fechamento do Chamado
+
+**Decisão**
+O Chamado só será liberado para NF quando todos os itens rastreáveis estiverem bipados e todos os itens contáveis confirmados. O fechamento do Chamado exigirá número de NF e confirmação de coleta.
+
+**Contexto**
+A emissão da NF de saída depende da bipagem completa do kit e da conferência dos itens na caixa. Além disso, o Chamado não pode ser encerrado sem NF e sem confirmação de coleta pela transportadora.
+
+**Consequências**
+- Implementar método/flag de liberação para NF no `Chamado`.
+- Incluir campos: `nf_pedido_numero`, `nf_saida_numero` (já existe), e controle de coleta (`coleta_solicitada_em`, `coleta_confirmada_em`).
+- `finalizar()` passa a validar NF e coleta para ENVIO.
+
+---
+## 2026-02-03 — `InstalacaoItem` referencia `TipoEquipamento` via FK
+
+**Decisão**
+Alterar `InstalacaoItem.tipo` de string para `ForeignKey` para `TipoEquipamento`.
+
+**Contexto**
+`ItemKit.tipo` já é FK para `TipoEquipamento`, mas a execução armazenava esse dado como texto. Para garantir consistência, filtros e regras estáveis, a execução deve referenciar o mesmo cadastro mestre.
+
+**Consequências**
+- Migração de schema e ajuste na criação de itens (`gerar_itens_de_instalacao`).
+- Ajuste de telas/serialização onde `tipo` era tratado como string.
