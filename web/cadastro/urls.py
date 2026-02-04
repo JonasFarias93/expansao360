@@ -35,6 +35,11 @@ urlpatterns = [
     ),
     # Kits
     path("kits/novo/", views.KitCreateView.as_view(), name="kit_create"),
+    path(
+        "ajax/tipos-por-equipamento/",
+        views.tipos_por_equipamento,
+        name="ajax_tipos_por_equipamento",
+    ),
     # Equipamento
     path(
         "equipamentos/novo/",

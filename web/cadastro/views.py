@@ -1,10 +1,14 @@
 # web/cadastro/views.py
+
 from django.contrib import messages
 from django.db.models import IntegerField
 from django.db.models.functions import Cast
+from django.http import HttpResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse, reverse_lazy
+from django.utils.html import escape
 from django.views import View
+from django.views.decorators.http import require_GET
 from django.views.generic import CreateView, ListView, TemplateView, UpdateView
 from iam.mixins import CapabilityRequiredMixin
 
@@ -18,12 +22,47 @@ from .forms import (
     SubprojetoForm,
     TipoEquipamentoFormSet,
 )
-from .models import Categoria, Equipamento, Kit, Loja, Projeto, Subprojeto
+from .models import Categoria, Equipamento, Kit, Loja, Projeto, Subprojeto, TipoEquipamento
 
 
-class CadastroHomeView(CapabilityRequiredMixin, TemplateView):
+class CadastroHomeView(TemplateView):
     template_name = "cadastro/home.html"
-    required_capability = "cadastro.visualizar"
+
+
+# ============================
+# AJAX: TIPOS POR EQUIPAMENTO
+# ============================
+
+
+@require_GET
+def tipos_por_equipamento(request):
+    equipamento_id = (request.GET.get("equipamento") or "").strip()
+
+    # Suporte a formset (form-0-equipamento, form-1-equipamento, ...)
+    if not equipamento_id:
+        for k, v in request.GET.items():
+            if k.endswith("-equipamento"):
+                equipamento_id = (v or "").strip()
+                break
+
+    options = ['<option value="">---------</option>']
+
+    if not equipamento_id.isdigit():
+        return HttpResponse("".join(options))
+
+    try:
+        equipamento = Equipamento.objects.select_related("categoria").get(pk=int(equipamento_id))
+    except Equipamento.DoesNotExist:
+        return HttpResponse("".join(options))
+
+    tipos = TipoEquipamento.objects.filter(categoria=equipamento.categoria, ativo=True).order_by(
+        "nome"
+    )
+
+    for t in tipos:
+        options.append(f'<option value="{t.pk}">{escape(str(t))}</option>')
+
+    return HttpResponse("".join(options))
 
 
 # -----------------------
@@ -254,7 +293,6 @@ class CategoriaCreateView(CapabilityRequiredMixin, CreateView):
     required_capability = "cadastro.editar"
 
     def get_success_url(self):
-        # após criar, já vai pra edição (pra cadastrar tipos)
         return reverse_lazy("registry:categoria_update", kwargs={"pk": self.object.pk})
 
     def form_valid(self, form):
@@ -315,7 +353,6 @@ class KitCreateView(CapabilityRequiredMixin, CreateView):
     required_capability = "cadastro.editar"
 
     def get_success_url(self):
-        # após criar, já vai pra tela de editar (pra adicionar itens)
         return reverse_lazy("registry:kit_update", kwargs={"pk": self.object.pk})
 
     def form_valid(self, form):
