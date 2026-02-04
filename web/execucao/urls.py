@@ -26,6 +26,7 @@ urlpatterns = [
         views.ChamadoFinalizarView.as_view(),
         name="chamado_finalizar",
     ),
+    path("ajax/subprojetos/", views.subprojetos_por_projeto, name="ajax_subprojetos"),
     # EVIDÊNCIAS
     path(
         "chamados/<int:chamado_id>/evidencias/add/",
