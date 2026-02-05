@@ -6,13 +6,18 @@
 
     <title>{% block title %}EXPANSÃO360{% endblock %}</title>
 
+    {% load static %}
+
     <!-- Tailwind (CDN) — MVP -->
     <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- UI global (tokens + componentes) -->
+    <link rel="stylesheet" href="{% static 'css/ui.css' %}?v=dev1" />
 
     {% block extra_head %}{% endblock %}
   </head>
 
-  <body class="bg-slate-100 text-slate-900">
+  <body class="bg-slate-100 text-slate-900" class="bg-slate-100 text-slate-900 test-ui-css">
     <div class="min-h-screen flex">
       {% include "partials/_sidebar.html" %}
 

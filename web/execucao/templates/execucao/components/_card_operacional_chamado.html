@@ -1,113 +1,111 @@
 {# web/execucao/templates/execucao/components/_card_operacional_chamado.html #}
 
-<div class="bg-white shadow rounded p-4 border hover:bg-gray-50 transition-colors">
-  <div class="flex items-start justify-between gap-4">
-    <div class="min-w-0">
-      <div class="flex items-center gap-2">
-        <h3 class="font-semibold truncate">
-          <a
-            href="{% url 'execucao:chamado_detalhe' chamado.id %}"
-            class="text-indigo-600 hover:underline"
-          >
-            Chamado {{ chamado.protocolo|default:chamado.id }}
-          </a>
-        </h3>
+<div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden hover:shadow transition">
+  <div class="p-5">
+    <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+      <div class="min-w-0">
+        <div class="flex flex-wrap items-center gap-2">
+          <h3 class="font-semibold text-slate-900">
+            <a
+              href="{% url 'execucao:chamado_detalhe' chamado.id %}"
+              class="hover:underline"
+            >
+              Chamado {{ chamado.protocolo|default:chamado.id }}
+            </a>
+          </h3>
 
-        {# Badge de status (mesma lógica do detalhe/histórico) #}
-        {% if chamado.status == "ABERTO" %}
-          <span class="inline-flex items-center rounded-full bg-slate-100 px-2 py-1 text-xs font-medium text-slate-700">
-            Aberto
-          </span>
-        {% elif chamado.status == "EM_EXECUCAO" %}
-          <span class="inline-flex items-center rounded-full bg-blue-100 px-2 py-1 text-xs font-medium text-blue-700">
-            Em execução
-          </span>
-        {% elif chamado.status == "AGUARDANDO_NF" %}
-          <span class="inline-flex items-center rounded-full bg-amber-100 px-2 py-1 text-xs font-medium text-amber-800">
-            Aguardando NF
-          </span>
-        {% elif chamado.status == "AGUARDANDO_COLETA" %}
-          <span class="inline-flex items-center rounded-full bg-amber-100 px-2 py-1 text-xs font-medium text-amber-800">
-            Aguardando coleta
-          </span>
-        {% elif chamado.status == "FINALIZADO" %}
-          <span class="inline-flex items-center rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-700">
-            Finalizado
-          </span>
-        {% else %}
-          <span class="inline-flex items-center rounded-full bg-amber-100 px-2 py-1 text-xs font-medium text-amber-700">
-            {{ chamado.status }}
-          </span>
-        {% endif %}
+          {# Badge de status (mesma lógica do detalhe/histórico) #}
+          {% if chamado.status == "ABERTO" %}
+            <span class="badge badge-open">Aberto</span>
+          {% elif chamado.status == "EM_EXECUCAO" %}
+            <span class="badge badge-running">Em execução</span>
+          {% elif chamado.status == "AGUARDANDO_NF" %}
+            <span class="badge badge-warning">Aguardando NF</span>
+          {% elif chamado.status == "AGUARDANDO_COLETA" %}
+            <span class="badge badge-warning">Aguardando coleta</span>
+          {% elif chamado.status == "FINALIZADO" %}
+            <span class="badge badge-done">Finalizado</span>
+          {% else %}
+            <span class="badge badge-muted">{{ chamado.status }}</span>
+          {% endif %}
+        </div>
+
+        <div class="mt-3 text-sm text-slate-700 space-y-1">
+          <div class="truncate">
+            <span class="font-medium text-slate-900">Loja:</span>
+            {% if chamado.loja %}
+              {{ chamado.loja.codigo|default:chamado.loja }} — {{ chamado.loja.nome|default:"" }}
+            {% else %}
+              —
+            {% endif %}
+          </div>
+
+          <div class="truncate">
+            <span class="font-medium text-slate-900">Projeto:</span>
+            {% if chamado.projeto %}
+              {{ chamado.projeto.codigo|default:chamado.projeto }} — {{ chamado.projeto.nome|default:"" }}
+            {% else %}
+              —
+            {% endif %}
+            {% if chamado.subprojeto %}
+              <span class="text-slate-500">/</span>
+              {{ chamado.subprojeto.codigo|default:chamado.subprojeto }} — {{ chamado.subprojeto.nome|default:"" }}
+            {% endif %}
+          </div>
+        </div>
       </div>
 
-      <div class="mt-2 text-sm text-gray-600 space-y-1">
-        <div class="truncate">
-          <span class="font-medium">Loja:</span>
-          {% if chamado.loja %}
-            {{ chamado.loja.codigo|default:chamado.loja }} — {{ chamado.loja.nome|default:"" }}
+      <div class="flex items-center gap-2 sm:shrink-0">
+        <a
+          href="{% url 'execucao:chamado_detalhe' chamado.id %}"
+          class="btn btn-primary"
+        >
+          Abrir
+        </a>
+        <a
+          href="{% url 'execucao:chamado_detalhe' chamado.id %}"
+          class="btn btn-ghost"
+        >
+          Detalhes
+        </a>
+      </div>
+    </div>
+
+    {# Referências (somente leitura no card) #}
+    <div class="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
+      <div class="rounded-xl border border-slate-200 bg-slate-50 p-3">
+        <div class="text-xs text-slate-500">Ticket externo</div>
+        <div class="text-sm font-medium text-slate-900 truncate mt-1">
+          {% if chamado.ticket_externo_sistema or chamado.ticket_externo_id %}
+            {{ chamado.ticket_externo_sistema|default:"—" }} — {{ chamado.ticket_externo_id|default:"—" }}
           {% else %}
             —
           {% endif %}
         </div>
+      </div>
 
-        <div class="truncate">
-          <span class="font-medium">Projeto:</span>
-          {% if chamado.projeto %}
-            {{ chamado.projeto.codigo|default:chamado.projeto }} — {{ chamado.projeto.nome|default:"" }}
-          {% else %}
-            —
-          {% endif %}
-          {% if chamado.subprojeto %}
-            / {{ chamado.subprojeto.codigo|default:chamado.subprojeto }} — {{ chamado.subprojeto.nome|default:"" }}
-          {% endif %}
+      <div class="rounded-xl border border-slate-200 bg-slate-50 p-3">
+        <div class="text-xs text-slate-500">Contabilidade</div>
+        <div class="text-sm font-medium text-slate-900 truncate mt-1">
+          {{ chamado.contabilidade_numero|default:"—" }}
         </div>
+      </div>
 
-        {# Referências (somente leitura no card) #}
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-2">
-          <div class="bg-gray-50 border rounded p-2">
-            <div class="text-xs text-gray-500">Ticket externo</div>
-            <div class="text-sm truncate">
-              {% if chamado.ticket_externo_sistema or chamado.ticket_externo_id %}
-                {{ chamado.ticket_externo_sistema|default:"—" }} — {{ chamado.ticket_externo_id|default:"—" }}
-              {% else %}
-                —
-              {% endif %}
-            </div>
-          </div>
-
-          <div class="bg-gray-50 border rounded p-2">
-            <div class="text-xs text-gray-500">Contabilidade</div>
-            <div class="text-sm truncate">{{ chamado.contabilidade_numero|default:"—" }}</div>
-          </div>
-
-          <div class="bg-gray-50 border rounded p-2">
-            <div class="text-xs text-gray-500">NF Saída</div>
-            <div class="text-sm truncate">{{ chamado.nf_saida_numero|default:"—" }}</div>
-          </div>
+      <div class="rounded-xl border border-slate-200 bg-slate-50 p-3">
+        <div class="text-xs text-slate-500">NF Saída</div>
+        <div class="text-sm font-medium text-slate-900 truncate mt-1">
+          {{ chamado.nf_saida_numero|default:"—" }}
         </div>
       </div>
     </div>
 
-    <div class="flex flex-col items-end gap-2 shrink-0">
-      {# CTA simples (fila) #}
-      <a
-        href="{% url 'execucao:chamado_detalhe' chamado.id %}"
-        class="px-3 py-2 border rounded hover:bg-white text-sm"
-      >
-        Abrir
-      </a>
-
-      {# Info auxiliar: criado/finalizado (se existir no objeto) #}
+    <div class="mt-4 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-end text-xs text-slate-500">
       {% if chamado.criado_em %}
-        <div class="text-xs text-gray-500">
-          Criado: {{ chamado.criado_em|date:"d/m/Y H:i" }}
-        </div>
+        <div>Criado: {{ chamado.criado_em|date:"d/m/Y H:i" }}</div>
       {% endif %}
       {% if chamado.finalizado_em %}
-        <div class="text-xs text-gray-500">
-          Finalizado: {{ chamado.finalizado_em|date:"d/m/Y H:i" }}
-        </div>
+        <div class="hidden sm:block">•</div>
+        <div>Finalizado: {{ chamado.finalizado_em|date:"d/m/Y H:i" }}</div>
       {% endif %}
     </div>
   </div>

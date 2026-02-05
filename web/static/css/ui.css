@@ -1,0 +1,109 @@
+body { outline: 8px solid red !important; }
+
+:root {
+  /* Brand / UI */
+  --brand-950: #0b1220;
+  --brand-900: #0f172a;
+  --brand-800: #1e293b;
+
+  /* Primary */
+  --primary-700: #1d4ed8;
+  --primary-800: #1e40af;
+
+  /* Semantic */
+  --success-600: #16a34a;
+  --danger-600: #dc2626;
+  --warning-600: #d97706;
+
+  /* Surfaces */
+  --border: #e2e8f0;
+}
+
+
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .5rem;
+
+  border-radius: .5rem;
+  padding: .5rem 1rem;
+
+  font-size: .875rem;
+  font-weight: 600;
+
+  border: 1px solid transparent;
+  transition: 150ms ease;
+
+  cursor: pointer;
+}
+
+.btn:disabled {
+  opacity: .5;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: var(--primary-700);
+  border-color: var(--primary-700);
+  color: #fff;
+}
+.btn-primary:hover { background: var(--primary-800); border-color: var(--primary-800); }
+
+.btn-secondary {
+  background: #fff;
+  border-color: #cbd5e1;
+  color: #0f172a;
+}
+.btn-secondary:hover { background: #f8fafc; }
+
+.btn-danger {
+  background: var(--danger-600);
+  border-color: var(--danger-600);
+  color: #fff;
+}
+.btn-danger:hover { filter: brightness(.95); }
+
+.btn-ghost {
+  background: transparent;
+  border-color: transparent;
+  color: #334155;
+}
+.btn-ghost:hover { background: #f1f5f9; }
+
+/* Badges */
+.badge-muted { background: #f8fafc; color: #334155; border-color: #e2e8f0; }
+.badge-open { background: #f8fafc; color: #334155; border-color: #e2e8f0; }
+.badge {
+  display: inline-flex;
+  align-items: center;
+
+  border-radius: 999px;
+  padding: .25rem .625rem;
+
+  font-size: .75rem;
+  font-weight: 700;
+
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  color: #334155;
+}
+
+.badge-running { background: #eff6ff; color: #1e40af; border-color: #bfdbfe; }
+.badge-done { background: #ecfdf5; color: #166534; border-color: #bbf7d0; }
+.badge-danger { background: #fef2f2; color: #991b1b; border-color: #fecaca; }
+.badge-warning { background: #fffbeb; color: #92400e; border-color: #fde68a; }
+
+
+
+/* web/static/css/ui.css */
+body {
+  outline: 5px solid red;
+}
+
+.test-ui-css {
+  background: red !important;
+  color: white !important;
+}

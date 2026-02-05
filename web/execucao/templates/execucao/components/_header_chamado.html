@@ -6,77 +6,49 @@
     {# LEFT: título + metadados #}
     <div class="min-w-0">
       <div class="flex flex-wrap items-center gap-2">
-        <h1 class="text-xl font-semibold tracking-tight">
+        <h1 class="text-2xl font-semibold tracking-tight text-slate-900">
           Chamado {{ chamado.protocolo }}
         </h1>
 
         {# Tipo #}
         {% if chamado.tipo %}
           {% if chamado.tipo == "ENVIO" %}
-            <span class="inline-flex items-center rounded-full bg-indigo-50 px-2 py-1 text-xs font-medium text-indigo-700 border border-indigo-100">
-              Envio
-            </span>
+            <span class="badge badge-running">Envio</span>
           {% elif chamado.tipo == "RETORNO" %}
-            <span class="inline-flex items-center rounded-full bg-fuchsia-50 px-2 py-1 text-xs font-medium text-fuchsia-700 border border-fuchsia-100">
-              Retorno
-            </span>
+            <span class="badge badge-muted">Retorno</span>
           {% else %}
-            <span class="inline-flex items-center rounded-full bg-slate-50 px-2 py-1 text-xs font-medium text-slate-700 border border-slate-100">
-              {{ chamado.tipo }}
-            </span>
+            <span class="badge badge-muted">{{ chamado.tipo }}</span>
           {% endif %}
         {% endif %}
 
         {# Prioridade #}
         {% if chamado.prioridade %}
           {% if chamado.prioridade == "CRITICA" %}
-            <span class="inline-flex items-center rounded-full bg-red-50 px-2 py-1 text-xs font-medium text-red-700 border border-red-100">
-              Crítica
-            </span>
+            <span class="badge badge-danger">Crítica</span>
           {% elif chamado.prioridade == "ALTA" %}
-            <span class="inline-flex items-center rounded-full bg-amber-50 px-2 py-1 text-xs font-medium text-amber-700 border border-amber-100">
-              Alta
-            </span>
+            <span class="badge badge-warning">Alta</span>
           {% elif chamado.prioridade == "MEDIA" %}
-            <span class="inline-flex items-center rounded-full bg-yellow-50 px-2 py-1 text-xs font-medium text-yellow-800 border border-yellow-100">
-              Média
-            </span>
+            <span class="badge badge-muted">Média</span>
           {% elif chamado.prioridade == "BAIXA" %}
-            <span class="inline-flex items-center rounded-full bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-700 border border-emerald-100">
-              Baixa
-            </span>
+            <span class="badge badge-done">Baixa</span>
           {% else %}
-            <span class="inline-flex items-center rounded-full bg-slate-50 px-2 py-1 text-xs font-medium text-slate-700 border border-slate-100">
-              {{ chamado.prioridade }}
-            </span>
+            <span class="badge badge-muted">{{ chamado.prioridade }}</span>
           {% endif %}
         {% endif %}
 
         {# Status #}
         {% if chamado.status == "ABERTO" %}
-          <span class="inline-flex items-center rounded-full bg-slate-100 px-2 py-1 text-xs font-medium text-slate-700">
-            Aberto
-          </span>
+          <span class="badge badge-open">Aberto</span>
         {% elif chamado.status == "EM_EXECUCAO" %}
-          <span class="inline-flex items-center rounded-full bg-blue-100 px-2 py-1 text-xs font-medium text-blue-700">
-            Em execução
-          </span>
+          <span class="badge badge-running">Em execução</span>
         {% elif chamado.status == "AGUARDANDO_NF" %}
-          <span class="inline-flex items-center rounded-full bg-amber-100 px-2 py-1 text-xs font-medium text-amber-800">
-            Aguardando NF
-          </span>
+          <span class="badge badge-warning">Aguardando NF</span>
         {% elif chamado.status == "AGUARDANDO_COLETA" %}
-          <span class="inline-flex items-center rounded-full bg-amber-100 px-2 py-1 text-xs font-medium text-amber-800">
-            Aguardando coleta
-          </span>
+          <span class="badge badge-warning">Aguardando coleta</span>
         {% elif chamado.status == "FINALIZADO" %}
-          <span class="inline-flex items-center rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-700">
-            Finalizado
-          </span>
+          <span class="badge badge-done">Finalizado</span>
         {% else %}
-          <span class="inline-flex items-center rounded-full bg-slate-100 px-2 py-1 text-xs font-medium text-slate-700">
-            {{ chamado.status }}
-          </span>
+          <span class="badge badge-muted">{{ chamado.status }}</span>
         {% endif %}
       </div>
 
@@ -96,11 +68,11 @@
         </div>
       </div>
 
-      {# Ticket externo (novo) + legado SN (se existir) #}
+      {# Ticket externo + legado SN + Kit #}
       <div class="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
         <div class="bg-slate-50 border border-slate-200 rounded-xl p-3">
           <div class="text-xs text-slate-500">Ticket externo</div>
-          <div class="text-sm font-medium text-slate-900">
+          <div class="text-sm font-medium text-slate-900 mt-1 truncate">
             {% if chamado.ticket_externo_sistema or chamado.ticket_externo_id %}
               {{ chamado.ticket_externo_sistema|default:"—" }} — {{ chamado.ticket_externo_id|default:"—" }}
             {% else %}
@@ -111,32 +83,28 @@
 
         <div class="bg-slate-50 border border-slate-200 rounded-xl p-3">
           <div class="text-xs text-slate-500">ServiceNow (legado)</div>
-          <div class="text-sm font-medium text-slate-900">
+          <div class="text-sm font-medium text-slate-900 mt-1 truncate">
             {{ chamado.servicenow_numero|default:"—" }}
           </div>
         </div>
 
         <div class="bg-slate-50 border border-slate-200 rounded-xl p-3">
           <div class="text-xs text-slate-500">Kit</div>
-          <div class="text-sm font-medium text-slate-900">
+          <div class="text-sm font-medium text-slate-900 mt-1 truncate">
             {{ chamado.kit.nome|default:"—" }}
           </div>
         </div>
       </div>
-
     </div>
 
-    {# RIGHT: ações rápidas de navegação #}
+    {# RIGHT: ações rápidas #}
     <div class="flex flex-col sm:flex-row lg:flex-col gap-2 lg:min-w-[220px]">
-      <a
-        href="{% url 'execucao:fila' %}"
-        class="px-4 py-2 border border-slate-200 rounded-lg hover:bg-slate-50 text-sm text-slate-700 text-center"
-      >
+      <a href="{% url 'execucao:fila' %}" class="btn btn-secondary text-center">
         Voltar
       </a>
 
       {% if chamado.finalizado_em %}
-        <div class="px-4 py-2 bg-slate-50 text-slate-600 rounded-lg border border-slate-200 text-sm text-center">
+        <div class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-2 text-sm text-slate-600 text-center">
           Chamado finalizado
         </div>
       {% endif %}

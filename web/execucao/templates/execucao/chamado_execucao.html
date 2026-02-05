@@ -5,26 +5,47 @@
 {% block title %}Chamado — Execução{% endblock %}
 
 {% block extra_head %}
-<link rel="stylesheet" href="{% static 'execucao/css/execucao.css' %}">
+  <link rel="stylesheet" href="{% static 'execucao/css/execucao.css' %}">
 {% endblock %}
 
 {% block content %}
-<div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+  <div class="max-w-6xl mx-auto space-y-6">
+    {# 1) Header do chamado (informativo) #}
+    {% include "execucao/components/_header_chamado.html" with chamado=chamado only %}
 
-  <!--{# 1) Header do chamado (informativo) #} -->
-  {% include "execucao/components/_header_chamado.html" with chamado=chamado only %}
+    {# 2) Conteúdo operacional (execução) #}
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      {# Coluna principal #}
+      <div class="lg:col-span-8 space-y-6">
+        {# Itens do chamado — execução-only #}
+        {% include "execucao/components/_itens_chamado_execucao.html" with chamado=chamado itens=itens only %}
 
-  {# 2) Card operacional (ponta final) — execução-only (sem setup) #}
-  {# IMPORTANTE: no detalhe deve ser o FULL, não o compact da fila #}
- <!--{% include "execucao/components/_card_operacional_chamado_full.html"
-     with chamado=chamado evidencias=evidencias evidencia_tipos=evidencia_tipos pode_liberar_nf=pode_liberar_nf only %}-->
+        {# Evidências / bloco operacional FULL (se/quando habilitado) #}
+        {# TODO(UI): reativar quando o componente full estiver pronto e estabilizado #}
+        {#
+          {% include "execucao/components/_card_operacional_chamado_full.html"
+            with chamado=chamado evidencias=evidencias evidencia_tipos=evidencia_tipos pode_liberar_nf=pode_liberar_nf only %}
+        #}
+      </div>
 
-  {# 3) Itens do chamado — execução-only #}
-  {% include "execucao/components/_itens_chamado_execucao.html" with chamado=chamado itens=itens only %}
+      {# Coluna lateral (resumo / ações rápidas / lembretes) #}
+      <div class="lg:col-span-4 space-y-6">
+        {# Reservado para blocos auxiliares (ex.: resumo do setup, alertas, checklist, SLA, etc.) #}
+        {# Mantemos vazio por enquanto para não misturar regra de negócio no template #}
 
-</div>
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+          <div class="text-sm font-semibold text-slate-900">Dicas rápidas</div>
+          <ul class="mt-2 text-sm text-slate-600 list-disc pl-5 space-y-1">
+            <li>Atualize evidências conforme executa os itens.</li>
+            <li>Use “Finalizar” apenas após checklist completo.</li>
+            <li>Se faltar NF/Coleta, ajuste o status corretamente.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
 {% endblock %}
 
 {% block extra_js %}
-<script src="{% static 'execucao/js/chamado_detalhe.js' %}"></script>
+  <script src="{% static 'execucao/js/chamado_detalhe.js' %}"></script>
 {% endblock %}

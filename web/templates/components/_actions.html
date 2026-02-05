@@ -1,3 +1,20 @@
-<div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-200 mt-6">
-  {{ content }}
-</div>
+{# web/templates/components/_actions.html #}
+{% with align=align|default:"right" %}
+  <div class="mt-6 border-t border-slate-200 pt-4">
+    <div
+      class="
+        flex flex-col-reverse gap-3
+        sm:flex-row sm:items-center
+        {% if align == 'left' %}
+          sm:justify-start
+        {% elif align == 'between' %}
+          sm:justify-between
+        {% else %}
+          sm:justify-end
+        {% endif %}
+      "
+    >
+      {{ content }}
+    </div>
+  </div>
+{% endwith %}

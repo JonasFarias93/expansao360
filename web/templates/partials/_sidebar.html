@@ -1,109 +1,185 @@
+{# web/templates/partials/_sidebar.html #}
+
 <aside class="w-64 bg-slate-900 text-white flex flex-col">
-  <div class="px-6 py-5 border-b border-slate-700">
-    <div class="text-lg font-semibold">EXPANSÃO360</div>
-    <div class="text-sm text-slate-300">Operação & Cadastro</div>
+  <div class="px-6 py-5 border-b border-slate-800">
+    <div class="text-lg font-semibold tracking-tight">EXPANSÃO360</div>
+    <div class="text-sm text-slate-300 mt-0.5">Operação & Cadastro</div>
   </div>
 
-  <nav class="p-4 space-y-1">
-    <div class="text-xs uppercase text-slate-400 mb-2">Execução</div>
+  <nav class="p-4 space-y-4">
+   <!-- {# =========================
+       Execução
+       ========================= #} -->
+    <div>
+      <div class="text-[11px] uppercase tracking-wider text-slate-400 mb-2">
+        Execução
+      </div>
 
-    <a
-      href="{% url 'execucao:fila' %}"
-      class="block px-3 py-2 rounded-lg hover:bg-slate-800 transition-colors
-             {% if request.resolver_match.namespace == 'execucao' and request.resolver_match.url_name == 'fila' %}bg-slate-800{% endif %}"
-    >
-      Fila Operacional
-    </a>
+      <div class="space-y-1">
+        <a
+          href="{% url 'execucao:fila' %}"
+          class="group flex items-center gap-2 px-3 py-2 rounded-xl transition
+                 hover:bg-slate-800
+                 {% if request.resolver_match.namespace == 'execucao' and request.resolver_match.url_name == 'fila' %}bg-slate-800 ring-1 ring-slate-700{% endif %}"
+        >
+          <svg class="h-4 w-4 text-slate-300 group-hover:text-white" viewBox="0 0 24 24" fill="none">
+            <path d="M4 6h16M4 12h16M4 18h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          <span class="text-sm">Fila Operacional</span>
+        </a>
 
-    <a
-      href="{% url 'execucao:historico' %}"
-      class="block px-3 py-2 rounded-lg hover:bg-slate-800 transition-colors
-             {% if request.resolver_match.namespace == 'execucao' and request.resolver_match.url_name == 'historico' %}bg-slate-800{% endif %}"
-    >
-      Histórico de Chamados
-    </a>
+        <a
+          href="{% url 'execucao:historico' %}"
+          class="group flex items-center gap-2 px-3 py-2 rounded-xl transition
+                 hover:bg-slate-800
+                 {% if request.resolver_match.namespace == 'execucao' and request.resolver_match.url_name == 'historico' %}bg-slate-800 ring-1 ring-slate-700{% endif %}"
+        >
+          <svg class="h-4 w-4 text-slate-300 group-hover:text-white" viewBox="0 0 24 24" fill="none">
+            <path d="M12 8v5l3 2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M21 12a9 9 0 1 1-3-6.7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          <span class="text-sm">Histórico de Chamados</span>
+        </a>
 
-    <a
-      href="{% url 'execucao:chamado_create' %}"
-      class="block px-3 py-2 rounded-lg hover:bg-slate-800 transition-colors
-             {% if request.resolver_match.namespace == 'execucao' and request.resolver_match.url_name == 'chamado_create' %}bg-slate-800{% endif %}"
-    >
-      Abrir Chamado
-    </a>
-
-    <div class="pt-3 mt-3 border-t border-slate-700 text-xs uppercase text-slate-400">
-      Cadastro
+        <a
+          href="{% url 'execucao:chamado_create' %}"
+          class="group flex items-center gap-2 px-3 py-2 rounded-xl transition
+                 hover:bg-slate-800
+                 {% if request.resolver_match.namespace == 'execucao' and request.resolver_match.url_name == 'chamado_create' %}bg-slate-800 ring-1 ring-slate-700{% endif %}"
+        >
+          <svg class="h-4 w-4 text-slate-300 group-hover:text-white" viewBox="0 0 24 24" fill="none">
+            <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          <span class="text-sm">Abrir Chamado</span>
+        </a>
+      </div>
     </div>
 
-    <a
-      href="{% url 'registry:home' %}"
-      class="block px-3 py-2 rounded-lg hover:bg-slate-800 transition-colors
-             {% if request.resolver_match.namespace == 'registry' and request.resolver_match.url_name == 'home' %}bg-slate-800{% endif %}"
-    >
-      Home do Cadastro
-    </a>
+   <!-- {# =========================
+       Cadastro
+       ========================= #}  -->
+    <div>
+      <div class="text-[11px] uppercase tracking-wider text-slate-400 mb-2">
+        Cadastro
+      </div>
 
-    <a
-      href="{% url 'registry:loja_list' %}"
-      class="block px-3 py-2 rounded-lg hover:bg-slate-800 transition-colors
-             {% if request.resolver_match.namespace == 'registry' and request.resolver_match.url_name == 'loja_list' %}bg-slate-800{% endif %}"
-    >
-      Lojas
-    </a>
+      <div class="space-y-1">
+        <a
+          href="{% url 'registry:home' %}"
+          class="group flex items-center gap-2 px-3 py-2 rounded-xl transition
+                 hover:bg-slate-800
+                 {% if request.resolver_match.namespace == 'registry' and request.resolver_match.url_name == 'home' %}bg-slate-800 ring-1 ring-slate-700{% endif %}"
+        >
+          <svg class="h-4 w-4 text-slate-300 group-hover:text-white" viewBox="0 0 24 24" fill="none">
+            <path d="M4 10l8-6 8 6v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V10z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+          </svg>
+          <span class="text-sm">Home do Cadastro</span>
+        </a>
 
-    <a
-      href="{% url 'registry:categoria_list' %}"
-      class="block px-3 py-2 rounded-lg hover:bg-slate-800 transition-colors
-             {% if request.resolver_match.namespace == 'registry' and request.resolver_match.url_name == 'categoria_list' %}bg-slate-800{% endif %}"
-    >
-      Categorias
-    </a>
+        <a
+          href="{% url 'registry:loja_list' %}"
+          class="group flex items-center gap-2 px-3 py-2 rounded-xl transition
+                 hover:bg-slate-800
+                 {% if request.resolver_match.namespace == 'registry' and request.resolver_match.url_name == 'loja_list' %}bg-slate-800 ring-1 ring-slate-700{% endif %}"
+        >
+          <svg class="h-4 w-4 text-slate-300 group-hover:text-white" viewBox="0 0 24 24" fill="none">
+            <path d="M4 7h16l-1 14H5L4 7z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+            <path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          <span class="text-sm">Lojas</span>
+        </a>
 
-    <a
-      href="{% url 'registry:projeto_list' %}"
-      class="block px-3 py-2 rounded-lg hover:bg-slate-800 transition-colors
-             {% if request.resolver_match.namespace == 'registry' and request.resolver_match.url_name == 'projeto_list' %}bg-slate-800{% endif %}"
-    >
-      Projetos
-    </a>
+        <a
+          href="{% url 'registry:categoria_list' %}"
+          class="group flex items-center gap-2 px-3 py-2 rounded-xl transition
+                 hover:bg-slate-800
+                 {% if request.resolver_match.namespace == 'registry' and request.resolver_match.url_name == 'categoria_list' %}bg-slate-800 ring-1 ring-slate-700{% endif %}"
+        >
+          <svg class="h-4 w-4 text-slate-300 group-hover:text-white" viewBox="0 0 24 24" fill="none">
+            <path d="M4 6h7v7H4V6zM13 6h7v7h-7V6zM4 15h7v3H4v-3zM13 15h7v3h-7v-3z" stroke="currentColor" stroke-width="2"/>
+          </svg>
+          <span class="text-sm">Categorias</span>
+        </a>
 
-    <a
-      href="{% url 'registry:subprojeto_list' %}"
-      class="block px-3 py-2 rounded-lg hover:bg-slate-800 transition-colors
-             {% if request.resolver_match.namespace == 'registry' and request.resolver_match.url_name == 'subprojeto_list' %}bg-slate-800{% endif %}"
-    >
-      Subprojetos
-    </a>
+        <a
+          href="{% url 'registry:projeto_list' %}"
+          class="group flex items-center gap-2 px-3 py-2 rounded-xl transition
+                 hover:bg-slate-800
+                 {% if request.resolver_match.namespace == 'registry' and request.resolver_match.url_name == 'projeto_list' %}bg-slate-800 ring-1 ring-slate-700{% endif %}"
+        >
+          <svg class="h-4 w-4 text-slate-300 group-hover:text-white" viewBox="0 0 24 24" fill="none">
+            <path d="M7 7h10v10H7V7z" stroke="currentColor" stroke-width="2"/>
+            <path d="M4 4h6M14 4h6M4 20h6M14 20h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          <span class="text-sm">Projetos</span>
+        </a>
 
-    <a
-      href="{% url 'registry:equipamento_list' %}"
-      class="block px-3 py-2 rounded-lg hover:bg-slate-800 transition-colors
-             {% if request.resolver_match.namespace == 'registry' and request.resolver_match.url_name == 'equipamento_list' %}bg-slate-800{% endif %}"
-    >
-      Equipamentos
-    </a>
+        <a
+          href="{% url 'registry:subprojeto_list' %}"
+          class="group flex items-center gap-2 px-3 py-2 rounded-xl transition
+                 hover:bg-slate-800
+                 {% if request.resolver_match.namespace == 'registry' and request.resolver_match.url_name == 'subprojeto_list' %}bg-slate-800 ring-1 ring-slate-700{% endif %}"
+        >
+          <svg class="h-4 w-4 text-slate-300 group-hover:text-white" viewBox="0 0 24 24" fill="none">
+            <path d="M4 7h6v6H4V7zM14 11h6v6h-6v-6z" stroke="currentColor" stroke-width="2"/>
+            <path d="M10 10h4M12 10v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          <span class="text-sm">Subprojetos</span>
+        </a>
 
-    <a
-      href="{% url 'registry:kit_list' %}"
-      class="block px-3 py-2 rounded-lg hover:bg-slate-800 transition-colors
-             {% if request.resolver_match.namespace == 'registry' and request.resolver_match.url_name == 'kit_list' %}bg-slate-800{% endif %}"
-    >
-      Kits
-    </a>
+        <a
+          href="{% url 'registry:equipamento_list' %}"
+          class="group flex items-center gap-2 px-3 py-2 rounded-xl transition
+                 hover:bg-slate-800
+                 {% if request.resolver_match.namespace == 'registry' and request.resolver_match.url_name == 'equipamento_list' %}bg-slate-800 ring-1 ring-slate-700{% endif %}"
+        >
+          <svg class="h-4 w-4 text-slate-300 group-hover:text-white" viewBox="0 0 24 24" fill="none">
+            <path d="M6 7h12v10H6V7z" stroke="currentColor" stroke-width="2"/>
+            <path d="M9 20h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          <span class="text-sm">Equipamentos</span>
+        </a>
 
-    <div class="pt-3 mt-3 border-t border-slate-700 text-xs uppercase text-slate-400">
-      Admin
+        <a
+          href="{% url 'registry:kit_list' %}"
+          class="group flex items-center gap-2 px-3 py-2 rounded-xl transition
+                 hover:bg-slate-800
+                 {% if request.resolver_match.namespace == 'registry' and request.resolver_match.url_name == 'kit_list' %}bg-slate-800 ring-1 ring-slate-700{% endif %}"
+        >
+          <svg class="h-4 w-4 text-slate-300 group-hover:text-white" viewBox="0 0 24 24" fill="none">
+            <path d="M7 7l5-3 5 3v10l-5 3-5-3V7z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+            <path d="M7 7l5 3 5-3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          <span class="text-sm">Kits</span>
+        </a>
+      </div>
     </div>
 
-    <a
-      href="/admin/"
-      class="block px-3 py-2 rounded-lg hover:bg-slate-800 transition-colors"
-    >
-      Django Admin
-    </a>
+    <!--{# =========================
+       Admin
+       ========================= #} -->
+    <div>
+      <div class="text-[11px] uppercase tracking-wider text-slate-400 mb-2">
+        Admin
+      </div>
+
+      <div class="space-y-1">
+        <a
+          href="/admin/"
+          class="group flex items-center gap-2 px-3 py-2 rounded-xl transition hover:bg-slate-800"
+        >
+          <svg class="h-4 w-4 text-slate-300 group-hover:text-white" viewBox="0 0 24 24" fill="none">
+            <path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z" stroke="currentColor" stroke-width="2"/>
+            <path d="M19.4 15a7.97 7.97 0 0 0 .1-6l2-1.5-2-3.5-2.3.8a8.1 8.1 0 0 0-5.2-3L11.5 1h-3L8 3.8a8.1 8.1 0 0 0-5.2 3L.5 6l-2 3.5L.5 11a7.97 7.97 0 0 0 .1 6l-2 1.5 2 3.5 2.3-.8a8.1 8.1 0 0 0 5.2 3L8.5 23h3l.5-2.8a8.1 8.1 0 0 0 5.2-3l2.3.8 2-3.5-2.1-1.5z"
+                  stroke="currentColor" stroke-width="0" fill="none"/>
+          </svg>
+          <span class="text-sm">Django Admin</span>
+        </a>
+      </div>
+    </div>
   </nav>
 
-  <div class="mt-auto p-4 text-xs text-slate-400 border-t border-slate-700">
+  <div class="mt-auto px-4 py-3 text-xs text-slate-400 border-t border-slate-800">
     v0 (MVP)
   </div>
 </aside>
