@@ -7,11 +7,13 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import Case, IntegerField, Q, Value, When
-from django.http import HttpResponse
+from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
+from django.utils.decorators import method_decorator
 from django.utils.html import escape
 from django.views import View
+from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.generic import TemplateView
 from iam.mixins import CapabilityRequiredMixin
 
@@ -25,7 +27,7 @@ from .models import (
 )
 
 
-def _push_validation_error_messages(request, exc: ValidationError) -> None:
+def _push_validation_error_messages(request: HttpRequest, exc: ValidationError) -> None:
     """
     Normaliza ValidationError para mensagens no Django messages framework.
     - ValidationError pode vir com .messages (lista)
@@ -45,7 +47,7 @@ def _push_validation_error_messages(request, exc: ValidationError) -> None:
 # AJAX: SUBPROJETOS POR PROJETO
 # ============================
 @login_required
-def subprojetos_por_projeto(request):
+def subprojetos_por_projeto(request: HttpRequest) -> HttpResponse:
     """
     Retorna as <option> para o select de subprojeto filtrado por projeto.
 
@@ -79,12 +81,12 @@ class ChamadoCreateView(CapabilityRequiredMixin, View):
     required_capability = "execucao.chamado.criar"
     template_name = "execucao/chamado_abertura.html"
 
-    def get(self, request):
+    def get(self, request: HttpRequest) -> HttpResponse:
         form = ChamadoCreateForm()
         return render(request, self.template_name, {"form": form})
 
     @transaction.atomic
-    def post(self, request):
+    def post(self, request: HttpRequest) -> HttpResponse:
         form = ChamadoCreateForm(request.POST)
 
         if not form.is_valid():
@@ -119,7 +121,8 @@ class ChamadoCreateView(CapabilityRequiredMixin, View):
         chamado.gerar_itens_de_instalacao()
 
         messages.success(
-            request, f"Chamado {chamado.protocolo} criado. Complete o setup para entrar na fila."
+            request,
+            f"Chamado {chamado.protocolo} criado. Complete o setup para entrar na fila.",
         )
         return redirect("execucao:chamado_setup", chamado_id=chamado.id)
 
@@ -127,30 +130,41 @@ class ChamadoCreateView(CapabilityRequiredMixin, View):
 # ==================
 # CHAMADO (SETUP)
 # ==================
-class ChamadoSetupView(CapabilityRequiredMixin, TemplateView):
+@method_decorator(ensure_csrf_cookie, name="dispatch")
+class ChamadoSetupView(CapabilityRequiredMixin, View):
     """
     Tela 2 do fluxo: Setup/Planejamento.
-    - Deve exToggle deve_configurar e capturar IP quando necessário.
+    - Permite marcar deve_configurar e capturar IP quando necessário.
     - Não é execução operacional.
     """
 
-    template_name = "execucao/chamado_execucao.html"
     required_capability = "execucao.chamado.criar"
+    template_name = "execucao/chamado_setup.html"
 
-    def get_context_data(self, **kwargs):
-        ctx = super().get_context_data(**kwargs)
-
-        chamado_id = kwargs["chamado_id"]
+    def get(self, request: HttpRequest, chamado_id: int) -> HttpResponse:
         chamado = get_object_or_404(
             Chamado.objects.select_related("loja", "projeto", "subprojeto", "kit"),
             pk=chamado_id,
         )
 
+        # Setup só faz sentido quando ainda está em EM_ABERTURA.
+        # Se já estiver ABERTO+, manda para a execução.
+        if chamado.status != Chamado.Status.EM_ABERTURA:
+            return redirect("execucao:chamado_detalhe", chamado_id=chamado.id)
+
         chamado.gerar_itens_de_instalacao()
         itens_qs = chamado.itens.select_related("equipamento").all().order_by("id")
 
-        evidencias = EvidenciaChamado.objects.filter(chamado=chamado).order_by("-criado_em", "-id")
-        evidencia_tipos = list(EvidenciaChamado.Tipo.choices)
+        motivos_bloqueio: list[str] = []
+        for item in itens_qs:
+            if not item.equipamento.configuravel:
+                continue
+            if not item.deve_configurar:
+                continue
+            if not (item.ip or "").strip():
+                motivos_bloqueio.append(
+                    f"Item '{item.equipamento.nome}': informe o IP (configuração marcada).",
+                )
 
         config_total = itens_qs.filter(deve_configurar=True).count()
         config_done = (
@@ -164,22 +178,17 @@ class ChamadoSetupView(CapabilityRequiredMixin, TemplateView):
         )
         config_pct = int((config_done * 100) / config_total) if config_total else 0
 
-        ctx.update(
-            {
-                "chamado": chamado,
-                "itens": list(itens_qs),
-                "evidencias": evidencias,
-                "evidencia_tipos": evidencia_tipos,
-                "config_total": config_total,
-                "config_done": config_done,
-                "config_pct": config_pct,
-                # setup não usa gates, mas mantemos no contexto (templates podem ignorar)
-                "pode_liberar_nf": chamado.pode_liberar_nf(),
-                "is_envio": chamado.tipo == Chamado.Tipo.ENVIO,
-                "is_retorno": chamado.tipo == Chamado.Tipo.RETORNO,
-            }
-        )
-        return ctx
+        context = {
+            "chamado": chamado,
+            "itens": list(itens_qs),
+            "config_total": config_total,
+            "config_done": config_done,
+            "config_pct": config_pct,
+            "motivos_bloqueio": motivos_bloqueio,
+            "is_setup": True,
+        }
+
+        return render(request, self.template_name, context)
 
 
 # ==================
@@ -230,7 +239,7 @@ class ChamadoFilaView(CapabilityRequiredMixin, TemplateView):
             .order_by("status_rank", "prio_rank", "criado_em")
         )
 
-        rows = []
+        rows: list[dict[str, object]] = []
         for ch in chamados:
             itens = list(ch.itens.all())
             rastreaveis = [i for i in itens if i.tem_ativo]
@@ -305,6 +314,16 @@ class ChamadoDetailView(CapabilityRequiredMixin, TemplateView):
     template_name = "execucao/chamado_execucao.html"
     required_capability = "execucao.chamado.visualizar"
 
+    def get(self, request: HttpRequest, *args, **kwargs) -> HttpResponse:
+        chamado_id = kwargs["chamado_id"]
+        chamado = get_object_or_404(Chamado, pk=chamado_id)
+
+        # Detalhe/execução não é permitido quando ainda está em EM_ABERTURA.
+        if chamado.status == Chamado.Status.EM_ABERTURA:
+            return redirect("execucao:chamado_setup", chamado_id=chamado.id)
+
+        return super().get(request, *args, **kwargs)
+
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
 
@@ -355,6 +374,7 @@ class ChamadoDetailView(CapabilityRequiredMixin, TemplateView):
                 "gate_contabil_ok": gate_contabil_ok,
                 "gate_nf_ok": gate_nf_ok,
                 "gate_coleta_ok": gate_coleta_ok,
+                "is_setup": False,
             }
         )
         return ctx
@@ -367,7 +387,7 @@ class ChamadoInformarContabilView(CapabilityRequiredMixin, View):
     required_capability = "execucao.chamado.editar_referencias"
 
     @transaction.atomic
-    def post(self, request, chamado_id, *args, **kwargs):
+    def post(self, request: HttpRequest, chamado_id: int, *args, **kwargs) -> HttpResponse:
         chamado = get_object_or_404(Chamado, pk=chamado_id)
         chamado.gerar_itens_de_instalacao()
 
@@ -410,7 +430,7 @@ class ChamadoInformarNFSaidaView(CapabilityRequiredMixin, View):
     required_capability = "execucao.chamado.editar_referencias"
 
     @transaction.atomic
-    def post(self, request, chamado_id, *args, **kwargs):
+    def post(self, request: HttpRequest, chamado_id: int, *args, **kwargs) -> HttpResponse:
         chamado = get_object_or_404(Chamado, pk=chamado_id)
 
         if chamado.status == Chamado.Status.FINALIZADO:
@@ -448,7 +468,7 @@ class ChamadoConfirmarColetaView(CapabilityRequiredMixin, View):
     required_capability = "execucao.chamado.confirmar_coleta"
 
     @transaction.atomic
-    def post(self, request, chamado_id, *args, **kwargs):
+    def post(self, request: HttpRequest, chamado_id: int, *args, **kwargs) -> HttpResponse:
         chamado = get_object_or_404(Chamado, pk=chamado_id)
 
         if chamado.status == Chamado.Status.FINALIZADO:
@@ -487,7 +507,7 @@ class ChamadoAtualizarItensView(CapabilityRequiredMixin, View):
     required_capability = "execucao.chamado.editar_itens"
 
     @transaction.atomic
-    def post(self, request, chamado_id, *args, **kwargs):
+    def post(self, request: HttpRequest, chamado_id: int, *args, **kwargs) -> HttpResponse:
         chamado = get_object_or_404(Chamado, pk=chamado_id)
 
         if chamado.status == Chamado.Status.FINALIZADO:
@@ -533,15 +553,16 @@ class ChamadoAtualizarItensView(CapabilityRequiredMixin, View):
             chamado.save(update_fields=["status"])
 
             messages.success(
-                request, "Setup salvo. Chamado promovido para ABERTO e enviado para a fila."
+                request,
+                "Setup salvo. Chamado promovido para ABERTO e enviado para a fila.",
             )
-            return redirect("execucao:chamado_detalhe", chamado_id=chamado.id)
+            return redirect("execucao:fila")
 
         # ==========================
         # MODO OPERACIONAL (ABERTO+)
         # ==========================
         for item in itens:
-            update_fields = []
+            update_fields: list[str] = []
 
             deve_configurar = request.POST.get(f"deve_configurar_{item.id}") == "on"
             ip_raw = (request.POST.get(f"ip_{item.id}") or "").strip()
@@ -576,7 +597,7 @@ class ChamadoFinalizarView(CapabilityRequiredMixin, View):
     required_capability = "execucao.chamado.finalizar"
 
     @transaction.atomic
-    def post(self, request, chamado_id, *args, **kwargs):
+    def post(self, request: HttpRequest, chamado_id: int, *args, **kwargs) -> HttpResponse:
         chamado = get_object_or_404(Chamado, pk=chamado_id)
         chamado.gerar_itens_de_instalacao()
 
@@ -596,7 +617,7 @@ class ChamadoFinalizarView(CapabilityRequiredMixin, View):
 class ChamadoAdicionarEvidenciaView(CapabilityRequiredMixin, View):
     required_capability = "execucao.evidencia.upload"
 
-    def post(self, request, chamado_id, *args, **kwargs):
+    def post(self, request: HttpRequest, chamado_id: int, *args, **kwargs) -> HttpResponse:
         chamado = get_object_or_404(Chamado, pk=chamado_id)
 
         tipo = (request.POST.get("tipo") or "").strip()
@@ -626,7 +647,14 @@ class ChamadoAdicionarEvidenciaView(CapabilityRequiredMixin, View):
 class EvidenciaRemoverView(CapabilityRequiredMixin, View):
     required_capability = "execucao.evidencia.remover"
 
-    def post(self, request, chamado_id, evidencia_id, *args, **kwargs):
+    def post(
+        self,
+        request: HttpRequest,
+        chamado_id: int,
+        evidencia_id: int,
+        *args,
+        **kwargs,
+    ) -> HttpResponse:
         chamado = get_object_or_404(Chamado, pk=chamado_id)
 
         if chamado.finalizado_em:
@@ -647,7 +675,14 @@ class ItemSetStatusConfiguracaoView(CapabilityRequiredMixin, View):
     required_capability = "execucao.item_configuracao.alterar_status"
 
     @transaction.atomic
-    def post(self, request, chamado_id, item_id, *args, **kwargs):
+    def post(
+        self,
+        request: HttpRequest,
+        chamado_id: int,
+        item_id: int,
+        *args,
+        **kwargs,
+    ) -> HttpResponse:
         chamado = get_object_or_404(Chamado, pk=chamado_id)
 
         if chamado.finalizado_em:

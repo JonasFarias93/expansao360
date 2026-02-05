@@ -11,14 +11,16 @@
 {% block content %}
 <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
 
-  {# 1) Header do chamado #}
-  {% include "execucao/components/_header_chamado.html" %}
+  {# 1) Header do chamado (informativo) #}
+  {% include "execucao/components/_header_chamado.html" with chamado=chamado only %}
 
-  {# 2) Card operacional (ponta final) #}
-  {% include "execucao/components/_card_operacional_chamado.html" with chamado=chamado only %}
+  {# 2) Card operacional (ponta final) — execução-only (sem setup) #}
+  {# IMPORTANTE: no detalhe deve ser o FULL, não o compact da fila #}
+  {% include "execucao/components/_card_operacional_chamado_full.html"
+     with chamado=chamado evidencias=evidencias evidencia_tipos=evidencia_tipos pode_liberar_nf=pode_liberar_nf only %}
 
-  {# 3) Itens do chamado #}
-  {% include "execucao/components/_itens_chamado.html" with chamado=chamado itens=itens only %}
+  {# 3) Itens do chamado — execução-only #}
+  {% include "execucao/components/_itens_chamado_execucao.html" with chamado=chamado itens=itens only %}
 
 </div>
 {% endblock %}

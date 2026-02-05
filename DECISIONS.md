@@ -279,3 +279,21 @@ Sem um estado explícito, a UI e as regras ficam ambíguas e geram regressões.
 - Simplifica templates (modo setup vs modo execução)
 - Simplifica regras e testes
 - Evita chamados “meio operacionais” logo após a criação
+
+
+---
+
+## 2026-02-05 — Separação de template para Setup do Chamado
+
+**Decisão**
+Criar um template dedicado `execucao/chamado_setup.html` para o estágio de planejamento (status `ABERTO`),
+mantendo `execucao/chamado_execucao.html` apenas para os estágios operacionais (`EM_EXECUCAO+`).
+
+**Contexto**
+O template “vivo” estava acumulando responsabilidades de planejamento e execução, exigindo muitos `ifs`
+por status e aumentando risco de mistura de ações operacionais no estado `ABERTO`.
+
+**Consequências**
+- `ChamadoSetupView` passa a renderizar `chamado_setup.html`.
+- `ChamadoDetailView` passa a ser acessível somente quando `status != ABERTO` (ou redireciona para setup).
+- O contrato de templates fica mais simples e reduz branching no HTML.

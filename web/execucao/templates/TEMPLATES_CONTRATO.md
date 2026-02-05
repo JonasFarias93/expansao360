@@ -8,6 +8,7 @@ do app `execucao`, para evitar mistura entre abertura/planejamento e execução 
 - Componente (`execucao/components/*.html`) concentra UI/ações do bloco específico.
 - **Fila não pode virar detalhe.**
 - `ABERTO` = planejamento; `EM_EXECUCAO+` = operação.
+- Setup é uma tela dedicada e obrigatória quando status = `ABERTO`.
 
 ---
 
@@ -24,9 +25,31 @@ do app `execucao`, para evitar mistura entre abertura/planejamento e execução 
 
 ---
 
+## execucao/chamado_setup.html
+
+**Responsabilidade:** Tela 2 — setup/planejamento do chamado (`status == ABERTO`)  
+✅ Define itens, necessidade de configuração, IP (quando aplicável) e valida “pronto para execução”.
+
+**Recebe no contexto:**
+- `chamado`
+- `itens` (lista/qs já ordenado)
+- (opcionais) `gate_*` / flags de validação de planejamento (ex.: `pode_iniciar_execucao`)
+
+**Inclui (ordem recomendada):**
+1. `components/_header_chamado.html`
+2. `components/_itens_chamado.html` (modo planejamento)
+3. `components/_setup_actions.html` (CTA “Iniciar execução”, salvar, validações visuais)
+
+**Não pode conter:**
+- upload de evidências
+- finalizar
+- ações operacionais de ponta final (NF, coleta, etc.)
+
+---
+
 ## execucao/chamado_execucao.html
 
-**Responsabilidade:** Página “viva” do chamado (planejamento + execução, dependendo do status)  
+**Responsabilidade:** Página “viva” do chamado (somente operação — `status != ABERTO`)  
 ✅ Apenas orquestra includes; não deve ter regra de negócio.
 
 **Recebe no contexto:**
@@ -40,7 +63,7 @@ do app `execucao`, para evitar mistura entre abertura/planejamento e execução 
 **Inclui (ordem recomendada):**
 1. `components/_header_chamado.html`
 2. `components/_card_operacional_chamado.html`
-3. `components/_itens_chamado.html`
+3. `components/_itens_chamado.html` (modo operação)
 
 **Nota:**
 - Evidências ficam dentro do card operacional (ponta final).
@@ -141,3 +164,15 @@ do app `execucao`, para evitar mistura entre abertura/planejamento e execução 
 - `chamado`
 - `evidencias`
 - `evidencia_tipos`
+
+---
+
+## components/_setup_actions.html
+
+**Responsabilidade:** Ações do setup (planejamento)  
+✅ CTA de salvar e “Iniciar execução”, com mensagens de bloqueio visual.
+
+**Recebe no contexto:**
+- `chamado`
+- (opcional) `pode_iniciar_execucao`
+- (opcional) `motivos_bloqueio` (lista de strings)
