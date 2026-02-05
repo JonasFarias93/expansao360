@@ -50,6 +50,32 @@
             </div>
           </div>
 
+          <!--{# ===========================================================
+             ✅ PRESERVAÇÃO NO POST (evita "apagar" deve_configurar/ip)
+             =========================================================== #} -->
+          {% if item.equipamento.configuravel %}
+            <input
+              type="hidden"
+              name="deve_configurar_{{ item.id }}"
+              value="{% if item.deve_configurar %}on{% endif %}"
+            />
+          {% endif %}
+
+          {# ✅ visibilidade do "planejado no setup" #}
+          {% if item.equipamento.configuravel %}
+            <div class="mt-2 text-xs">
+              {% if item.deve_configurar %}
+                <span class="inline-flex items-center px-2 py-0.5 rounded bg-violet-50 text-violet-800 border border-violet-200">
+                  Configuração marcada no setup
+                </span>
+              {% else %}
+                <span class="inline-flex items-center px-2 py-0.5 rounded bg-slate-50 text-slate-700 border border-slate-200">
+                  Configurável, mas configuração NÃO marcada no setup
+                </span>
+              {% endif %}
+            </div>
+          {% endif %}
+
           {% if item.tem_ativo %}
             <div class="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3 border-b pb-3 mb-3">
               <div>
@@ -88,18 +114,78 @@
             <div class="mt-3 border-t pt-3">
               <div class="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div>
-                  <label class="block text-[11px] uppercase tracking-wider text-gray-500 font-bold mb-1">IP</label>
+                  <div class="flex items-center justify-between gap-3">
+                    <label class="block text-[11px] uppercase tracking-wider text-gray-500 font-bold">
+                      IP
+                    </label>
+
+                    {% if not chamado.finalizado_em %}
+                      <button
+                        type="button"
+                        class="text-xs font-medium text-slate-700 hover:text-slate-900 underline"
+                        data-ip-edit-btn="{{ item.id }}"
+                      >
+                        Editar
+                      </button>
+                    {% endif %}
+                  </div>
+
+                 <!-- {# ✅ Modo leitura (padrão) #} -->
+                  <div
+                    class="mt-2"
+                    data-ip-read="{{ item.id }}"
+                  >
+                    {% if item.ip %}
+                      <div class="text-sm">
+                        <span class="text-gray-600">IP definido no setup:</span>
+                        <code class="ml-2 px-2 py-0.5 rounded border bg-white">{{ item.ip }}</code>
+                      </div>
+                    {% else %}
+                      <div class="text-sm text-amber-700">
+                        IP não informado (configuração marcada no setup).
+                      </div>
+                    {% endif %}
+                  </div>
+
+                  <!-- {# ✅ Campo editável (escondido por padrão) #} -->
+                  <div
+                    class="mt-2 hidden"
+                    data-ip-edit="{{ item.id }}"
+                  >
+                    <input
+                      name="ip_{{ item.id }}"
+                      value="{{ item.ip|default_if_none:'' }}"
+                      class="w-full border rounded px-3 py-2 text-sm"
+                      placeholder="ex: 10.0.0.10"
+                      autocomplete="off"
+                      {% if chamado.finalizado_em %}disabled{% endif %}
+                      data-ip-input="{{ item.id }}"
+                    />
+                    <div class="mt-2 flex items-center gap-2">
+                      <button
+                        type="button"
+                        class="text-xs px-2 py-1 rounded border bg-white hover:bg-slate-50"
+                        data-ip-cancel-btn="{{ item.id }}"
+                      >
+                        Cancelar
+                      </button>
+                      <span class="text-xs text-gray-500">Salve os itens para aplicar a alteração.</span>
+                    </div>
+                  </div>
+
+                <!-- //* {# ✅ Preserva IP no POST quando não está editando (evita backend limpar) #} -->
                   <input
+                    type="hidden"
                     name="ip_{{ item.id }}"
                     value="{{ item.ip|default_if_none:'' }}"
-                    class="w-full border rounded px-3 py-2 text-sm"
-                    placeholder="ex: 10.0.0.10"
-                    {% if chamado.finalizado_em %}disabled{% endif %}
+                    data-ip-hidden="{{ item.id }}"
                   />
                 </div>
 
                 <div>
-                  <label class="block text-[11px] uppercase tracking-wider text-gray-500 font-bold mb-1">Status de Configuração</label>
+                  <label class="block text-[11px] uppercase tracking-wider text-gray-500 font-bold mb-1">
+                    Status de Configuração
+                  </label>
 
                   <div class="flex flex-wrap gap-1">
                     <button
@@ -182,3 +268,39 @@
     {% endif %}
   {% endfor %}
 </div>
+
+<script>
+  (function () {
+    // Ativa edição do IP item a item (sem dependências)
+    const buttons = document.querySelectorAll("[data-ip-edit-btn]");
+    buttons.forEach((btn) => {
+      const id = btn.getAttribute("data-ip-edit-btn");
+      if (!id) return;
+
+      const readBox = document.querySelector(`[data-ip-read="${id}"]`);
+      const editBox = document.querySelector(`[data-ip-edit="${id}"]`);
+      const input = document.querySelector(`[data-ip-input="${id}"]`);
+      const hidden = document.querySelector(`[data-ip-hidden="${id}"]`);
+      const cancelBtn = document.querySelector(`[data-ip-cancel-btn="${id}"]`);
+
+      if (!readBox || !editBox || !hidden) return;
+
+      btn.addEventListener("click", () => {
+        readBox.classList.add("hidden");
+        editBox.classList.remove("hidden");
+        hidden.disabled = true; // evita enviar dois ip_{{id}} no POST
+        if (input) input.focus();
+      });
+
+      if (cancelBtn) {
+        cancelBtn.addEventListener("click", () => {
+          editBox.classList.add("hidden");
+          readBox.classList.remove("hidden");
+          hidden.disabled = false;
+          // volta o valor do input para o original (opcional)
+          if (input) input.value = hidden.value || "";
+        });
+      }
+    });
+  })();
+</script>
