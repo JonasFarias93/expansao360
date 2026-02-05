@@ -85,3 +85,5 @@ web/db.sqlite3.bak
 
 # Imports lojas e cadastros.
 data/
+
+.tmp/

@@ -5,97 +5,151 @@
 {% block title %}Novo Equipamento — Cadastro{% endblock %}
 
 {% block content %}
-  <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 max-w-2xl">
-    <div class="flex items-center justify-between">
-      <div>
-        <div class="text-lg font-semibold">Novo equipamento</div>
-        <div class="text-sm text-slate-600">Informe os dados.</div>
-      </div>
-      <a href="{% url 'registry:equipamento_list' %}" class="text-sm text-slate-600 hover:underline">Voltar</a>
-    </div>
+  <div class="max-w-6xl mx-auto">
+    <div class="max-w-2xl mx-auto bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+      <div class="bg-slate-900 text-white px-5 py-4 border-b border-slate-800">
+        <div class="flex items-start justify-between gap-4">
+          <div>
+            <div class="text-lg font-semibold leading-tight">Novo equipamento</div>
+            <div class="text-sm text-slate-200 mt-1">Informe os dados do equipamento.</div>
+          </div>
 
-    <form method="post" class="mt-5 space-y-4" id="form-equipamento">
-      {% csrf_token %}
-
-      {{ form.codigo.label_tag }} {{ form.codigo }}
-      {{ form.nome.label_tag }} {{ form.nome }}
-
-      <div>
-        <div class="flex items-center justify-between">
-          {{ form.categoria.label_tag }}
-          <button
-            type="button"
-            id="btn-open-modal"
-            data-modal="categoria"
-            class="text-sm text-indigo-600 hover:underline"
-          >
-            + Nova categoria
-          </button>
+          <a href="{% url 'registry:equipamento_list' %}" class="btn btn-ghost !text-white !border-slate-700 hover:!bg-slate-800">
+            Voltar
+          </a>
         </div>
-
-        {{ form.categoria }}
-
-        {% if form.categoria.errors %}
-          <div class="text-sm text-red-600 mt-1">{{ form.categoria.errors }}</div>
-        {% endif %}
       </div>
 
-      <div class="flex gap-6">
-        <label class="flex items-center gap-2 text-sm">
-          {{ form.tem_ativo }} <span>Tem ativo (rastreável)</span>
-        </label>
-        <label class="flex items-center gap-2 text-sm">
-          {{ form.configuravel }} <span>Configurável</span>
-        </label>
-      </div>
+      <div class="p-5">
+        <form method="post" class="space-y-4" id="form-equipamento">
+          {% csrf_token %}
 
-      <div class="pt-2 flex justify-end gap-2">
-        <a
-          href="{% url 'registry:equipamento_list' %}"
-          class="px-4 py-2 border rounded-lg hover:bg-slate-50 text-sm"
-        >
-          Cancelar
-        </a>
-        <button class="px-4 py-2 rounded-lg bg-slate-900 text-white hover:bg-slate-800 text-sm">
-          Salvar
-        </button>
+          {% if form.non_field_errors %}
+            <div class="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-900">
+              {{ form.non_field_errors }}
+            </div>
+          {% endif %}
+
+          {% for field in form.hidden_fields %}
+            {{ field }}
+          {% endfor %}
+
+          <div class="space-y-4">
+            {% include "components/_field.html" with label=form.codigo.label content=form.codigo hint=form.codigo.help_text only %}
+            {% if form.codigo.errors %}
+              <div class="-mt-3 text-sm text-red-700">{{ form.codigo.errors }}</div>
+            {% endif %}
+
+            {% include "components/_field.html" with label=form.nome.label content=form.nome hint=form.nome.help_text only %}
+            {% if form.nome.errors %}
+              <div class="-mt-3 text-sm text-red-700">{{ form.nome.errors }}</div>
+            {% endif %}
+
+            <div>
+              <div class="flex items-center justify-between gap-3 mb-1">
+                <label class="block text-sm font-medium text-slate-700">
+                  {{ form.categoria.label }}
+                </label>
+
+                <button
+                  type="button"
+                  id="btn-open-modal"
+                  data-modal="categoria"
+                  class="text-sm font-medium text-slate-700 hover:text-slate-900 underline"
+                >
+                  + Nova categoria
+                </button>
+              </div>
+
+              {{ form.categoria }}
+              {% if form.categoria.help_text %}
+                <div class="text-xs text-slate-500 mt-1">{{ form.categoria.help_text }}</div>
+              {% endif %}
+
+              {% if form.categoria.errors %}
+                <div class="text-sm text-red-700 mt-1">{{ form.categoria.errors }}</div>
+              {% endif %}
+            </div>
+
+            <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+              <div class="text-sm font-semibold text-slate-900">Opções</div>
+              <div class="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-6">
+                <label class="flex items-center gap-2 text-sm text-slate-700">
+                  {{ form.tem_ativo }}
+                  <span>Tem ativo (rastreável)</span>
+                </label>
+
+                <label class="flex items-center gap-2 text-sm text-slate-700">
+                  {{ form.configuravel }}
+                  <span>Configurável</span>
+                </label>
+              </div>
+
+              {% if form.tem_ativo.errors %}
+                <div class="mt-2 text-sm text-red-700">{{ form.tem_ativo.errors }}</div>
+              {% endif %}
+              {% if form.configuravel.errors %}
+                <div class="mt-2 text-sm text-red-700">{{ form.configuravel.errors }}</div>
+              {% endif %}
+            </div>
+          </div>
+
+          <div class="mt-6 border-t border-slate-200 pt-4">
+            <div class="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-end">
+              <a href="{% url 'registry:equipamento_list' %}" class="btn btn-secondary">
+                Cancelar
+              </a>
+              <button type="submit" class="btn btn-primary">
+                Salvar
+              </button>
+            </div>
+          </div>
+        </form>
       </div>
-    </form>
+    </div>
   </div>
 
-  {# Modal simples #}
+  {# Modal simples (mantém IDs p/ JS) #}
   <div id="modal" class="fixed inset-0 hidden items-center justify-center bg-black/50 p-4" aria-hidden="true">
-    <div class="bg-white rounded-2xl w-full max-w-md p-5 border border-slate-200 shadow">
-      <div class="flex items-center justify-between">
-        <div class="font-semibold">Nova categoria</div>
-        <button type="button" id="btn-close-modal" class="text-slate-500 hover:text-slate-900" aria-label="Fechar">
-          ✕
-        </button>
+    <div class="bg-white rounded-2xl w-full max-w-md border border-slate-200 shadow-sm overflow-hidden">
+      <div class="bg-slate-900 text-white px-5 py-4 border-b border-slate-800">
+        <div class="flex items-center justify-between">
+          <div class="font-semibold">Nova categoria</div>
+          <button type="button" id="btn-close-modal" class="text-slate-200 hover:text-white" aria-label="Fechar">
+            ✕
+          </button>
+        </div>
       </div>
 
-      <form method="post" action="{% url 'registry:categoria_create_quick' %}" class="mt-4 space-y-3">
-        {% csrf_token %}
-        <input type="hidden" name="next" value="{{ request.path }}">
+      <div class="p-5">
+        <form method="post" action="{% url 'registry:categoria_create_quick' %}" class="space-y-4">
+          {% csrf_token %}
+          <input type="hidden" name="next" value="{{ request.path }}">
 
-        <div>
-          <label class="block text-sm text-slate-700 mb-1">Nome</label>
-          <input
-            name="nome"
-            class="w-full rounded-lg border border-slate-300 px-3 py-2"
-            placeholder="Ex: Periféricos"
-            required
-          />
-        </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-1">Nome</label>
+            <input
+              name="nome"
+              class="w-full rounded-lg border border-slate-300 px-3 py-2"
+              placeholder="Ex: Periféricos"
+              required
+              autocomplete="off"
+            />
+            <div class="text-xs text-slate-500 mt-1">A categoria será criada e ficará disponível no seletor.</div>
+          </div>
 
-        <div class="flex justify-end gap-2 pt-2">
-          <button type="button" id="btn-cancel" class="px-4 py-2 border rounded-lg hover:bg-slate-50 text-sm">
-            Cancelar
-          </button>
-          <button class="px-4 py-2 rounded-lg bg-slate-900 text-white hover:bg-slate-800 text-sm">
-            Salvar
-          </button>
-        </div>
-      </form>
+          <div class="mt-6 border-t border-slate-200 pt-4">
+            <div class="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-end">
+              <button type="button" id="btn-cancel" class="btn btn-secondary">
+                Cancelar
+              </button>
+              <button type="submit" class="btn btn-primary">
+                Salvar
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
     </div>
   </div>
 {% endblock %}

@@ -1,0 +1,35 @@
+{# web/execucao/templates/execucao/fila_operacional.html #}
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto space-y-5">
+  <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+    <div>
+      <h1 class="text-2xl font-semibold text-slate-900">Fila Operacional</h1>
+      <p class="text-sm text-slate-600 mt-1">
+        Chamados em andamento, organizados por prioridade operacional.
+      </p>
+    </div>
+
+    <div class="flex items-center gap-2">
+      <a href="{% url 'execucao:historico' %}" class="btn btn-secondary">
+        Ver histórico
+      </a>
+    </div>
+  </div>
+
+  {% if chamados %}
+    <div class="space-y-3">
+      {% for chamado in chamados %}
+        {% include "execucao/components/_card_operacional_chamado.html" with chamado=chamado only %}
+      {% endfor %}
+    </div>
+  {% else %}
+    {% include "components/_card.html" with title="Sem chamados na fila" subtitle="Nada em andamento no momento." content="" %}
+    <div class="rounded-2xl border border-slate-200 bg-white p-10 text-center">
+      <div class="text-slate-700 font-medium">Nenhum chamado em andamento.</div>
+      <div class="text-sm text-slate-500 mt-1">Quando houver chamados em execução, eles aparecerão aqui.</div>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

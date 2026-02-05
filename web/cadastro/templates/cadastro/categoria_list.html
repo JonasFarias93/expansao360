@@ -1,53 +1,69 @@
 {% extends "base.html" %}
 
-{% block title %}Categorias | EXPANSÃO360{% endblock %}
+{% block title %}Categorias — Cadastro{% endblock %}
 
 {% block content %}
-  <div class="max-w-5xl mx-auto">
-    <div class="flex items-center justify-between mb-4">
+  <div class="max-w-6xl mx-auto space-y-6">
+    {# Header da página #}
+    <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
       <div>
-        <h1 class="text-xl font-semibold">Categorias</h1>
-        <p class="text-sm text-slate-600">Gerencie categorias e seus tipos (Touch, LCD, PDV, etc.).</p>
+        <h1 class="text-2xl font-semibold text-slate-900">Categorias</h1>
+        <p class="text-sm text-slate-600 mt-1">
+          Gerencie categorias e seus tipos (Touch, LCD, PDV, etc.).
+        </p>
       </div>
 
-      <a
-        href="{% url 'registry:categoria_create' %}"
-        class="inline-flex items-center px-4 py-2 rounded-lg bg-slate-900 text-white hover:bg-slate-800 transition-colors"
-      >
-        Nova categoria
-      </a>
+      <div class="flex items-center gap-2">
+        <a
+          href="{% url 'registry:categoria_create' %}"
+          class="btn btn-primary"
+        >
+          Nova categoria
+        </a>
+      </div>
     </div>
 
-    <div class="rounded-xl border border-slate-200 bg-white overflow-hidden">
-      <table class="w-full text-sm">
-        <thead class="bg-slate-50 text-slate-600">
-          <tr>
-            <th class="text-left p-3">Nome</th>
-            <th class="text-right p-3">Ações</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for c in categorias %}
-            <tr class="border-t border-slate-100">
-              <td class="p-3 font-medium text-slate-900">{{ c.nome }}</td>
-              <td class="p-3 text-right">
-                <a
-                  class="inline-flex items-center px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors"
-                  href="{% url 'registry:categoria_update' c.pk %}"
-                >
-                  Editar
-                </a>
-              </td>
+    {# Card com tabela #}
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="min-w-full text-sm">
+          <thead class="bg-slate-50 text-slate-600">
+            <tr class="border-b border-slate-200">
+              <th class="text-left py-3 px-5 font-semibold">
+                Nome
+              </th>
+              <th class="text-right py-3 px-5 font-semibold">
+                Ações
+              </th>
             </tr>
-          {% empty %}
-            <tr>
-              <td class="p-6 text-slate-600" colspan="2">
-                Nenhuma categoria cadastrada.
-              </td>
-            </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+          </thead>
+
+          <tbody class="divide-y divide-slate-100">
+            {% for c in categorias %}
+              <tr class="hover:bg-slate-50">
+                <td class="py-3 px-5 font-medium text-slate-900">
+                  {{ c.nome }}
+                </td>
+
+                <td class="py-3 px-5 text-right">
+                  <a
+                    href="{% url 'registry:categoria_update' c.pk %}"
+                    class="btn btn-ghost px-3 py-1.5 text-xs"
+                  >
+                    Editar
+                  </a>
+                </td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="2" class="py-10 text-slate-500 text-center">
+                  Nenhuma categoria cadastrada.
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
 {% endblock %}

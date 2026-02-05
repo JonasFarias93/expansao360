@@ -1,19 +1,42 @@
-/* web/execucao/static/execucao/chamado_detalhe.js */
+// =====================================
+// Itens de Execução — UI helpers
+// (sem dependências)
+// =====================================
+(function () {
+  // Progress bar (data-progress-bar)
+  document.querySelectorAll("[data-progress-bar]").forEach((bar) => {
+    const raw = bar.getAttribute("data-progress");
+    const pct = Math.max(0, Math.min(100, Number(raw || 0)));
+    bar.style.width = `${pct}%`;
+  });
 
+  // IP edit toggle (item a item)
+  document.querySelectorAll("[data-ip-edit-btn]").forEach((btn) => {
+    const id = btn.getAttribute("data-ip-edit-btn");
+    if (!id) return;
 
-  function pedirMotivoEEnviar(formId, precisaMotivo) {
-    if (precisaMotivo) {
-      const motivo = prompt("Informe o motivo da mudança:");
-      if (!motivo || !motivo.trim()) return false;
+    const readBox = document.querySelector(`[data-ip-read="${id}"]`);
+    const editBox = document.querySelector(`[data-ip-edit="${id}"]`);
+    const input = document.querySelector(`[data-ip-input="${id}"]`);
+    const hidden = document.querySelector(`[data-ip-hidden="${id}"]`);
+    const cancelBtn = document.querySelector(`[data-ip-cancel-btn="${id}"]`);
 
-      const form = document.getElementById(formId);
-      form.querySelector('input[name="motivo"]').value = motivo.trim();
-      form.submit();
-      return false;
+    if (!readBox || !editBox || !hidden) return;
+
+    btn.addEventListener("click", () => {
+      readBox.classList.add("hidden");
+      editBox.classList.remove("hidden");
+      hidden.disabled = true; // evita enviar dois ip_<id> no POST
+      if (input) input.focus();
+    });
+
+    if (cancelBtn) {
+      cancelBtn.addEventListener("click", () => {
+        editBox.classList.add("hidden");
+        readBox.classList.remove("hidden");
+        hidden.disabled = false;
+        if (input) input.value = hidden.value || "";
+      });
     }
-
-    if (!confirm("Confirmar alteração de status?")) return false;
-    document.getElementById(formId).submit();
-    return false;
-  }
-
+  });
+})();

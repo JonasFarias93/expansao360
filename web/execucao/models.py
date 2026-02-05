@@ -1,5 +1,7 @@
 # web/execucao/models.py
 
+from __future__ import annotations
+
 # =========
 # imports
 # =========
@@ -26,13 +28,23 @@ class StatusConfiguracao(models.TextChoices):
 # =======
 class Chamado(models.Model):
     class Status(models.TextChoices):
+        EM_ABERTURA = "EM_ABERTURA", "Em abertura"
         ABERTO = "ABERTO", "Aberto"
         EM_EXECUCAO = "EM_EXECUCAO", "Em execução"
+        AGUARDANDO_NF = "AGUARDANDO_NF", "Aguardando NF"
+        AGUARDANDO_COLETA = "AGUARDANDO_COLETA", "Aguardando coleta"
         FINALIZADO = "FINALIZADO", "Finalizado"
 
     class Tipo(models.TextChoices):
         ENVIO = "ENVIO", "Envio (Matriz → Loja)"
         RETORNO = "RETORNO", "Retorno (Loja → Matriz)"
+
+    class Prioridade(models.TextChoices):
+        MAIS_ANTIGO = "MAIS_ANTIGO", "Mais antigo (padrão)"
+        BAIXA = "BAIXA", "Baixa"
+        MEDIA = "MEDIA", "Média"
+        ALTA = "ALTA", "Alta"
+        CRITICA = "CRITICA", "Crítica"
 
     loja = models.ForeignKey(Loja, on_delete=models.PROTECT)
     projeto = models.ForeignKey(Projeto, on_delete=models.PROTECT)
@@ -50,21 +62,56 @@ class Chamado(models.Model):
         help_text="Chamado de origem (obrigatório quando tipo=RETORNO).",
     )
 
-    status = models.CharField(max_length=20, choices=Status.choices, default=Status.ABERTO)
+    status = models.CharField(
+        max_length=20,
+        choices=Status.choices,
+        default=Status.EM_ABERTURA,
+        db_index=True,
+    )
+    prioridade = models.CharField(
+        max_length=20,
+        choices=Prioridade.choices,
+        default=Prioridade.MAIS_ANTIGO,
+        db_index=True,
+    )
+
     criado_em = models.DateTimeField(auto_now_add=True)
     finalizado_em = models.DateTimeField(null=True, blank=True)
     protocolo = models.CharField(max_length=32, unique=True, editable=False)
 
+    # =========================
+    # Ticket externo (novo)
+    # =========================
+    # NOTA: deixar blank/default na migration inicial para não quebrar dados existentes.
+    # A obrigatoriedade real fica na UI (form) + migração de endurecimento depois.
+    ticket_externo_sistema = models.CharField(max_length=50, blank=True, default="")
+    ticket_externo_id = models.CharField(max_length=50, blank=True, default="")
+
+    # =========================
+    # Coleta (novo gate ENVIO)
+    # =========================
+    coleta_confirmada_em = models.DateTimeField(null=True, blank=True)
+
+    # =========================
+    # Legado / compatibilidade
+    # =========================
+    # manter por enquanto para não quebrar templates/tests/DB;
+    # depois migraremos para ticket_externo_* e removeremos.
     servicenow_numero = models.CharField(max_length=40, unique=True, null=True, blank=True)
+
+    # Administrativo/financeiro (já existia)
     contabilidade_numero = models.CharField(max_length=40, unique=True, null=True, blank=True)
     nf_saida_numero = models.CharField(max_length=40, unique=True, null=True, blank=True)
 
     def __str__(self) -> str:
         return self.protocolo or f"Chamado {self.pk}"
 
-    def clean(self):
+    def clean(self) -> None:
         super().clean()
 
+        # Subprojeto pode ser opcional na UI dependendo do cadastro.
+        # Se o model estiver como PROTECT (obrigatório), manter.
+        # Caso vocês decidam tornar Subprojeto opcional no futuro, este método já é compatível.
         if self.tipo == self.Tipo.RETORNO:
             if not self.chamado_origem_id:
                 raise ValidationError(
@@ -76,7 +123,6 @@ class Chamado(models.Model):
                     {"chamado_origem": "Chamado não pode ser origem de si mesmo."}
                 )
 
-            # garante origem finalizada
             origem = self.chamado_origem
             if origem and origem.status != self.Status.FINALIZADO:
                 raise ValidationError(
@@ -97,6 +143,8 @@ class Chamado(models.Model):
         Gera itens do chamado a partir do kit.
         - Itens rastreáveis (equipamento.tem_ativo=True): explode em linhas unitárias para bipagem.
         - Itens contáveis (equipamento.tem_ativo=False): cria linha agregada com quantidade.
+
+        Deve ser idempotente: se já existem itens, não cria novamente.
         """
         if self.itens.exists():
             return
@@ -105,7 +153,6 @@ class Chamado(models.Model):
             eq = item_kit.equipamento
 
             if eq.tem_ativo:
-                # rastreável: 1 linha por unidade
                 for _ in range(item_kit.quantidade):
                     InstalacaoItem.objects.create(
                         chamado=self,
@@ -113,12 +160,9 @@ class Chamado(models.Model):
                         tipo=str(item_kit.tipo),
                         quantidade=1,
                         tem_ativo=True,
-                        # compatibilidade: persistimos info do kit,
-                        # mas obrigatoriedade é via deve_configurar.
                         requer_configuracao=item_kit.requer_configuracao,
                     )
             else:
-                # contável: 1 linha agregada
                 InstalacaoItem.objects.create(
                     chamado=self,
                     equipamento=eq,
@@ -164,9 +208,11 @@ class Chamado(models.Model):
         - Itens rastreáveis: exige ativo + número de série.
         - Itens contáveis: exige confirmado=True.
         - Configuração: EXIGIDA APENAS quando item.deve_configurar=True
-          (decisão operacional do chamado), exigindo:
+          exigindo:
             - status_configuracao=CONFIGURADO
             - ip preenchido
+        - NF de saída é obrigatória (nf_saida_numero)
+        - Coleta confirmada é obrigatória (coleta_confirmada_em)
 
         RETORNO:
         - Exige desfecho (status_retorno).
@@ -186,10 +232,13 @@ class Chamado(models.Model):
         # ENVIO (Matriz -> Loja)
         # ==========================
         if self.tipo == self.Tipo.ENVIO:
+            if not (self.nf_saida_numero or "").strip():
+                erros.append("Não é possível finalizar: informe a NF de saída.")
+
+            if self.coleta_confirmada_em is None:
+                erros.append("Não é possível finalizar: confirme a coleta pela transportadora.")
+
             for item in itens:
-                # ✅ NOVA REGRA:
-                # configuração é decisão do chamado (deve_configurar),
-                # não obrigatoriamente do cadastro (requer_configuracao).
                 if item.deve_configurar:
                     if item.status_configuracao != StatusConfiguracao.CONFIGURADO:
                         erros.append(
@@ -203,7 +252,6 @@ class Chamado(models.Model):
                             f"'{item.equipamento.nome} {item.tipo}' exige IP (configuração)."
                         )
 
-                # regra: se rastreável, exige ativo e número de série
                 if item.tem_ativo:
                     if not (item.ativo or "").strip() or not (item.numero_serie or "").strip():
                         erros.append(
@@ -212,7 +260,6 @@ class Chamado(models.Model):
                             "exige Ativo e Número de Série."
                         )
                 else:
-                    # regra: se contável, exige confirmação
                     if not item.confirmado:
                         erros.append(
                             f"Item contável '{item.equipamento.nome} {item.tipo}' "
@@ -345,7 +392,9 @@ class InstalacaoItem(models.Model):
 
 class ItemConfiguracaoLog(models.Model):
     item = models.ForeignKey(
-        "InstalacaoItem", on_delete=models.CASCADE, related_name="logs_configuracao"
+        "InstalacaoItem",
+        on_delete=models.CASCADE,
+        related_name="logs_configuracao",
     )
     de_status = models.CharField(max_length=20, choices=StatusConfiguracao.choices)
     para_status = models.CharField(max_length=20, choices=StatusConfiguracao.choices)

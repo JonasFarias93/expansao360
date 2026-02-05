@@ -1,30 +1,64 @@
 {% extends "base.html" %}
-{% block content %}
-<div class="space-y-4">
-  <div class="flex items-center justify-between">
-    <h1 class="text-xl font-semibold">Projetos</h1>
-    <a href="{% url 'cadastro:projeto_create' %}" class="px-4 py-2 bg-blue-600 text-white rounded">Novo</a>
-  </div>
 
-  <div class="bg-white border rounded">
-    <table class="w-full text-sm">
-      <thead class="bg-gray-50">
-        <tr>
-          <th class="text-left p-2">Código</th>
-          <th class="text-left p-2">Nome</th>
-        </tr>
-      </thead>
-      <tbody>
-      {% for p in projetos %}
-        <tr class="border-t">
-          <td class="p-2 font-medium">{{ p.codigo }}</td>
-          <td class="p-2">{{ p.nome }}</td>
-        </tr>
-      {% empty %}
-        <tr><td class="p-4 text-gray-500" colspan="2">Nenhum projeto cadastrado.</td></tr>
-      {% endfor %}
-      </tbody>
-    </table>
+{% block title %}Projetos — Cadastro{% endblock %}
+
+{% block content %}
+  <div class="max-w-6xl mx-auto space-y-6">
+    {# Header da página #}
+    <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+      <div>
+        <h1 class="text-2xl font-semibold text-slate-900">Projetos</h1>
+        <p class="text-sm text-slate-600 mt-1">
+          Cadastro mestre de projetos.
+        </p>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <a
+          href="{% url 'registry:projeto_create' %}"
+          class="btn btn-primary"
+        >
+          Novo projeto
+        </a>
+      </div>
+    </div>
+
+    {# Card com tabela #}
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="min-w-full text-sm">
+          <thead class="bg-slate-50 text-slate-600">
+            <tr class="border-b border-slate-200">
+              <th class="text-left py-3 px-5 font-semibold">
+                Código
+              </th>
+              <th class="text-left py-3 pr-4 font-semibold">
+                Nome
+              </th>
+            </tr>
+          </thead>
+
+          <tbody class="divide-y divide-slate-100">
+            {% for p in projetos %}
+              <tr class="hover:bg-slate-50">
+                <td class="py-3 px-5 font-semibold text-slate-900">
+                  {{ p.codigo }}
+                </td>
+
+                <td class="py-3 pr-4 text-slate-700">
+                  {{ p.nome }}
+                </td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="2" class="py-10 text-slate-500 text-center">
+                  Nenhum projeto cadastrado.
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
   </div>
-</div>
 {% endblock %}
