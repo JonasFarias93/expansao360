@@ -250,3 +250,32 @@ evidenciam o estágio do processo.
 - Alteração de nomes de arquivos impacta includes e `template_name` nas views.
 - A refatoração é mecânica e deve ser entregue em commit atômico (renome + ajustes).
 - Reduz significativamente risco de regressões futuras por confusão de responsabilidade.
+
+---
+# ADR — 2026-02-05 — Status EM_ABERTURA e promoção explícita para ABERTO
+
+**Status:** Aceito
+
+## Decisão
+Introduzir o status **EM_ABERTURA** no ciclo de vida de `Chamado`, separando explicitamente:
+
+- **Abertura (setup / planejamento)** → `EM_ABERTURA`
+- **Fila operacional** → `ABERTO` em diante
+
+## Contexto
+A tela 2 (setup) ocorre imediatamente após o POST do formulário inicial, quando o chamado já existe e os itens foram gerados, mas ainda não deve:
+- aparecer na fila operacional
+- permitir execução (bipagem / gates / finalizar)
+
+Sem um estado explícito, a UI e as regras ficam ambíguas e geram regressões.
+
+## Regras de negócio
+1) POST da Tela 1 cria o chamado com `status = EM_ABERTURA`
+2) Ao clicar **Salvar setup**, o chamado é promovido para `status = ABERTO`
+3) A fila operacional lista somente `ABERTO`, `EM_EXECUCAO`, `AGUARDANDO_*` (nunca `EM_ABERTURA`)
+
+## Consequências
+- Separa claramente setup vs execução
+- Simplifica templates (modo setup vs modo execução)
+- Simplifica regras e testes
+- Evita chamados “meio operacionais” logo após a criação
