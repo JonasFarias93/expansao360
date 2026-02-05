@@ -419,3 +419,76 @@ passam a seguir o mesmo padrão de:
 Aceito ✅
 
 (Implementado e validado em Codespaces e ambiente local)
+
+
+---
+# ADR — Fila de Chamados: Detalhes como Preview e Deprecação do DetailView
+
+## Data
+2026-02-05
+
+## Decisão 1 — "Detalhes" na fila vira preview inline (accordion), sem nova página
+### Contexto
+Hoje o botão **Detalhes** abre uma `DetailView` ques. Porém ele leva para a mesma experiência do **Abrir**, gerando redundância e fricção na triagem da fila.
+
+### Decisão
+O botão **Detalhes** na fila será um **accordion inline** no card (preview simples).  
+Inicialmente será um placeholder (“aqui vai ter detalhes”), sem regras operacionais.
+
+### Consequências
+- A fila fica mais rápida para triagem.
+- Evita criar nova página e nova view desnecessárias.
+- “Abrir” permanece como único fluxo para a tela operacional (execução).
+
+---
+
+## Decisão 2 — `ChamadoDetailView` deixa de ser o destino do botão "Detalhes" (deprecado)
+### Contexto
+O link atual de “Detalhes” aponta para uma `DetailView`, mas esse fluxo deixa de existir com o preview inline.
+
+### Decisão
+- O botão "Detalhes" **não** chama mais a `DetailView`.
+- A `DetailView` poderá ser **mantida temporariamente** (compatibilidade/rotas antigas), porém deve:
+  - (opção recomendada) **redirecionar** para a tela de execução (`ExecucaoView`) ou
+  - (opção alternativa) exibir uma página realmente read-only futuramente (fora do escopo de hoje).
+
+### Consequências
+- Evita duplicidade de telas.
+- Mantém retrocompatibilidade sem quebrar URLs antigas.
+- Reduz manutenção e confusão para o usuário.
+
+---
+
+## Decisão 3 — Organização de JS por página: execução vs fila
+### Contexto
+Existe `execucao/js/chamado_detalhe.js` cuidando de UI helpers da tela de execução (progress bar e edição inline de IP).
+
+### Decisão
+- `chamado_detalhe.js` permanece **exclusivo da tela de execução** (`chamado_execucao.html`).
+- Um novo JS será criado para a fila: `execucao/js/fila_operacional.js`, cuidando do accordion do preview.
+
+### Consequências
+- Evita "perder JS" em meio a muitos templates.
+- Mantém cada comportamento no contexto correto (por página).
+- Reforça a regra: **sem JS inline em templates** e scripts com `defer`.
+
+---
+
+## Status
+Aceito
+
+
+---
+
+## 2026-02-05 — Renomeação da DetailView para Execução do Chamado
+
+**Decisão**  
+A view anteriormente chamada `ChamadoDetailView` foi renomeada para `ChamadoExecucaoView`.
+
+**Contexto**  
+A view não representava uma tela apenas de leitura, mas sim a execução operacional do chamado, concentrando regras, progresso, evidências e gates.
+
+**Consequências**
+- O nome da classe passa a refletir sua responsabilidade real.
+- A URL e o `url name` são mantidos para compatibilidade.
+- O botão “Detalhes” da fila deixa de depender de view e passa a ser um preview inline.
