@@ -1,305 +1,73 @@
-{# execucao/components/_chamado_header.html #}
+<div class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+  <div>
+    <h1 class="text-xl font-semibold">
+      Chamado {{ chamado.protocolo }}
+    </h1>
 
-<div class="bg-white border border-slate-200 rounded-2xl shadow-sm p-5">
-  <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+    <div class="text-sm text-gray-600 space-y-1">
+      <div>
+        <span class="font-medium">Loja:</span> {{ chamado.loja.codigo }} — {{ chamado.loja.nome }}
+      </div>
 
-    {# LEFT: título + metadados #}
-    <div class="min-w-0">
-      <div class="flex flex-wrap items-center gap-2">
-        <h1 class="text-xl font-semibold tracking-tight">
-          Chamado {{ chamado.protocolo }}
-        </h1>
-
-        {# Tipo #}
-        {% if chamado.tipo %}
-          {% if chamado.tipo == "ENVIO" %}
-            <span class="inline-flex items-center rounded-full bg-indigo-50 px-2 py-1 text-xs font-medium text-indigo-700 border border-indigo-100">
-              Envio
-            </span>
-          {% elif chamado.tipo == "RETORNO" %}
-            <span class="inline-flex items-center rounded-full bg-fuchsia-50 px-2 py-1 text-xs font-medium text-fuchsia-700 border border-fuchsia-100">
-              Retorno
-            </span>
-          {% else %}
-            <span class="inline-flex items-center rounded-full bg-slate-50 px-2 py-1 text-xs font-medium text-slate-700 border border-slate-100">
-              {{ chamado.tipo }}
-            </span>
-          {% endif %}
+      <div>
+        <span class="font-medium">Projeto:</span> {{ chamado.projeto.codigo }} — {{ chamado.projeto.nome }}
+        {% if chamado.subprojeto %}
+          / {{ chamado.subprojeto.codigo }} — {{ chamado.subprojeto.nome }}
         {% endif %}
+      </div>
 
-        {# Prioridade (se existir) #}
-        {% if chamado.prioridade %}
-          {% if chamado.prioridade == "CRITICA" %}
-            <span class="inline-flex items-center rounded-full bg-red-50 px-2 py-1 text-xs font-medium text-red-700 border border-red-100">
-              Crítica
-            </span>
-          {% elif chamado.prioridade == "ALTA" %}
-            <span class="inline-flex items-center rounded-full bg-amber-50 px-2 py-1 text-xs font-medium text-amber-700 border border-amber-100">
-              Alta
-            </span>
-          {% elif chamado.prioridade == "MEDIA" %}
-            <span class="inline-flex items-center rounded-full bg-yellow-50 px-2 py-1 text-xs font-medium text-yellow-800 border border-yellow-100">
-              Média
-            </span>
-          {% elif chamado.prioridade == "BAIXA" %}
-            <span class="inline-flex items-center rounded-full bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-700 border border-emerald-100">
-              Baixa
-            </span>
-          {% else %}
-            <span class="inline-flex items-center rounded-full bg-slate-50 px-2 py-1 text-xs font-medium text-slate-700 border border-slate-100">
-              {{ chamado.prioridade }}
-            </span>
-          {% endif %}
-        {% endif %}
-
-        {# Status #}
+      <div class="flex items-center gap-2">
+        <span class="font-medium">Status:</span>
         {% if chamado.status == "ABERTO" %}
-          <span class="inline-flex items-center rounded-full bg-slate-100 px-2 py-1 text-xs font-medium text-slate-700">
-            Aberto
-          </span>
+          <span class="inline-flex items-center rounded-full bg-slate-100 px-2 py-1 text-xs font-medium text-slate-700">Aberto</span>
         {% elif chamado.status == "EM_EXECUCAO" %}
-          <span class="inline-flex items-center rounded-full bg-blue-100 px-2 py-1 text-xs font-medium text-blue-700">
-            Em execução
-          </span>
-        {% elif chamado.status == "AGUARDANDO_NF" %}
-          <span class="inline-flex items-center rounded-full bg-amber-100 px-2 py-1 text-xs font-medium text-amber-800">
-            Aguardando NF
-          </span>
-        {% elif chamado.status == "AGUARDANDO_COLETA" %}
-          <span class="inline-flex items-center rounded-full bg-amber-100 px-2 py-1 text-xs font-medium text-amber-800">
-            Aguardando coleta
-          </span>
+          <span class="inline-flex items-center rounded-full bg-blue-100 px-2 py-1 text-xs font-medium text-blue-700">Em execução</span>
         {% elif chamado.status == "FINALIZADO" %}
-          <span class="inline-flex items-center rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-700">
-            Finalizado
-          </span>
+          <span class="inline-flex items-center rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-700">Finalizado</span>
         {% else %}
-          <span class="inline-flex items-center rounded-full bg-slate-100 px-2 py-1 text-xs font-medium text-slate-700">
-            {{ chamado.status }}
-          </span>
+          <span class="inline-flex items-center rounded-full bg-amber-100 px-2 py-1 text-xs font-medium text-amber-700">{{ chamado.status }}</span>
         {% endif %}
       </div>
 
-      <div class="mt-2 text-sm text-slate-600 space-y-1">
-        <div class="truncate">
-          <span class="font-medium text-slate-700">Loja:</span>
-          {{ chamado.loja.codigo }} — {{ chamado.loja.nome }}
+      <div class="pt-2 grid grid-cols-1 md:grid-cols-3 gap-2">
+        <div class="bg-gray-50 border rounded p-2">
+          <div class="text-xs text-gray-500">ServiceNow</div>
+          <div class="text-sm">{{ chamado.servicenow_numero|default:"—" }}</div>
         </div>
-
-        <div class="truncate">
-          <span class="font-medium text-slate-700">Projeto:</span>
-          {{ chamado.projeto.codigo }} — {{ chamado.projeto.nome }}
-          {% if chamado.subprojeto %}
-            <span class="text-slate-400">/</span>
-            {{ chamado.subprojeto.codigo }} — {{ chamado.subprojeto.nome }}
-          {% endif %}
+        <div class="bg-gray-50 border rounded p-2">
+          <div class="text-xs text-gray-500">Contabilidade</div>
+          <div class="text-sm">{{ chamado.contabilidade_numero|default:"—" }}</div>
         </div>
-      </div>
-
-      {# Referências externas (mantém o que você já tinha, só ajusta visual) #}
-      <div class="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
-        <div class="bg-slate-50 border border-slate-200 rounded-xl p-3">
-          <div class="text-xs text-slate-500">ServiceNow</div>
-          <div class="text-sm font-medium text-slate-900">
-            {{ chamado.servicenow_numero|default:"—" }}
-          </div>
-        </div>
-        <div class="bg-slate-50 border border-slate-200 rounded-xl p-3">
-          <div class="text-xs text-slate-500">Contabilidade</div>
-          <div class="text-sm font-medium text-slate-900">
-            {{ chamado.contabilidade_numero|default:"—" }}
-          </div>
-        </div>
-        <div class="bg-slate-50 border border-slate-200 rounded-xl p-3">
-          <div class="text-xs text-slate-500">NF Saída</div>
-          <div class="text-sm font-medium text-slate-900">
-            {{ chamado.nf_saida_numero|default:"—" }}
-          </div>
+        <div class="bg-gray-50 border rounded p-2">
+          <div class="text-xs text-gray-500">NF Saída</div>
+          <div class="text-sm">{{ chamado.nf_saida_numero|default:"—" }}</div>
         </div>
       </div>
-
-      {# Gates (Contábil/NF/Coleta) com ações usando suas rotas #}
-      {% if not chamado.finalizado_em and chamado.tipo == "ENVIO" %}
-        <div class="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
-          {# Gate 1: Contábil #}
-          <div class="border border-slate-200 rounded-xl p-3">
-            <div class="flex items-center justify-between">
-              <div class="text-xs text-slate-500">Gate 1</div>
-              {% if chamado.contabilidade_numero %}
-                <span class="text-xs px-2 py-1 rounded-full bg-green-50 text-green-700 border border-green-100">OK</span>
-              {% else %}
-                {% if pode_liberar_nf %}
-                  <span class="text-xs px-2 py-1 rounded-full bg-amber-50 text-amber-800 border border-amber-100">Pendente</span>
-                {% else %}
-                  <span class="text-xs px-2 py-1 rounded-full bg-slate-50 text-slate-700 border border-slate-100">Bloqueado</span>
-                {% endif %}
-              {% endif %}
-            </div>
-
-            <div class="mt-1 text-sm font-medium text-slate-900">Contábil</div>
-
-            {% if not chamado.contabilidade_numero %}
-              <div class="mt-2">
-                <form method="post" action="{% url 'execucao:chamado_informar_contabil' chamado.id %}" class="flex gap-2">
-                  {% csrf_token %}
-                  <input
-                    name="contabilidade_numero"
-                    placeholder="Número contábil"
-                    class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
-                    {% if not pode_liberar_nf %}disabled{% endif %}
-                  />
-                  <button
-                    class="px-3 py-2 rounded-lg text-sm font-medium border border-slate-200 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                    type="submit"
-                    {% if not pode_liberar_nf %}disabled{% endif %}
-                    title="{% if not pode_liberar_nf %}Conclua bipagem/checagem dos itens para liberar{% endif %}"
-                  >
-                    Salvar
-                  </button>
-                </form>
-                {% if not pode_liberar_nf %}
-                  <div class="mt-1 text-xs text-slate-500">
-                    Complete bipagem/checagem dos itens para liberar este gate.
-                  </div>
-                {% endif %}
-              </div>
-            {% else %}
-              <div class="mt-2 text-xs text-slate-600">
-                Número: <span class="font-medium text-slate-900">{{ chamado.contabilidade_numero }}</span>
-              </div>
-            {% endif %}
-          </div>
-
-          {# Gate 2: NF Saída #}
-          <div class="border border-slate-200 rounded-xl p-3">
-            <div class="flex items-center justify-between">
-              <div class="text-xs text-slate-500">Gate 2</div>
-              {% if chamado.nf_saida_numero %}
-                <span class="text-xs px-2 py-1 rounded-full bg-green-50 text-green-700 border border-green-100">OK</span>
-              {% else %}
-                {% if chamado.contabilidade_numero %}
-                  <span class="text-xs px-2 py-1 rounded-full bg-amber-50 text-amber-800 border border-amber-100">Pendente</span>
-                {% else %}
-                  <span class="text-xs px-2 py-1 rounded-full bg-slate-50 text-slate-700 border border-slate-100">Bloqueado</span>
-                {% endif %}
-              {% endif %}
-            </div>
-
-            <div class="mt-1 text-sm font-medium text-slate-900">NF de saída</div>
-
-            {% if not chamado.nf_saida_numero %}
-              <div class="mt-2">
-                <form method="post" action="{% url 'execucao:chamado_informar_nf_saida' chamado.id %}" class="flex gap-2">
-                  {% csrf_token %}
-                  <input
-                    name="nf_saida_numero"
-                    placeholder="Número da NF"
-                    class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
-                    {% if not chamado.contabilidade_numero %}disabled{% endif %}
-                  />
-                  <button
-                    class="px-3 py-2 rounded-lg text-sm font-medium border border-slate-200 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                    type="submit"
-                    {% if not chamado.contabilidade_numero %}disabled{% endif %}
-                  >
-                    Salvar
-                  </button>
-                </form>
-                {% if not chamado.contabilidade_numero %}
-                  <div class="mt-1 text-xs text-slate-500">
-                    Informe o contábil antes da NF.
-                  </div>
-                {% endif %}
-              </div>
-            {% else %}
-              <div class="mt-2 text-xs text-slate-600">
-                Número: <span class="font-medium text-slate-900">{{ chamado.nf_saida_numero }}</span>
-              </div>
-            {% endif %}
-          </div>
-
-          {# Gate 3: Coleta #}
-          <div class="border border-slate-200 rounded-xl p-3">
-            <div class="flex items-center justify-between">
-              <div class="text-xs text-slate-500">Gate 3</div>
-              {% if chamado.coleta_confirmada_em %}
-                <span class="text-xs px-2 py-1 rounded-full bg-green-50 text-green-700 border border-green-100">OK</span>
-              {% else %}
-                {% if chamado.nf_saida_numero %}
-                  <span class="text-xs px-2 py-1 rounded-full bg-amber-50 text-amber-800 border border-amber-100">Pendente</span>
-                {% else %}
-                  <span class="text-xs px-2 py-1 rounded-full bg-slate-50 text-slate-700 border border-slate-100">Bloqueado</span>
-                {% endif %}
-              {% endif %}
-            </div>
-
-            <div class="mt-1 text-sm font-medium text-slate-900">Coleta</div>
-
-            {% if not chamado.coleta_confirmada_em %}
-              <div class="mt-2">
-                <form method="post" action="{% url 'execucao:chamado_confirmar_coleta' chamado.id %}">
-                  {% csrf_token %}
-                  <button
-                    class="w-full px-3 py-2 rounded-lg text-sm font-medium bg-slate-900 text-white hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed"
-                    type="submit"
-                    {% if not chamado.nf_saida_numero %}disabled{% endif %}
-                    title="{% if not chamado.nf_saida_numero %}Informe a NF antes de confirmar a coleta{% endif %}"
-                  >
-                    Confirmar coleta
-                  </button>
-                </form>
-                {% if not chamado.nf_saida_numero %}
-                  <div class="mt-1 text-xs text-slate-500">
-                    Informe a NF antes de confirmar a coleta.
-                  </div>
-                {% endif %}
-              </div>
-            {% else %}
-              <div class="mt-2 text-xs text-slate-600">
-                Confirmada em:
-                <span class="font-medium text-slate-900">
-                  {{ chamado.coleta_confirmada_em|date:"d/m/Y H:i" }}
-                </span>
-              </div>
-            {% endif %}
-          </div>
-        </div>
-      {% endif %}
     </div>
+  </div>
 
-    {# RIGHT: ações #}
-    <div class="flex flex-col sm:flex-row lg:flex-col gap-2 lg:min-w-[220px]">
-      <a
-        href="{% url 'execucao:historico' %}"
-        class="px-4 py-2 border border-slate-200 rounded-lg hover:bg-slate-50 text-sm text-slate-700 text-center"
-      >
-        Voltar
-      </a>
+  <div class="flex gap-2">
+    <a href="{% url 'execucao:historico' %}" class="px-4 py-2 border rounded hover:bg-gray-50">
+      Voltar
+    </a>
 
-      {% if not chamado.finalizado_em %}
-        <button
-          form="form-itens"
-          class="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 text-sm font-medium"
-        >
-          Salvar itens
+    {% if not chamado.finalizado_em %}
+      <!-- Botão que dispara o FORM PRINCIPAL (salvar itens) -->
+      <button form="form-itens" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+        Salvar itens
+      </button>
+
+      <!-- Finalizar chamado: FORM SEPARADO -->
+      <form method="post" action="{% url 'execucao:chamado_finalizar' chamado.id %}" onsubmit="return confirm('Deseja realmente finalizar este chamado?')">
+        {% csrf_token %}
+        <button class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
+          Finalizar
         </button>
-
-        <form
-          method="post"
-          action="{% url 'execucao:chamado_finalizar' chamado.id %}"
-          onsubmit="return confirm('Deseja realmente finalizar este chamado?')"
-        >
-          {% csrf_token %}
-          <button class="w-full px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 text-sm font-medium">
-            Finalizar
-          </button>
-        </form>
-      {% else %}
-        <div class="px-4 py-2 bg-slate-50 text-slate-600 rounded-lg border border-slate-200 text-sm text-center">
-          Chamado finalizado
-        </div>
-      {% endif %}
-    </div>
-
+      </form>
+    {% else %}
+      <span class="px-4 py-2 bg-gray-100 text-gray-600 rounded border">
+        Chamado finalizado
+      </span>
+    {% endif %}
   </div>
 </div>
