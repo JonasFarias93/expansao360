@@ -1,166 +1,201 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}Editar categoria | EXPANSÃO360{% endblock %}
+{% block title %}Editar categoria — Cadastro{% endblock %}
 
 {% block content %}
-  <div class="max-w-5xl mx-auto">
-    <div class="mb-4">
-      <h1 class="text-xl font-semibold">Editar categoria</h1>
-      <p class="text-sm text-slate-600">
-        Aqui você cadastra os tipos aceitos por esta categoria (ex.: LCD, TOUCH, PDV, TC, GERÊNCIA...).
-      </p>
-    </div>
+  <div class="max-w-6xl mx-auto">
+    <div class="max-w-4xl mx-auto bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+      <div class="bg-slate-900 text-white px-5 py-4 border-b border-slate-800">
+        <div class="flex items-start justify-between gap-4">
+          <div>
+            <div class="text-lg font-semibold leading-tight">Editar categoria</div>
+            <div class="text-sm text-slate-200 mt-1">
+              Aqui você cadastra os tipos aceitos por esta categoria (ex.: LCD, TOUCH, PDV, TC, GERÊNCIA...).
+            </div>
+          </div>
 
-    <form method="post" class="space-y-6">
-      {% csrf_token %}
-
-      <div class="rounded-xl border border-slate-200 bg-white p-5">
-        <div class="flex items-center justify-between mb-3">
-          <h2 class="font-semibold">Dados da categoria</h2>
-          <a
-            href="{% url 'registry:categoria_list' %}"
-            class="text-sm underline text-slate-600 hover:text-slate-900"
-          >
-            Voltar para lista
+          <a href="{% url 'registry:categoria_list' %}" class="btn btn-ghost !text-white !border-slate-700 hover:!bg-slate-800">
+            Voltar
           </a>
         </div>
-
-        {{ form.non_field_errors }}
-
-        <div>
-          {{ form.nome.label_tag }}
-          <div class="mt-1">
-            {{ form.nome }}
-          </div>
-          <div class="text-sm text-red-600 mt-1">{{ form.nome.errors }}</div>
-        </div>
       </div>
 
-      <div class="rounded-xl border border-slate-200 bg-white p-5">
-        <div class="flex items-center justify-between mb-3">
-          <div>
-            <h2 class="font-semibold">Tipos</h2>
+      <div class="p-5">
+        <form method="post" class="space-y-6">
+          {% csrf_token %}
 
-            <p class="text-sm text-slate-600 mt-1">
-              Cadastre/edite/remova tipos desta categoria.
-            </p>
+          {% if form.non_field_errors %}
+            <div class="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-900">
+              {{ form.non_field_errors }}
+            </div>
+          {% endif %}
 
-            <p class="text-xs text-slate-500 mt-2">
-              <strong>Disponível</strong>: aparece para uso em novos kits.<br />
-              <strong>Remover</strong>: apaga o tipo se ele <u>não estiver em uso</u>.
-            </p>
+          {# =========================
+             Dados da categoria
+             ========================= #}
+          <div class="rounded-2xl border border-slate-200 bg-white p-5">
+            <div class="flex items-start justify-between gap-4 mb-4">
+              <div>
+                <h2 class="text-base font-semibold text-slate-900">Dados da categoria</h2>
+                <p class="text-sm text-slate-600 mt-1">Nome e identificação da categoria.</p>
+              </div>
+
+              <a href="{% url 'registry:categoria_list' %}" class="btn btn-secondary">
+                Voltar para lista
+              </a>
+            </div>
+
+            {% for hidden in form.hidden_fields %}
+              {{ hidden }}
+            {% endfor %}
+
+            {% include "components/_field.html" with label=form.nome.label content=form.nome hint=form.nome.help_text only %}
+            {% if form.nome.errors %}
+              <div class="mt-1 text-sm text-red-700">
+                {{ form.nome.errors }}
+              </div>
+            {% endif %}
           </div>
 
-          <button
-            type="button"
-            id="btn-add-tipo"
-            class="px-3 py-2 rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors text-sm"
-          >
-            + Adicionar tipo
-          </button>
-        </div>
+          {# =========================
+             Tipos (formset)
+             ========================= #}
+          <div class="rounded-2xl border border-slate-200 bg-white p-5">
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between mb-4">
+              <div>
+                <h2 class="text-base font-semibold text-slate-900">Tipos</h2>
+                <p class="text-sm text-slate-600 mt-1">Cadastre/edite/remova tipos desta categoria.</p>
 
-        {{ formset.management_form }}
-        {{ formset.non_form_errors }}
-
-        <div id="tipos-container" class="space-y-3">
-          {% for f in formset %}
-            <div class="border-t border-slate-100 pt-3 tipo-row">
-              {{ f.id }}
-              {{ f.non_field_errors }}
-
-              <div class="grid grid-cols-12 gap-3 items-end">
-                <div class="col-span-12 md:col-span-8">
-                  {{ f.nome.label_tag }}
-                  <div class="mt-1">
-                    {{ f.nome }}
-                  </div>
-                  <div class="text-sm text-red-600 mt-1">{{ f.nome.errors }}</div>
+                <div class="mt-2 text-xs text-slate-500">
+                  <div><strong>Disponível</strong>: aparece para uso em novos kits.</div>
+                  <div><strong>Remover</strong>: apaga o tipo se ele <u>não estiver em uso</u>.</div>
                 </div>
+              </div>
 
-                <div class="col-span-6 md:col-span-2">
-                  {{ f.disponivel.label_tag }}
-                  <div class="mt-2">
-                    {{ f.disponivel }}
-                  </div>
-                  <div class="text-sm text-red-600 mt-1">{{ f.disponivel.errors }}</div>
-                </div>
+              <button
+                type="button"
+                id="btn-add-tipo"
+                class="btn btn-secondary"
+              >
+                + Adicionar tipo
+              </button>
+            </div>
 
-                <div class="col-span-6 md:col-span-2">
-                  {% if formset.can_delete %}
-                    <label class="block text-sm font-medium text-slate-700">
-                      Remover
-                      <span class="text-xs text-slate-500">(apaga se não estiver em uso)</span>
-                    </label>
-                    <div class="mt-2">
-                      {{ f.DELETE }}
+            {{ formset.management_form }}
+
+            {% if formset.non_form_errors %}
+              <div class="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-900 mb-4">
+                {{ formset.non_form_errors }}
+              </div>
+            {% endif %}
+
+            <div id="tipos-container" class="space-y-3">
+              {% for f in formset %}
+                <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4 tipo-row">
+                  {{ f.id }}
+
+                  {% if f.non_field_errors %}
+                    <div class="mb-3 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-900">
+                      {{ f.non_field_errors }}
                     </div>
-                    <div class="text-sm text-red-600 mt-1">{{ f.DELETE.errors }}</div>
                   {% endif %}
-                </div>
-              </div>
-            </div>
-          {% endfor %}
-        </div>
 
-        <div class="mt-4 text-sm text-slate-600">
-          Dica: cadastre nomes consistentes (ex.:
-          <span class="font-mono">LCD</span>, <span class="font-mono">Touch</span>, <span class="font-mono">PDV</span>).
-          O sistema gera o código automaticamente.
-        </div>
+                  <div class="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
+                    <div class="md:col-span-8">
+                      {% include "components/_field.html" with label=f.nome.label content=f.nome hint=f.nome.help_text only %}
+                      {% if f.nome.errors %}
+                        <div class="mt-1 text-sm text-red-700">{{ f.nome.errors }}</div>
+                      {% endif %}
+                    </div>
 
-        <!-- Template para novas linhas (usado pelo JS) -->
-        <template id="tipo-empty-form-template">
-          <div class="border-t border-slate-100 pt-3 tipo-row">
-            <div class="grid grid-cols-12 gap-3 items-end">
-              <div class="col-span-12 md:col-span-8">
-                {{ formset.empty_form.nome.label_tag }}
-                <div class="mt-1">
-                  {{ formset.empty_form.nome }}
-                </div>
-              </div>
+                    <div class="md:col-span-2">
+                      <label class="block text-sm font-medium text-slate-700 mb-1">
+                        {{ f.disponivel.label }}
+                      </label>
+                      <div class="mt-2">
+                        {{ f.disponivel }}
+                      </div>
+                      {% if f.disponivel.errors %}
+                        <div class="mt-1 text-sm text-red-700">{{ f.disponivel.errors }}</div>
+                      {% endif %}
+                    </div>
 
-              <div class="col-span-6 md:col-span-2">
-                {{ formset.empty_form.disponivel.label_tag }}
-                <div class="mt-2">
-                  {{ formset.empty_form.disponivel }}
-                </div>
-              </div>
-
-              <div class="col-span-6 md:col-span-2">
-                {% if formset.can_delete %}
-                  <label class="block text-sm font-medium text-slate-700">
-                    Remover
-                    <span class="text-xs text-slate-500">(apaga se não estiver em uso)</span>
-                  </label>
-                  <div class="mt-2">
-                    {{ formset.empty_form.DELETE }}
+                    <div class="md:col-span-2">
+                      {% if formset.can_delete %}
+                        <label class="block text-sm font-medium text-slate-700">
+                          Remover
+                          <span class="text-xs text-slate-500">(apaga se não estiver em uso)</span>
+                        </label>
+                        <div class="mt-2">
+                          {{ f.DELETE }}
+                        </div>
+                        {% if f.DELETE.errors %}
+                          <div class="mt-1 text-sm text-red-700">{{ f.DELETE.errors }}</div>
+                        {% endif %}
+                      {% endif %}
+                    </div>
                   </div>
-                {% endif %}
-              </div>
+                </div>
+              {% endfor %}
+            </div>
 
-              {{ formset.empty_form.id }}
+            <div class="mt-4 text-sm text-slate-600">
+              Dica: cadastre nomes consistentes (ex.:
+              <span class="font-mono">LCD</span>, <span class="font-mono">Touch</span>, <span class="font-mono">PDV</span>).
+              O sistema gera o código automaticamente.
+            </div>
+
+            {# Template para novas linhas (usado pelo JS) #}
+            <template id="tipo-empty-form-template">
+              <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4 tipo-row">
+                <div class="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
+                  <div class="md:col-span-8">
+                    {{ formset.empty_form.nome.label_tag }}
+                    <div class="mt-1">
+                      {{ formset.empty_form.nome }}
+                    </div>
+                  </div>
+
+                  <div class="md:col-span-2">
+                    {{ formset.empty_form.disponivel.label_tag }}
+                    <div class="mt-2">
+                      {{ formset.empty_form.disponivel }}
+                    </div>
+                  </div>
+
+                  <div class="md:col-span-2">
+                    {% if formset.can_delete %}
+                      <label class="block text-sm font-medium text-slate-700">
+                        Remover
+                        <span class="text-xs text-slate-500">(apaga se não estiver em uso)</span>
+                      </label>
+                      <div class="mt-2">
+                        {{ formset.empty_form.DELETE }}
+                      </div>
+                    {% endif %}
+                  </div>
+
+                  {{ formset.empty_form.id }}
+                </div>
+              </div>
+            </template>
+          </div>
+
+          {# Ações #}
+          <div class="mt-6 border-t border-slate-200 pt-4">
+            <div class="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-end">
+              <a href="{% url 'registry:categoria_list' %}" class="btn btn-secondary">
+                Cancelar
+              </a>
+              <button type="submit" class="btn btn-primary">
+                Salvar
+              </button>
             </div>
           </div>
-        </template>
+        </form>
       </div>
-
-      <div class="flex gap-2">
-        <button
-          type="submit"
-          class="px-4 py-2 rounded-lg bg-slate-900 text-white hover:bg-slate-800 transition-colors"
-        >
-          Salvar
-        </button>
-        <a
-          href="{% url 'registry:categoria_list' %}"
-          class="px-4 py-2 rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors"
-        >
-          Cancelar
-        </a>
-      </div>
-    </form>
+    </div>
   </div>
 {% endblock %}
 
