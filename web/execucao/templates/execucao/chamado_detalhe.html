@@ -1,20 +1,27 @@
 {% extends "base.html" %}
 {% load static %}
+
+{% block title %}Chamado — Execução{% endblock %}
+
 {% block extra_head %}
 <link rel="stylesheet" href="{% static 'execucao/css/execucao.css' %}">
 {% endblock %}
 
 {% block content %}
-<div class="space-y-6">
+<div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
 
+  {# Header do chamado (card) #}
   {% include "execucao/components/_chamado_header.html" %}
 
+  {# Itens (execução/configuração) #}
   {% include "execucao/components/_itens_execucao.html" %}
 
+  {# Evidências #}
   {% include "execucao/components/_evidencias.html" %}
 
 </div>
 {% endblock %}
+
 {% block extra_js %}
 <script src="{% static 'execucao/js/chamado_detalhe.js' %}"></script>
 {% endblock %}

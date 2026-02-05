@@ -545,3 +545,68 @@ O bug do “tipo vazio” em linhas adicionadas dinamicamente não era coberto p
 - Node/npm passam a ser dependência de desenvolvimento
 - Testes JS ficam próximos aos arquivos estáticos do app
 - Makefile integra `pytest` + `jest`
+
+---
+# 2026-02-04 — Ciclo de Vida do Chamado, Prioridade e Ticket Externo
+
+## Data
+2026-02-04
+
+## Decisão
+Evoluir o **Chamado** para operar com máquina de estados (workflow) e regras de transição validadas por negócio, incluindo:
+- Campo de **prioridade** para ordenação da fila, com padrão `MAIS_ANTIGO` quando não informado.
+- Substituição do acoplamento ao nome “ServiceNow” por **Ticket Externo** (genérico) e **obrigatório** na criação.
+- Regras de habilitação e dependência para **Chamado Contábil**, **NF de saída** e **finalização**.
+- `FINALIZADO` é estado terminal (não reabre).
+
+## Contexto
+O processo real exige:
+- Ticket externo informado na abertura (ferramenta pode mudar).
+- Chamado contábil só pode existir quando todos os itens estiverem “bipados” (gate já modelado via validações de itens).
+- NF de saída só pode existir após chamado contábil.
+- Chamado só finaliza quando: itens OK + NF de saída + coleta confirmada.
+- A fila de “abertos” precisa ser ordenada por prioridade e, na ausência, pelo mais antigo.
+
+## Regras de Negócio
+### RN-CH-001 — Ticket Externo obrigatório
+Na criação do chamado é obrigatório informar:
+- `ticket_externo_sistema`
+- `ticket_externo_id`
+
+### RN-CH-002 — Contábil depende de itens bipados
+`contabilidade_numero` só pode ser definido se todos os itens atenderem ao gate operacional (itens rastreáveis com ativo+série; itens contáveis confirmados).  
+(Para ENVIO, este gate já existe como `pode_liberar_nf()`.)
+
+### RN-CH-003 — NF de saída depende do contábil
+`nf_saida_numero` só pode ser definido se `contabilidade_numero` estiver definido.
+
+### RN-CH-004 — Finalização depende de itens + NF + coleta
+Chamado só pode ser finalizado se:
+1) gate de itens OK
+2) `nf_saida_numero` definido
+3) `coleta_confirmada_em` definido
+
+### RN-CH-005 — Estado terminal
+Em `FINALIZADO`, o chamado não pode ser reaberto.
+
+## Status do Chamado
+Status oficiais:
+- `ABERTO`
+- `EM_EXECUCAO` (equivalente semântico a “em andamento”)
+- `AGUARDANDO_NF` (após informar contábil)
+- `AGUARDANDO_COLETA` (após informar NF de saída)
+- `FINALIZADO` é terminal; “reabertura” operacional é feita via criação de um novo Chamado do tipo `RETORNO` referenciando o `chamado_origem` (UI será tratada no Histórico/Detalhe posteriormente).
+
+## Prioridade
+O chamado possui `prioridade` com padrão `MAIS_ANTIGO` quando não informada na criação; pode ser alterada após abertura.
+
+Ordenação da fila de abertos:
+1) prioridade (CRITICA, ALTA, MEDIA, BAIXA, MAIS_ANTIGO)
+2) criado_em (mais antigo primeiro)
+
+## Consequências
+- O domínio passa a refletir o ciclo real do chamado.
+- A UI ganha ações explícitas para avançar status e informar contábil/NF/coleta.
+- Evita inconsistências (NF sem contábil; finalização sem coleta; etc).
+- Remove acoplamento ao nome “ServiceNow” (troca de ferramenta não quebra o domínio).
+- O termo “ServiceNow” deixa de ser fixo, reduzindo acoplamento a fornecedor.

@@ -33,12 +33,20 @@
             <div class="font-medium">
               {{ item.equipamento.nome }} — {{ item.tipo }}
             </div>
+
             <div class="text-sm text-gray-600">
               Qtd: <span class="font-medium">{{ item.quantidade }}</span>
+
               {% if item.tem_ativo %}
                 <span class="ml-2 inline-flex items-center px-2 py-0.5 text-xs rounded bg-orange-100 text-orange-800 font-medium">Rastreável</span>
               {% else %}
                 <span class="ml-2 inline-flex items-center px-2 py-0.5 text-xs rounded bg-sky-100 text-sky-800 font-medium">Contável</span>
+              {% endif %}
+
+              {% if item.equipamento.configuravel %}
+                <span class="ml-2 inline-flex items-center px-2 py-0.5 text-xs rounded bg-violet-100 text-violet-800 font-medium">Configurável</span>
+              {% else %}
+                <span class="ml-2 inline-flex items-center px-2 py-0.5 text-xs rounded bg-slate-100 text-slate-600 font-medium">Não configurável</span>
               {% endif %}
             </div>
           </div>
@@ -77,50 +85,95 @@
             </div>
           {% endif %}
 
-          {% if item.requer_configuracao %}
-            <!-- ✅ PASSO 1: aqui NÃO tem form. Só botões apontando para forms externos -->
-            <div class="mt-3 flex flex-wrap gap-2 items-center">
-              <span class="text-xs font-bold uppercase text-gray-500 tracking-tight mr-1">
-                Status de Configuração:
-              </span>
+          <!-- ==========================
+               CONFIGURAÇÃO (decisão operacional)
+               ========================== -->
+          {% if item.equipamento.configuravel %}
+            <div class="mt-3 border-t pt-3">
+              <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+                <div class="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    name="deve_configurar_{{ item.id }}"
+                    {% if item.deve_configurar %}checked{% endif %}
+                    {% if chamado.finalizado_em %}disabled{% endif %}
+                    class="rounded border-gray-300 text-violet-600 focus:ring-violet-500"
+                  />
+                  <div class="text-sm">
+                    <span class="font-medium">Configurar este item</span>
+                    <span class="text-gray-500"> (decisão do chamado)</span>
+                  </div>
+                </div>
 
-              <div class="flex gap-1">
-                <button
-                  type="button"
-                  class="js-status-btn px-3 py-1.5 rounded border text-xs font-medium transition-colors
-                        {% if item.status_configuracao == 'AGUARDANDO' %}bg-gray-200 border-gray-400 text-gray-900 shadow-sm{% else %}bg-white border-gray-200 text-gray-600 hover:bg-gray-50{% endif %}"
-                  data-form-id="form-status-{{ item.id }}-AGUARDANDO"
-                  data-requires-reason="{% if item.status_configuracao == 'CONFIGURADO' %}1{% else %}0{% endif %}"
-                  {% if chamado.finalizado_em %}disabled{% endif %}
-                            >
-                  Aguardando
-                </button>
-
-                <button
-                  type="submit"
-                  form="form-status-{{ item.id }}-EM_CONFIGURACAO"
-                  class="px-3 py-1.5 rounded border text-xs font-medium transition-colors
-                         {% if item.status_configuracao == 'EM_CONFIGURACAO' %}bg-blue-600 border-blue-700 text-white shadow-sm{% else %}bg-white border-gray-200 text-gray-600 hover:bg-gray-50{% endif %}"
-                  {% if chamado.finalizado_em %}disabled{% endif %}
-                >
-                  Em execução
-                </button>
-
-                <button
-                  type="submit"
-                  form="form-status-{{ item.id }}-CONFIGURADO"
-                  class="px-3 py-1.5 rounded border text-xs font-medium transition-colors
-                         {% if item.status_configuracao == 'CONFIGURADO' %}bg-green-600 border-green-700 text-white shadow-sm{% else %}bg-white border-gray-200 text-gray-600 hover:bg-gray-50{% endif %}"
-                  {% if chamado.finalizado_em %}disabled{% endif %}
-                >
-                  Configurado
-                </button>
+                {% if item.deve_configurar %}
+                  <div class="text-xs text-gray-500">
+                    Para finalizar: exige <span class="font-medium">Status CONFIGURADO</span> + <span class="font-medium">IP</span>.
+                  </div>
+                {% endif %}
               </div>
+
+              {% if item.deve_configurar %}
+                <div class="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div>
+                    <label class="block text-[11px] uppercase tracking-wider text-gray-500 font-bold mb-1">IP</label>
+                    <input
+                      name="ip_{{ item.id }}"
+                      value="{{ item.ip|default_if_none:'' }}"
+                      class="w-full border rounded px-3 py-2 text-sm"
+                      placeholder="ex: 10.0.0.10"
+                      {% if chamado.finalizado_em %}disabled{% endif %}
+                    />
+                  </div>
+
+                  <div>
+                    <label class="block text-[11px] uppercase tracking-wider text-gray-500 font-bold mb-1">Status de Configuração</label>
+
+                    <div class="flex flex-wrap gap-1">
+                      <button
+                        type="button"
+                        class="js-status-btn px-3 py-1.5 rounded border text-xs font-medium transition-colors
+                              {% if item.status_configuracao == 'AGUARDANDO' %}bg-gray-200 border-gray-400 text-gray-900 shadow-sm{% else %}bg-white border-gray-200 text-gray-600 hover:bg-gray-50{% endif %}"
+                        data-form-id="form-status-{{ item.id }}-AGUARDANDO"
+                        data-requires-reason="{% if item.status_configuracao == 'CONFIGURADO' %}1{% else %}0{% endif %}"
+                        {% if chamado.finalizado_em %}disabled{% endif %}
+                      >
+                        Aguardando
+                      </button>
+
+                      <button
+                        type="submit"
+                        form="form-status-{{ item.id }}-EM_CONFIGURACAO"
+                        class="px-3 py-1.5 rounded border text-xs font-medium transition-colors
+                               {% if item.status_configuracao == 'EM_CONFIGURACAO' %}bg-blue-600 border-blue-700 text-white shadow-sm{% else %}bg-white border-gray-200 text-gray-600 hover:bg-gray-50{% endif %}"
+                        {% if chamado.finalizado_em %}disabled{% endif %}
+                      >
+                        Em execução
+                      </button>
+
+                      <button
+                        type="submit"
+                        form="form-status-{{ item.id }}-CONFIGURADO"
+                        class="px-3 py-1.5 rounded border text-xs font-medium transition-colors
+                               {% if item.status_configuracao == 'CONFIGURADO' %}bg-green-600 border-green-700 text-white shadow-sm{% else %}bg-white border-gray-200 text-gray-600 hover:bg-gray-50{% endif %}"
+                        {% if chamado.finalizado_em %}disabled{% endif %}
+                      >
+                        Configurado
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              {% else %}
+                <div class="mt-3">
+                  <span class="inline-flex items-center px-2 py-1 text-[10px] font-bold uppercase rounded bg-gray-50 text-gray-400 border border-gray-100">
+                    Configuração opcional (não marcada)
+                  </span>
+                </div>
+              {% endif %}
             </div>
           {% else %}
             <div class="mt-3">
               <span class="inline-flex items-center px-2 py-1 text-[10px] font-bold uppercase rounded bg-gray-50 text-gray-400 border border-gray-100">
-                Não requer configuração lógica
+                Não configurável (cadastro)
               </span>
             </div>
           {% endif %}
@@ -129,9 +182,9 @@
     </div>
   </form>
 
-  <!-- ✅ PASSO 2: forms de status ficam AQUI, fora do form-itens -->
+  <!-- forms de status ficam fora do form-itens -->
   {% for item in itens %}
-    {% if item.requer_configuracao %}
+    {% if item.equipamento.configuravel %}
       <form
         id="form-status-{{ item.id }}-AGUARDANDO"
         method="post"
