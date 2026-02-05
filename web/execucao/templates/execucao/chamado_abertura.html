@@ -1,0 +1,150 @@
+{# web/execucao/templates/execucao/chamado_abertura.html #}
+{% extends "base.html" %}
+{% block title %}Abrir Chamado — Execução{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+  <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
+    <div class="flex items-start justify-between gap-4">
+      <div>
+        <div class="text-lg font-semibold">Abrir chamado</div>
+        <div class="text-sm text-slate-600">
+          Selecione Loja, Projeto/Subprojeto e Kit para gerar os itens automaticamente.
+        </div>
+      </div>
+
+      <a href="{% url 'execucao:fila' %}" class="text-sm text-slate-600 hover:underline whitespace-nowrap">
+        Voltar
+      </a>
+    </div>
+
+    <form method="post" class="mt-5 space-y-4">
+      {% csrf_token %}
+
+      {% if form.non_field_errors %}
+        <div class="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg p-3">
+          {{ form.non_field_errors }}
+        </div>
+      {% endif %}
+
+      {# Campo opcional (ex.: retorno) — renderiza apenas se existir no form #}
+      {% if form.tipo %}
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1">Tipo</label>
+          {{ form.tipo }}
+          {% if form.tipo.errors %}
+            <div class="text-sm text-red-600 mt-1">{{ form.tipo.errors }}</div>
+          {% endif %}
+        </div>
+      {% endif %}
+
+      <div>
+        <label class="block text-sm font-medium text-slate-700 mb-1">Loja</label>
+        {{ form.loja }}
+        {% if form.loja.errors %}
+          <div class="text-sm text-red-600 mt-1">{{ form.loja.errors }}</div>
+        {% endif %}
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-slate-700 mb-1">Projeto</label>
+        {{ form.projeto }}
+        {% if form.projeto.errors %}
+          <div class="text-sm text-red-600 mt-1">{{ form.projeto.errors }}</div>
+        {% endif %}
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-slate-700 mb-1">Subprojeto</label>
+        {{ form.subprojeto }}
+        {% if form.subprojeto.errors %}
+          <div class="text-sm text-red-600 mt-1">{{ form.subprojeto.errors }}</div>
+        {% endif %}
+
+        {% if form.subprojeto.help_text %}
+          <div class="text-xs text-slate-500 mt-1">
+            {{ form.subprojeto.help_text }}
+          </div>
+        {% else %}
+          <div class="text-xs text-slate-500 mt-1">
+            Selecione um Projeto para carregar os Subprojetos.
+          </div>
+        {% endif %}
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-slate-700 mb-1">Kit</label>
+        {{ form.kit }}
+        {% if form.kit.errors %}
+          <div class="text-sm text-red-600 mt-1">{{ form.kit.errors }}</div>
+        {% endif %}
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1">Sistema do ticket externo</label>
+          {{ form.ticket_externo_sistema }}
+          {% if form.ticket_externo_sistema.errors %}
+            <div class="text-sm text-red-600 mt-1">{{ form.ticket_externo_sistema.errors }}</div>
+          {% endif %}
+          {% if form.ticket_externo_sistema.help_text %}
+            <div class="text-xs text-slate-500 mt-1">{{ form.ticket_externo_sistema.help_text }}</div>
+          {% endif %}
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1">Número do ticket externo</label>
+          {{ form.ticket_externo_id }}
+          {% if form.ticket_externo_id.errors %}
+            <div class="text-sm text-red-600 mt-1">{{ form.ticket_externo_id.errors }}</div>
+          {% endif %}
+          {% if form.ticket_externo_id.help_text %}
+            <div class="text-xs text-slate-500 mt-1">{{ form.ticket_externo_id.help_text }}</div>
+          {% endif %}
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-slate-700 mb-1">Prioridade</label>
+        {{ form.prioridade }}
+        {% if form.prioridade.errors %}
+          <div class="text-sm text-red-600 mt-1">{{ form.prioridade.errors }}</div>
+        {% endif %}
+        {% if form.prioridade.help_text %}
+          <div class="text-xs text-slate-500 mt-1">{{ form.prioridade.help_text }}</div>
+        {% endif %}
+      </div>
+
+      {# Campo opcional (ex.: retorno) — renderiza apenas se existir no form #}
+      {% if form.chamado_origem %}
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1">Chamado de origem</label>
+          {{ form.chamado_origem }}
+          {% if form.chamado_origem.errors %}
+            <div class="text-sm text-red-600 mt-1">{{ form.chamado_origem.errors }}</div>
+          {% endif %}
+          <div class="text-xs text-slate-500 mt-1">
+            Obrigatório para retorno (Loja → Matriz). O chamado de origem deve estar finalizado.
+          </div>
+        </div>
+      {% endif %}
+
+      <div class="pt-2 flex justify-end gap-2">
+        <a
+          href="{% url 'execucao:fila' %}"
+          class="px-4 py-2 border border-slate-200 rounded-lg hover:bg-slate-50 text-sm"
+        >
+          Cancelar
+        </a>
+
+        <button
+          class="px-4 py-2 rounded-lg bg-slate-900 text-white hover:bg-slate-800 text-sm"
+          type="submit"
+        >
+          Abrir chamado
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

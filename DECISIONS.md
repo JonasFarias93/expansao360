@@ -16,6 +16,16 @@ Este documento registra decisões técnicas e arquiteturais relevantes do projet
 
 **Decisão**
 O sistema será modelado com duas camadas conceituais principais:
+<<<<<<< HEAD
+
+* **Registry (Cadastro Mestre):** define “o que existe” e “como deve ser”
+* **Operation (Execução de Campo):** registra “o que foi executado”, com rastreabilidade e histórico
+
+**Contexto**  
+Precisamos garantir governança sobre padrões e, ao mesmo tempo, registrar a execução real
+em campo sem poluir o cadastro mestre e sem perder histórico.
+
+=======
 
 * **Registry (Cadastro Mestre):** define “o que existe” e “como deve ser”
 * **Operation (Execução de Campo):** registra “o que foi executado”, com rastreabilidade e histórico
@@ -23,6 +33,7 @@ O sistema será modelado com duas camadas conceituais principais:
 **Contexto**
 Precisamos garantir governança sobre padrões e, ao mesmo tempo, registrar a execução real em campo sem poluir o cadastro mestre e sem perder histórico.
 
+>>>>>>> origin/main
 **Consequências**
 
 * Operation referencia Registry; Registry não depende de Operation.
@@ -32,7 +43,11 @@ Precisamos garantir governança sobre padrões e, ao mesmo tempo, registrar a ex
 
 ## 2026-01-20 — Estratégia de trabalho: microtarefas + disciplina de versionamento
 
+<<<<<<< HEAD
+**Decisão**  
+=======
 **Decisão**
+>>>>>>> origin/main
 O desenvolvimento seguirá por microtarefas com validação objetiva, usando branches e commits pequenos.
 
 **Contexto**
@@ -50,6 +65,12 @@ Queremos previsibilidade, rastreabilidade e redução de retrabalho.
 
 **Decisão**
 Usaremos:
+<<<<<<< HEAD
+
+* `main` para estabilidade e releases
+* `develop` para integração contínua
+=======
+>>>>>>> origin/main
 
 * `main` para estabilidade e releases
 * `develop` para integração contínua
@@ -58,6 +79,11 @@ Usaremos:
 Separar o que está pronto para release do que está em desenvolvimento reduz risco operacional.
 
 **Consequências**
+<<<<<<< HEAD
+
+* Mudanças entram via branches derivadas.
+* `main` recebe apenas conteúdo estável.
+=======
 
 * Mudanças entram via branches derivadas.
 * `main` recebe apenas conteúdo estável.
@@ -77,6 +103,7 @@ Evitar acoplamento prematuro permite decisões baseadas em requisitos reais.
 * `.gitignore` genérico.
 * Nenhuma estrutura de framework antecipada.
 * Stack definida posteriormente via decisão formal.
+>>>>>>> origin/main
 
 ---
 
@@ -85,6 +112,16 @@ Evitar acoplamento prematuro permite decisões baseadas em requisitos reais.
 **Decisão**
 A camada Web será implementada em **Django**.
 
+<<<<<<< HEAD
+**Contexto**  
+Após estabilização do core, era necessário um framework maduro para UI, ORM e velocidade de entrega.
+
+**Consequências**
+
+* Core permanece independente.
+* Django atua como adapter.
+* Models Django não concentram regras de negócio complexas.
+=======
 **Contexto**
 Após estabilização do core e da CLI, era necessário um framework maduro para UI, autenticação, ORM e velocidade de entrega.
 
@@ -109,6 +146,7 @@ Reduzir carga cognitiva e aproximar o código do negócio real.
 * Core em PT-BR.
 * Framework/infra seguem convenções originais.
 * Glossário mantido para consistência.
+>>>>>>> origin/main
 
 ---
 
@@ -117,6 +155,15 @@ Reduzir carga cognitiva e aproximar o código do negócio real.
 **Decisão**
 O termo **Chamado** substitui “Card” como entidade operacional.
 
+<<<<<<< HEAD
+**Contexto**  
+“Card” é ambíguo e visual. “Chamado” representa melhor uma unidade operacional real.
+
+**Consequências**
+
+* Domínio, UI e testes utilizam “Chamado”.
+* Histórico operacional preservado.
+=======
 **Contexto**
 “Card” é ambíguo e visual. “Chamado” representa melhor uma unidade operacional.
 
@@ -124,11 +171,28 @@ O termo **Chamado** substitui “Card” como entidade operacional.
 
 * Domínio, CLI e Web utilizam “Chamado”.
 * Possíveis aliases temporários para compatibilidade (se necessário).
+>>>>>>> origin/main
 
 ---
 
-## 2026-01-21 — Equipamentos rastreáveis vs contáveis (`tem_ativo`)
+## 2026-02-03 — Configuração (ex.: IP) é decisão do Chamado, não do Kit
 
+**Status:** Aceito
+
+<<<<<<< HEAD
+**Decisão**  
+A necessidade de configuração operacional (ex.: exigir IP) é decidida na execução do **Chamado**
+e não imposta pelo cadastro de Kit/KitItem.
+
+**Contexto**  
+O cadastro apenas sugere padrões; a obrigatoriedade varia conforme cenário real de execução.
+
+**Consequências**
+
+* Campo operacional `deve_configurar` pertence à execução.
+* Validação exige IP **somente** quando `deve_configurar=True`.
+* Cadastro não força configuração.
+=======
 **Decisão**
 Equipamentos são classificados como:
 
@@ -142,11 +206,25 @@ Nem todos os itens exigem ativo/número de série.
 
 * Execução valida campos conforme tipo.
 * Relatórios diferenciam ativos e consumíveis.
+>>>>>>> origin/main
 
 ---
 
-## 2026-01-21 — Layout base Web com Tailwind (CDN)
+## 2026-02-03 — Gate de NF e critérios de fechamento do Chamado
 
+<<<<<<< HEAD
+**Decisão**  
+O Chamado só será liberado para NF quando todos os itens estiverem conferidos.
+O fechamento exige NF e confirmação de coleta quando aplicável.
+
+**Contexto**  
+Processo real exige controle contábil e evidência mínima antes de encerramento.
+
+**Consequências**
+
+* Método `pode_liberar_nf()` no Chamado.
+* `finalizar()` valida regras conforme tipo (ENVIO / RETORNO).
+=======
 **Decisão**
 Adotar Tailwind via CDN e estrutura base de templates (`base`, `partials`, `components`).
 
@@ -157,11 +235,33 @@ Padronizar UI desde o início sem custo de build frontend.
 
 * UI padronizada desde o início.
 * Evita HTML duplicado e decisões visuais ad-hoc.
+>>>>>>> origin/main
 
 ---
 
-## 2026-01-21 — Camada Web como adapter
+## 2026-02-04 — Ciclo de Vida do Chamado, Prioridade e Ticket Externo
 
+<<<<<<< HEAD
+**Decisão**  
+Evoluir o **Chamado** para operar com regras explícitas de ciclo de vida, incluindo:
+
+* Ticket Externo obrigatório na criação
+* Prioridade para ordenação da fila
+* Estados intermediários (contábil, NF, coleta)
+* `FINALIZADO` como estado terminal
+
+**Contexto**  
+O processo real não permite:
+* NF sem contábil
+* Finalização sem coleta
+* Chamado sem ticket externo
+
+**Consequências**
+
+* Domínio reflete processo real.
+* UI orienta avanço de status.
+* Evita inconsistências operacionais.
+=======
 **Decisão**
 A Web atua apenas como adapter (UI + persistência + orquestração), preservando regras de negócio fora da camada de entrega.
 
@@ -173,11 +273,62 @@ Evitar migração de regras de negócio para a camada Web.
 * Core independente.
 * CLI e Web compartilham domínio.
 * Facilita API e mobile no futuro.
+>>>>>>> origin/main
 
 ---
 
-## 2026-01-21 — Fluxo inverso via novo Chamado (Loja → Matriz)
+# 🆕 2026-02-04 — Separação entre Abertura do Chamado e Fila Operacional
 
+<<<<<<< HEAD
+**Status:** Aceito
+
+## Decisão
+Introduzir explicitamente a separação entre:
+
+* **Abertura do Chamado (setup operacional)**  
+* **Execução Operacional (fila de trabalho)**
+
+Chamados **não entram automaticamente na fila operacional no momento da criação**.
+
+## Contexto
+Durante ajustes de layout e fluxo, foi identificado que:
+
+* A tela de **decisão operacional** (bipagem e “configurar este item”) estava sendo exibida
+  diretamente na **fila operacional**.
+* Isso causava confusão de fluxo e a impressão de que itens já estavam “em execução”
+  logo após a criação.
+* A decisão de configuração (`deve_configurar`) pertence ao **step de abertura**,
+  não à execução em fila.
+
+O problema não era estético, mas **arquitetural**: ausência de um estado explícito
+para o momento intermediário entre “criado” e “em execução”.
+
+## Decisão Técnica
+O ciclo de vida do Chamado passa a considerar explicitamente:
+
+1) Abertura / Preparação
+   * Criação do Chamado
+   * Geração dos itens de execução
+   * Decisão de configuração (`deve_configurar`)
+   * Planejamento técnico (definição de IP obrigatório para itens configuráveis)
+
+2) **Fila Operacional**
+   * Apenas Chamados prontos para execução entram na fila
+   * Chamados em abertura **não aparecem** na fila
+
+A transição para a fila ocorre **explicitamente** após salvar os itens e decisões iniciais.
+
+## Consequências
+
+* Elimina mistura de responsabilidades entre setup e execução.
+* Evita confusão de UX e estados “meio operacionais”.
+* Garante que decisões iniciais não sejam tratadas como execução em andamento.
+* Abre caminho para:
+  * validações mais claras
+  * métricas corretas
+  * possíveis wizards de abertura no futuro
+* Previne regressões semelhantes em alterações de layout/UI.
+=======
 **Decisão**
 Correções e retornos geram **novo Chamado**, nunca edição destrutiva.
 
@@ -189,11 +340,23 @@ Chamados representam eventos operacionais e contábeis reais.
 * Histórico imutável.
 * Retornos exigem desfecho explícito.
 * Auditoria e contabilidade preservadas.
+>>>>>>> origin/main
 
 ---
 
-## 2026-01-22 — Evidências (anexos) por Chamado
+## Decisões pendentes de implementação
 
+<<<<<<< HEAD
+Esta seção lista decisões **já aceitas** mas ainda não completamente implementadas.
+
+### 1) Transição explícita de estado após abertura
+* Promover Chamado para estado operacional somente após salvar itens.
+* Ajustar testes de fluxo completo.
+
+### 2) Ajuste fino de UX no step de abertura
+* Feedback visual claro de “setup” vs “execução”.
+* Possível separação visual ou wizard (futuro).
+=======
 **Decisão**
 Evidências são entidades próprias vinculadas a Chamados.
 
@@ -205,11 +368,86 @@ NF, Carta de Conteúdo e documentos de exceção são parte do processo real.
 * Finalização pode exigir evidência.
 * Auditoria fortalecida.
 * Modelo extensível (fotos, assinaturas, etc.).
+>>>>>>> origin/main
 
 ---
 
-## 2026-01-22 — IAM mínimo por capabilities
+# ADR — Nomes semânticos e separação de templates do fluxo de Chamado
 
+<<<<<<< HEAD
+## Data
+2026-02-04
+
+## Status
+Aceito
+
+## Decisão
+Renomear templates e componentes do app `execucao` para nomes semânticos que expressem
+claramente a responsabilidade de cada tela/fragmento, reduzindo risco de misturar
+etapas do fluxo (abertura/planejamento vs execução operacional).
+
+Além disso, separar explicitamente a renderização de itens em:
+- planejamento (status `ABERTO`)
+- operação (status `EM_EXECUCAO` e posteriores)
+
+## Contexto
+Após mudanças de layout, trechos de execução operacional foram inseridos em templates
+de abertura/planejamento, causando confusão de fluxo e regressões.
+O problema foi agravado por nomes genéricos (`chamado_detalhe`, `_itens_execucao`) que não
+evidenciam o estágio do processo.
+
+## Consequências
+- Alteração de nomes de arquivos impacta includes e `template_name` nas views.
+- A refatoração é mecânica e deve ser entregue em commit atômico (renome + ajustes).
+- Reduz significativamente risco de regressões futuras por confusão de responsabilidade.
+
+---
+# ADR — 2026-02-05 — Status EM_ABERTURA e promoção explícita para ABERTO
+
+**Status:** Aceito
+
+## Decisão
+Introduzir o status **EM_ABERTURA** no ciclo de vida de `Chamado`, separando explicitamente:
+
+- **Abertura (setup / planejamento)** → `EM_ABERTURA`
+- **Fila operacional** → `ABERTO` em diante
+
+## Contexto
+A tela 2 (setup) ocorre imediatamente após o POST do formulário inicial, quando o chamado já existe e os itens foram gerados, mas ainda não deve:
+- aparecer na fila operacional
+- permitir execução (bipagem / gates / finalizar)
+
+Sem um estado explícito, a UI e as regras ficam ambíguas e geram regressões.
+
+## Regras de negócio
+1) POST da Tela 1 cria o chamado com `status = EM_ABERTURA`
+2) Ao clicar **Salvar setup**, o chamado é promovido para `status = ABERTO`
+3) A fila operacional lista somente `ABERTO`, `EM_EXECUCAO`, `AGUARDANDO_*` (nunca `EM_ABERTURA`)
+
+## Consequências
+- Separa claramente setup vs execução
+- Simplifica templates (modo setup vs modo execução)
+- Simplifica regras e testes
+- Evita chamados “meio operacionais” logo após a criação
+
+
+---
+
+## 2026-02-05 — Separação de template para Setup do Chamado
+
+**Decisão**
+Criar um template dedicado `execucao/chamado_setup.html` para o estágio de planejamento (status `ABERTO`),
+mantendo `execucao/chamado_execucao.html` apenas para os estágios operacionais (`EM_EXECUCAO+`).
+
+**Contexto**
+O template “vivo” estava acumulando responsabilidades de planejamento e execução, exigindo muitos `ifs`
+por status e aumentando risco de mistura de ações operacionais no estado `ABERTO`.
+
+**Consequências**
+- `ChamadoSetupView` passa a renderizar `chamado_setup.html`.
+- `ChamadoDetailView` passa a ser acessível somente quando `status != ABERTO` (ou redireciona para setup).
+- O contrato de templates fica mais simples e reduz branching no HTML.
+=======
 **Decisão**
 Adoção de **Capability-Based Access Control** na camada Web.
 
@@ -545,3 +783,4 @@ O bug do “tipo vazio” em linhas adicionadas dinamicamente não era coberto p
 - Node/npm passam a ser dependência de desenvolvimento
 - Testes JS ficam próximos aos arquivos estáticos do app
 - Makefile integra `pytest` + `jest`
+>>>>>>> origin/main

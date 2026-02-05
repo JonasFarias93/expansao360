@@ -1,9 +1,39 @@
+{# web/templates/partials/_messages.html #}
+
 {% if messages %}
   <div class="space-y-3 mb-6">
     {% for message in messages %}
-      <div class="rounded-lg px-4 py-3 bg-white border border-slate-200">
-        <div class="text-sm">{{ message }}</div>
-      </div>
+      {% with tags=message.tags|default:"" %}
+        <div class="rounded-xl px-4 py-3 border
+          {% if 'error' in tags or 'danger' in tags %}
+            bg-red-50 border-red-200 text-red-900
+          {% elif 'success' in tags %}
+            bg-green-50 border-green-200 text-green-900
+          {% elif 'warning' in tags %}
+            bg-amber-50 border-amber-200 text-amber-900
+          {% else %}
+            bg-white border-slate-200 text-slate-900
+          {% endif %}
+        ">
+          <div class="flex items-start gap-3">
+            <div class="mt-0.5">
+              {% if 'error' in tags or 'danger' in tags %}
+                <span class="badge badge-danger">Erro</span>
+              {% elif 'success' in tags %}
+                <span class="badge badge-done">Sucesso</span>
+              {% elif 'warning' in tags %}
+                <span class="badge badge-warning">Atenção</span>
+              {% else %}
+                <span class="badge badge-muted">Info</span>
+              {% endif %}
+            </div>
+
+            <div class="text-sm leading-relaxed">
+              {{ message }}
+            </div>
+          </div>
+        </div>
+      {% endwith %}
     {% endfor %}
   </div>
 {% endif %}

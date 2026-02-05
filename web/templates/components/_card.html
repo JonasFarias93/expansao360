@@ -1,14 +1,26 @@
+{# web/templates/components/_card.html #}
+
 <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
   {% if title %}
-    <div class="bg-slate-900 text-white px-5 py-4">
-      <div class="font-semibold">{{ title }}</div>
-      {% if subtitle %}
-        <div class="text-sm text-slate-300 mt-1">{{ subtitle }}</div>
-      {% endif %}
+    <div class="bg-slate-900 text-white px-5 py-4 border-b border-slate-800">
+      <div class="flex items-start justify-between gap-4">
+        <div class="min-w-0">
+          <div class="font-semibold leading-tight">{{ title }}</div>
+          {% if subtitle %}
+            <div class="text-sm text-slate-200 mt-1 leading-snug">{{ subtitle }}</div>
+          {% endif %}
+        </div>
+
+        {% if header_right %}
+          <div class="shrink-0">
+            {{ header_right }}
+          </div>
+        {% endif %}
+      </div>
     </div>
   {% endif %}
 
-  <div class="p-5">
+  <div class="{% if body_class %}{{ body_class }}{% else %}p-5{% endif %}">
     {{ content }}
   </div>
 </div>

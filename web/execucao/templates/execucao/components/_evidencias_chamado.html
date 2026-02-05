@@ -1,3 +1,5 @@
+{# web/execucao/templates/execucao/components/_evidencias_chamado.html #}
+
 <div class="bg-white shadow rounded p-4">
   <div class="flex items-center justify-between mb-3">
     <h2 class="font-semibold">Evidências</h2>
@@ -9,7 +11,12 @@
       Este chamado está finalizado. As evidências ficam somente para consulta.
     </div>
   {% else %}
-    <form method="post" enctype="multipart/form-data" action="{% url 'execucao:chamado_adicionar_evidencia' chamado.id %}" class="mb-6 border-b pb-6">
+    <form
+      method="post"
+      enctype="multipart/form-data"
+      action="{% url 'execucao:chamado_adicionar_evidencia' chamado.id %}"
+      class="mb-6 border-b pb-6"
+    >
       {% csrf_token %}
       <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
         <div>
@@ -21,15 +28,23 @@
             {% endfor %}
           </select>
         </div>
+
         <div class="md:col-span-2">
           <label class="block text-sm text-gray-600 mb-1 font-medium">Descrição</label>
-          <input name="descricao" class="w-full border rounded px-3 py-2 text-sm" placeholder="Ex: Foto da fachada, NF saída, etc." required />
+          <input
+            name="descricao"
+            class="w-full border rounded px-3 py-2 text-sm"
+            placeholder="Ex: Foto da fachada, NF saída, etc."
+            required
+          />
         </div>
+
         <div class="md:col-span-3">
           <label class="block text-sm text-gray-600 mb-1 font-medium">Arquivo</label>
           <input type="file" name="arquivo" class="w-full border rounded px-3 py-2 bg-white text-sm" required />
         </div>
       </div>
+
       <div class="mt-3 flex justify-end">
         <button class="px-6 py-2 bg-blue-600 text-white rounded text-sm hover:bg-blue-700 transition-colors">
           Enviar Evidência
@@ -52,17 +67,43 @@
                   </span>
                 {% endif %}
               </div>
+
               <div class="text-xs text-gray-500 mt-1">
-                Enviado em {{ ev.criado_em|date:"d/m/Y H:i" }} {% if ev.enviado_por %} • por {{ ev.enviado_por }}{% endif %}
+                Enviado em {{ ev.criado_em|date:"d/m/Y H:i" }}
+                {% if ev.enviado_por %}
+                  • por {{ ev.enviado_por }}
+                {% endif %}
               </div>
             </div>
+
             <div class="flex gap-2 shrink-0">
-              <a href="{{ ev.arquivo.url }}" target="_blank" class="px-3 py-1.5 border rounded text-xs hover:bg-white transition-colors">Visualizar</a>
-              <a href="{{ ev.arquivo.url }}" download class="px-3 py-1.5 border rounded text-xs hover:bg-white transition-colors">Baixar</a>
+              <a
+                href="{{ ev.arquivo.url }}"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="px-3 py-1.5 border rounded text-xs hover:bg-white transition-colors"
+              >
+                Visualizar
+              </a>
+              <a
+                href="{{ ev.arquivo.url }}"
+                download
+                class="px-3 py-1.5 border rounded text-xs hover:bg-white transition-colors"
+              >
+                Baixar
+              </a>
+
               {% if not chamado.finalizado_em %}
-                <form method="post" action="{% url 'execucao:evidencia_remover' chamado.id ev.id %}" onsubmit="return confirm('Excluir esta evidência?')">
+                <form
+                  method="post"
+                  action="{% url 'execucao:evidencia_remover' chamado.id ev.id %}"
+                  onsubmit="return confirm('Excluir esta evidência?')"
+                >
                   {% csrf_token %}
-                  <button class="px-3 py-1.5 border rounded text-xs text-red-700 border-red-200 bg-red-50 hover:bg-red-100" type="submit">
+                  <button
+                    class="px-3 py-1.5 border rounded text-xs text-red-700 border-red-200 bg-red-50 hover:bg-red-100"
+                    type="submit"
+                  >
                     Remover
                   </button>
                 </form>
@@ -73,6 +114,8 @@
       {% endfor %}
     </div>
   {% else %}
-    <div class="text-sm text-gray-600 py-4 italic text-center">Nenhuma evidência anexada.</div>
+    <div class="text-sm text-gray-600 py-4 italic text-center">
+      Nenhuma evidência anexada.
+    </div>
   {% endif %}
 </div>

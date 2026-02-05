@@ -3,27 +3,60 @@
 {% block title %}Nova Loja — Cadastro{% endblock %}
 
 {% block content %}
-  <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 max-w-2xl">
-    <div class="flex items-center justify-between">
-      <div>
-        <div class="text-lg font-semibold">Nova loja</div>
-        <div class="text-sm text-slate-600">Informe código e nome.</div>
+  <div class="max-w-6xl mx-auto">
+    <div class="max-w-2xl mx-auto bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+      <div class="bg-slate-900 text-white px-5 py-4 border-b border-slate-800">
+        <div class="flex items-start justify-between gap-4">
+          <div>
+            <div class="text-lg font-semibold leading-tight">Nova loja</div>
+            <div class="text-sm text-slate-200 mt-1">Informe os dados da loja.</div>
+          </div>
+
+          <a href="{% url 'registry:loja_list' %}" class="btn btn-ghost !text-white !border-slate-700 hover:!bg-slate-800">
+            Voltar
+          </a>
+        </div>
       </div>
-      <a href="{% url 'registry:loja_list' %}" class="text-sm text-slate-600 hover:underline">Voltar</a>
+
+      <div class="p-5">
+        <form method="post" class="space-y-4">
+          {% csrf_token %}
+
+          {% if form.non_field_errors %}
+            <div class="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-900">
+              {{ form.non_field_errors }}
+            </div>
+          {% endif %}
+
+          {# Hidden fields first #}
+          {% for field in form.hidden_fields %}
+            {{ field }}
+          {% endfor %}
+
+          {# Visible fields #}
+          <div class="space-y-4">
+            {% for field in form.visible_fields %}
+              {% include "components/_field.html" with label=field.label content=field hint=field.help_text only %}
+              {% if field.errors %}
+                <div class="-mt-3 text-sm text-red-700">
+                  {{ field.errors }}
+                </div>
+              {% endif %}
+            {% endfor %}
+          </div>
+
+          <div class="mt-6 border-t border-slate-200 pt-4">
+            <div class="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-end">
+              <a href="{% url 'registry:loja_list' %}" class="btn btn-secondary">
+                Cancelar
+              </a>
+              <button type="submit" class="btn btn-primary">
+                Salvar
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
     </div>
-
-    <form method="post" class="mt-5 space-y-4">
-      {% csrf_token %}
-      {{ form.as_p }}
-
-      <div class="pt-2 flex justify-end gap-2">
-        <a href="{% url 'registry:loja_list' %}" class="px-4 py-2 border rounded-lg hover:bg-slate-50 text-sm">
-          Cancelar
-        </a>
-        <button class="px-4 py-2 rounded-lg bg-slate-900 text-white hover:bg-slate-800 text-sm">
-          Salvar
-        </button>
-      </div>
-    </form>
   </div>
 {% endblock %}
