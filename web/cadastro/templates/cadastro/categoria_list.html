@@ -1,6 +1,5 @@
 {% extends "base.html" %}
 
-<<<<<<< HEAD
 {% block title %}Categorias — Cadastro{% endblock %}
 
 {% block content %}
@@ -68,56 +67,3 @@
     </div>
   </div>
 {% endblock %}
-=======
-{% block title %}Categorias | EXPANSÃO360{% endblock %}
-
-{% block content %}
-  <div class="max-w-5xl mx-auto">
-    <div class="flex items-center justify-between mb-4">
-      <div>
-        <h1 class="text-xl font-semibold">Categorias</h1>
-        <p class="text-sm text-slate-600">Gerencie categorias e seus tipos (Touch, LCD, PDV, etc.).</p>
-      </div>
-
-      <a
-        href="{% url 'registry:categoria_create' %}"
-        class="inline-flex items-center px-4 py-2 rounded-lg bg-slate-900 text-white hover:bg-slate-800 transition-colors"
-      >
-        Nova categoria
-      </a>
-    </div>
-
-    <div class="rounded-xl border border-slate-200 bg-white overflow-hidden">
-      <table class="w-full text-sm">
-        <thead class="bg-slate-50 text-slate-600">
-          <tr>
-            <th class="text-left p-3">Nome</th>
-            <th class="text-right p-3">Ações</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for c in categorias %}
-            <tr class="border-t border-slate-100">
-              <td class="p-3 font-medium text-slate-900">{{ c.nome }}</td>
-              <td class="p-3 text-right">
-                <a
-                  class="inline-flex items-center px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors"
-                  href="{% url 'registry:categoria_update' c.pk %}"
-                >
-                  Editar
-                </a>
-              </td>
-            </tr>
-          {% empty %}
-            <tr>
-              <td class="p-6 text-slate-600" colspan="2">
-                Nenhuma categoria cadastrada.
-              </td>
-            </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-  </div>
-{% endblock %}
->>>>>>> origin/main
