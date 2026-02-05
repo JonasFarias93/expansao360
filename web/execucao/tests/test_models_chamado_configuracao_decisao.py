@@ -61,6 +61,9 @@ class ChamadoConfiguracaoDecididaNoChamadoTests(TestCase):
             subprojeto=self.subprojeto,
             kit=self.kit,
             tipo=Chamado.Tipo.ENVIO,
+            # gates de fechamento (ENVIO)
+            nf_saida_numero="NF-123",
+            coleta_confirmada_em=timezone.now(),
         )
         chamado.gerar_itens_de_instalacao()
         return chamado

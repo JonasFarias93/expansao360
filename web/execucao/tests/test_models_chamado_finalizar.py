@@ -24,12 +24,14 @@ class ValidacaoExecucaoChamadoTest(ChamadoBaseTestCase):
             categoria=self.categoria,
             tem_ativo=False,
         )
-
         self.chamado = Chamado.objects.create(
             loja=self.loja,
             projeto=self.projeto,
             subprojeto=self.sub,
             kit=self.kit,
+            # gates de fechamento (ENVIO)
+            nf_saida_numero="NF-123",
+            coleta_confirmada_em=timezone.now(),
         )
 
         self.item_micro = InstalacaoItem.objects.create(

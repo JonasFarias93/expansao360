@@ -1,3 +1,6 @@
+# web/execucao/forms.py
+from __future__ import annotations
+
 from cadastro.models import Kit, Loja, Projeto, Subprojeto
 from django import forms
 from django.urls import reverse
@@ -27,7 +30,7 @@ class ChamadoCreateForm(forms.Form):
         label="Kit",
     )
 
-    # ✅ NOVO: Ticket Externo (obrigatório)
+    # ✅ Ticket Externo (obrigatório)
     ticket_externo_sistema = forms.CharField(
         required=True,
         max_length=50,
@@ -56,7 +59,9 @@ class ChamadoCreateForm(forms.Form):
             "focus:outline-none focus:ring-2 focus:ring-slate-900"
         )
         for _name, field in self.fields.items():
-            field.widget.attrs["class"] = base
+            # não sobrescreve classes já definidas (se houver)
+            current = (field.widget.attrs.get("class") or "").strip()
+            field.widget.attrs["class"] = f"{current} {base}".strip() if current else base
 
         # Descobre projeto_id (POST / GET com params / initial)
         projeto_id = None
@@ -87,3 +92,19 @@ class ChamadoCreateForm(forms.Form):
                 "hx-include": "[name='projeto']",
             }
         )
+
+    def clean(self):
+        cleaned = super().clean()
+
+        sistema = (cleaned.get("ticket_externo_sistema") or "").strip()
+        ticket_id = (cleaned.get("ticket_externo_id") or "").strip()
+
+        if not sistema:
+            self.add_error("ticket_externo_sistema", "Campo obrigatório.")
+        if not ticket_id:
+            self.add_error("ticket_externo_id", "Campo obrigatório.")
+
+        cleaned["ticket_externo_sistema"] = sistema
+        cleaned["ticket_externo_id"] = ticket_id
+
+        return cleaned

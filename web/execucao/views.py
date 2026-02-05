@@ -1,4 +1,5 @@
 # web/execucao/views.py
+from __future__ import annotations
 
 from cadastro.models import Subprojeto
 from django.contrib import messages
@@ -30,7 +31,7 @@ def _push_validation_error_messages(request, exc: ValidationError) -> None:
     - ValidationError pode vir com .messages (lista)
     - ou .message_dict (dict campo -> lista msgs)
     """
-    if hasattr(exc, "message_dict") and exc.message_dict:
+    if hasattr(exc, "message_dict") and getattr(exc, "message_dict", None):
         for _field, msgs in exc.message_dict.items():  # type: ignore[attr-defined]
             for msg in msgs:
                 messages.error(request, msg)
@@ -48,13 +49,7 @@ def subprojetos_por_projeto(request):
     """
     Retorna as <option> para o select de subprojeto filtrado por projeto.
 
-    Uso típico (HTMX):
-      - hx-get="/execucao/ajax/subprojetos/"
-      - hx-trigger="change"
-      - hx-target="#id_subprojeto"
-      - hx-include="[name='projeto']"
-
-    Querystring esperada:
+    Querystring:
       ?projeto=<id>
 
     Resposta:
@@ -96,6 +91,8 @@ class ChamadoCreateView(CapabilityRequiredMixin, View):
             return render(request, self.template_name, {"form": form})
 
         # Regra atual do negócio: abertura sempre é ENVIO (Matriz -> Loja).
+        prioridade = form.cleaned_data.get("prioridade") or Chamado.Prioridade.MAIS_ANTIGO
+
         chamado = Chamado(
             loja=form.cleaned_data["loja"],
             projeto=form.cleaned_data["projeto"],
@@ -103,14 +100,21 @@ class ChamadoCreateView(CapabilityRequiredMixin, View):
             kit=form.cleaned_data["kit"],
             status=Chamado.Status.ABERTO,
             tipo=Chamado.Tipo.ENVIO,
-            # novo: ticket externo + prioridade
+            # Ticket externo (obrigatório no form; ainda assim normalizamos)
             ticket_externo_sistema=(form.cleaned_data.get("ticket_externo_sistema") or "").strip(),
             ticket_externo_id=(form.cleaned_data.get("ticket_externo_id") or "").strip(),
-            prioridade=form.cleaned_data.get("prioridade") or Chamado.Prioridade.MAIS_ANTIGO,
+            prioridade=prioridade,
         )
-        chamado.full_clean()
+
+        try:
+            chamado.full_clean()
+        except ValidationError as exc:
+            _push_validation_error_messages(request, exc)
+            return render(request, self.template_name, {"form": form})
+
         chamado.save()
 
+        # Deve ser idempotente (não pode duplicar itens)
         chamado.gerar_itens_de_instalacao()
 
         messages.success(request, f"Chamado {chamado.protocolo} aberto com sucesso.")
@@ -166,9 +170,6 @@ class ChamadoFilaView(CapabilityRequiredMixin, TemplateView):
             .order_by("status_rank", "prio_rank", "criado_em")
         )
 
-        # ViewModel simples para a UI (fila):
-        # - liberação de NF (gate)
-        # - progresso de bipagem / checagem / configuração (decisão do chamado)
         rows = []
         for ch in chamados:
             itens = list(ch.itens.all())
@@ -254,14 +255,11 @@ class ChamadoDetailView(CapabilityRequiredMixin, TemplateView):
             pk=chamado_id,
         )
 
-        # mantém idempotente (não cria duplicado)
+        # Mantém idempotente (não cria duplicado)
         chamado.gerar_itens_de_instalacao()
 
         itens_qs = chamado.itens.select_related("equipamento").all().order_by("id")
 
-        # Configuração é decisão operacional do chamado:
-        # conta apenas itens com deve_configurar=True e considera "done"
-        # quando status_configuracao=CONFIGURADO e ip preenchido.
         config_total = itens_qs.filter(deve_configurar=True).count()
         config_done = (
             itens_qs.filter(
@@ -279,9 +277,7 @@ class ChamadoDetailView(CapabilityRequiredMixin, TemplateView):
         evidencias = EvidenciaChamado.objects.filter(chamado=chamado).order_by("-criado_em", "-id")
         evidencia_tipos = list(EvidenciaChamado.Tipo.choices)
 
-        # ==========================
-        # Flags/UI (sem mudar regra)
-        # ==========================
+        # Flags/UI
         is_envio = chamado.tipo == Chamado.Tipo.ENVIO
         is_retorno = chamado.tipo == Chamado.Tipo.RETORNO
         gate_contabil_ok = bool((chamado.contabilidade_numero or "").strip())
