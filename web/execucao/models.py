@@ -28,11 +28,20 @@ class Chamado(models.Model):
     class Status(models.TextChoices):
         ABERTO = "ABERTO", "Aberto"
         EM_EXECUCAO = "EM_EXECUCAO", "Em execução"
+        AGUARDANDO_NF = "AGUARDANDO_NF", "Aguardando NF"
+        AGUARDANDO_COLETA = "AGUARDANDO_COLETA", "Aguardando coleta"
         FINALIZADO = "FINALIZADO", "Finalizado"
 
     class Tipo(models.TextChoices):
         ENVIO = "ENVIO", "Envio (Matriz → Loja)"
         RETORNO = "RETORNO", "Retorno (Loja → Matriz)"
+
+    class Prioridade(models.TextChoices):
+        MAIS_ANTIGO = "MAIS_ANTIGO", "Mais antigo (padrão)"
+        BAIXA = "BAIXA", "Baixa"
+        MEDIA = "MEDIA", "Média"
+        ALTA = "ALTA", "Alta"
+        CRITICA = "CRITICA", "Crítica"
 
     loja = models.ForeignKey(Loja, on_delete=models.PROTECT)
     projeto = models.ForeignKey(Projeto, on_delete=models.PROTECT)
@@ -51,11 +60,38 @@ class Chamado(models.Model):
     )
 
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.ABERTO)
+    prioridade = models.CharField(
+        max_length=20,
+        choices=Prioridade.choices,
+        default=Prioridade.MAIS_ANTIGO,
+        db_index=True,
+    )
+
     criado_em = models.DateTimeField(auto_now_add=True)
     finalizado_em = models.DateTimeField(null=True, blank=True)
     protocolo = models.CharField(max_length=32, unique=True, editable=False)
 
+    # =========================
+    # Ticket externo (novo)
+    # =========================
+    # NOTA: deixar blank/default na migration inicial para não quebrar dados existentes.
+    # A obrigatoriedade real fica na UI (form) + migração de endurecimento depois.
+    ticket_externo_sistema = models.CharField(max_length=50, blank=True, default="")
+    ticket_externo_id = models.CharField(max_length=50, blank=True, default="")
+
+    # =========================
+    # Coleta (novo gate ENVIO)
+    # =========================
+    coleta_confirmada_em = models.DateTimeField(null=True, blank=True)
+
+    # =========================
+    # Legado / compatibilidade
+    # =========================
+    # manter por enquanto para não quebrar templates/tests/DB;
+    # depois migraremos para ticket_externo_* e removeremos.
     servicenow_numero = models.CharField(max_length=40, unique=True, null=True, blank=True)
+
+    # Administrativo/financeiro (já existia)
     contabilidade_numero = models.CharField(max_length=40, unique=True, null=True, blank=True)
     nf_saida_numero = models.CharField(max_length=40, unique=True, null=True, blank=True)
 
@@ -167,6 +203,8 @@ class Chamado(models.Model):
           (decisão operacional do chamado), exigindo:
             - status_configuracao=CONFIGURADO
             - ip preenchido
+        - NF de saída é obrigatória (nf_saida_numero)
+        - Coleta confirmada é obrigatória (coleta_confirmada_em)
 
         RETORNO:
         - Exige desfecho (status_retorno).
@@ -186,6 +224,13 @@ class Chamado(models.Model):
         # ENVIO (Matriz -> Loja)
         # ==========================
         if self.tipo == self.Tipo.ENVIO:
+            # gates administrativos do fechamento
+            if not (self.nf_saida_numero or "").strip():
+                erros.append("Não é possível finalizar: informe a NF de saída.")
+
+            if self.coleta_confirmada_em is None:
+                erros.append("Não é possível finalizar: confirme a coleta pela transportadora.")
+
             for item in itens:
                 # ✅ NOVA REGRA:
                 # configuração é decisão do chamado (deve_configurar),
