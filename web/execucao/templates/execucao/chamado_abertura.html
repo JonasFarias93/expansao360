@@ -1,3 +1,4 @@
+{# web/execucao/templates/execucao/chamado_abertura.html #}
 {% extends "base.html" %}
 {% block title %}Abrir Chamado — Execução{% endblock %}
 
@@ -26,6 +27,7 @@
         </div>
       {% endif %}
 
+      {# Campo opcional (ex.: retorno) — renderiza apenas se existir no form #}
       {% if form.tipo %}
         <div>
           <label class="block text-sm font-medium text-slate-700 mb-1">Tipo</label>
@@ -78,6 +80,42 @@
         {% endif %}
       </div>
 
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1">Sistema do ticket externo</label>
+          {{ form.ticket_externo_sistema }}
+          {% if form.ticket_externo_sistema.errors %}
+            <div class="text-sm text-red-600 mt-1">{{ form.ticket_externo_sistema.errors }}</div>
+          {% endif %}
+          {% if form.ticket_externo_sistema.help_text %}
+            <div class="text-xs text-slate-500 mt-1">{{ form.ticket_externo_sistema.help_text }}</div>
+          {% endif %}
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1">Número do ticket externo</label>
+          {{ form.ticket_externo_id }}
+          {% if form.ticket_externo_id.errors %}
+            <div class="text-sm text-red-600 mt-1">{{ form.ticket_externo_id.errors }}</div>
+          {% endif %}
+          {% if form.ticket_externo_id.help_text %}
+            <div class="text-xs text-slate-500 mt-1">{{ form.ticket_externo_id.help_text }}</div>
+          {% endif %}
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-slate-700 mb-1">Prioridade</label>
+        {{ form.prioridade }}
+        {% if form.prioridade.errors %}
+          <div class="text-sm text-red-600 mt-1">{{ form.prioridade.errors }}</div>
+        {% endif %}
+        {% if form.prioridade.help_text %}
+          <div class="text-xs text-slate-500 mt-1">{{ form.prioridade.help_text }}</div>
+        {% endif %}
+      </div>
+
+      {# Campo opcional (ex.: retorno) — renderiza apenas se existir no form #}
       {% if form.chamado_origem %}
         <div>
           <label class="block text-sm font-medium text-slate-700 mb-1">Chamado de origem</label>

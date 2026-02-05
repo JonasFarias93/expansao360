@@ -1,3 +1,4 @@
+{# web/execucao/templates/execucao/chamado_execucao.html #}
 {% extends "base.html" %}
 {% load static %}
 
@@ -10,14 +11,14 @@
 {% block content %}
 <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
 
-  {# Header do chamado (card) #}
-  {% include "execucao/components/_chamado_header.html" %}
+  {# 1) Header do chamado #}
+  {% include "execucao/components/_header_chamado.html" %}
 
-  {# Itens (execução/configuração) #}
-  {% include "execucao/components/_itens_execucao.html" %}
+  {# 2) Card operacional (ponta final) #}
+  {% include "execucao/components/_card_operacional_chamado.html" with chamado=chamado only %}
 
-  {# Evidências #}
-  {% include "execucao/components/_evidencias.html" %}
+  {# 3) Itens do chamado #}
+  {% include "execucao/components/_itens_chamado.html" with chamado=chamado itens=itens only %}
 
 </div>
 {% endblock %}

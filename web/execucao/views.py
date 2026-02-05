@@ -8,6 +8,7 @@ from django.db import transaction
 from django.db.models import Case, IntegerField, Q, Value, When
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
 from django.utils.html import escape
 from django.views import View
 from django.views.generic import TemplateView
@@ -21,6 +22,22 @@ from .models import (
     ItemConfiguracaoLog,
     StatusConfiguracao,
 )
+
+
+def _push_validation_error_messages(request, exc: ValidationError) -> None:
+    """
+    Normaliza ValidationError para mensagens no Django messages framework.
+    - ValidationError pode vir com .messages (lista)
+    - ou .message_dict (dict campo -> lista msgs)
+    """
+    if hasattr(exc, "message_dict") and exc.message_dict:
+        for _field, msgs in exc.message_dict.items():  # type: ignore[attr-defined]
+            for msg in msgs:
+                messages.error(request, msg)
+        return
+
+    for msg in getattr(exc, "messages", [str(exc)]):
+        messages.error(request, msg)
 
 
 # ============================
@@ -86,6 +103,10 @@ class ChamadoCreateView(CapabilityRequiredMixin, View):
             kit=form.cleaned_data["kit"],
             status=Chamado.Status.ABERTO,
             tipo=Chamado.Tipo.ENVIO,
+            # novo: ticket externo + prioridade
+            ticket_externo_sistema=(form.cleaned_data.get("ticket_externo_sistema") or "").strip(),
+            ticket_externo_id=(form.cleaned_data.get("ticket_externo_id") or "").strip(),
+            prioridade=form.cleaned_data.get("prioridade") or Chamado.Prioridade.MAIS_ANTIGO,
         )
         chamado.full_clean()
         chamado.save()
@@ -101,7 +122,7 @@ class ChamadoCreateView(CapabilityRequiredMixin, View):
 # ==================
 class ChamadoFilaView(CapabilityRequiredMixin, TemplateView):
     """
-    Fila operacional de chamados ativos (ABERTO / EM_EXECUCAO).
+    Fila operacional de chamados ativos.
     """
 
     template_name = "execucao/fila.html"
@@ -111,18 +132,38 @@ class ChamadoFilaView(CapabilityRequiredMixin, TemplateView):
         ctx = super().get_context_data(**kwargs)
 
         chamados = (
-            Chamado.objects.filter(status__in=[Chamado.Status.ABERTO, Chamado.Status.EM_EXECUCAO])
+            Chamado.objects.filter(
+                status__in=[
+                    Chamado.Status.ABERTO,
+                    Chamado.Status.EM_EXECUCAO,
+                    Chamado.Status.AGUARDANDO_NF,
+                    Chamado.Status.AGUARDANDO_COLETA,
+                ]
+            )
             .select_related("loja", "projeto", "subprojeto", "kit")
             .prefetch_related("itens")
             .annotate(
-                prioridade=Case(
+                # prioridade por status (ordem operacional)
+                status_rank=Case(
                     When(status=Chamado.Status.EM_EXECUCAO, then=Value(0)),
                     When(status=Chamado.Status.ABERTO, then=Value(1)),
-                    default=Value(2),
+                    When(status=Chamado.Status.AGUARDANDO_NF, then=Value(2)),
+                    When(status=Chamado.Status.AGUARDANDO_COLETA, then=Value(3)),
+                    default=Value(9),
                     output_field=IntegerField(),
-                )
+                ),
+                # prioridade real do chamado (CRITICA...MAIS_ANTIGO)
+                prio_rank=Case(
+                    When(prioridade=Chamado.Prioridade.CRITICA, then=Value(0)),
+                    When(prioridade=Chamado.Prioridade.ALTA, then=Value(1)),
+                    When(prioridade=Chamado.Prioridade.MEDIA, then=Value(2)),
+                    When(prioridade=Chamado.Prioridade.BAIXA, then=Value(3)),
+                    When(prioridade=Chamado.Prioridade.MAIS_ANTIGO, then=Value(4)),
+                    default=Value(4),
+                    output_field=IntegerField(),
+                ),
             )
-            .order_by("prioridade", "criado_em")
+            .order_by("status_rank", "prio_rank", "criado_em")
         )
 
         # ViewModel simples para a UI (fila):
@@ -178,7 +219,9 @@ class HistoricoView(CapabilityRequiredMixin, TemplateView):
         if q:
             chamados = chamados.filter(
                 Q(protocolo__icontains=q)
-                | Q(servicenow_numero__icontains=q)
+                | Q(ticket_externo_id__icontains=q)
+                | Q(ticket_externo_sistema__icontains=q)
+                | Q(servicenow_numero__icontains=q)  # legado
                 | Q(contabilidade_numero__icontains=q)
                 | Q(nf_saida_numero__icontains=q)
                 | Q(loja__codigo__icontains=q)
@@ -211,6 +254,7 @@ class ChamadoDetailView(CapabilityRequiredMixin, TemplateView):
             pk=chamado_id,
         )
 
+        # mantém idempotente (não cria duplicado)
         chamado.gerar_itens_de_instalacao()
 
         itens_qs = chamado.itens.select_related("equipamento").all().order_by("id")
@@ -235,6 +279,15 @@ class ChamadoDetailView(CapabilityRequiredMixin, TemplateView):
         evidencias = EvidenciaChamado.objects.filter(chamado=chamado).order_by("-criado_em", "-id")
         evidencia_tipos = list(EvidenciaChamado.Tipo.choices)
 
+        # ==========================
+        # Flags/UI (sem mudar regra)
+        # ==========================
+        is_envio = chamado.tipo == Chamado.Tipo.ENVIO
+        is_retorno = chamado.tipo == Chamado.Tipo.RETORNO
+        gate_contabil_ok = bool((chamado.contabilidade_numero or "").strip())
+        gate_nf_ok = bool((chamado.nf_saida_numero or "").strip())
+        gate_coleta_ok = chamado.coleta_confirmada_em is not None
+
         ctx.update(
             {
                 "chamado": chamado,
@@ -245,9 +298,152 @@ class ChamadoDetailView(CapabilityRequiredMixin, TemplateView):
                 "config_done": config_done,
                 "config_pct": config_pct,
                 "pode_liberar_nf": chamado.pode_liberar_nf(),
+                # UI flags
+                "is_envio": is_envio,
+                "is_retorno": is_retorno,
+                "gate_contabil_ok": gate_contabil_ok,
+                "gate_nf_ok": gate_nf_ok,
+                "gate_coleta_ok": gate_coleta_ok,
             }
         )
         return ctx
+
+
+# ==========================
+# CHAMADO: ADMIN / WORKFLOW
+# ==========================
+class ChamadoInformarContabilView(CapabilityRequiredMixin, View):
+    """
+    Define contabilidade_numero.
+    Regra: só pode existir quando todos itens estiverem OK (pode_liberar_nf).
+    Ao informar, o chamado vai para AGUARDANDO_NF.
+    """
+
+    required_capability = "execucao.chamado.editar_referencias"
+
+    @transaction.atomic
+    def post(self, request, chamado_id, *args, **kwargs):
+        chamado = get_object_or_404(Chamado, pk=chamado_id)
+        chamado.gerar_itens_de_instalacao()
+
+        if chamado.status == Chamado.Status.FINALIZADO:
+            messages.error(request, "Chamado finalizado. Não é possível alterar.")
+            return redirect("execucao:chamado_detalhe", chamado_id=chamado.id)
+
+        if chamado.tipo != Chamado.Tipo.ENVIO:
+            messages.error(request, "Ação disponível apenas para chamados do tipo ENVIO.")
+            return redirect("execucao:chamado_detalhe", chamado_id=chamado.id)
+
+        if not chamado.pode_liberar_nf():
+            messages.error(
+                request,
+                "Só é possível informar o contábil após todos os itens estarem OK"
+                " (bipados/confirmados).",
+            )
+            return redirect("execucao:chamado_detalhe", chamado_id=chamado.id)
+
+        numero = (request.POST.get("contabilidade_numero") or "").strip()
+        if not numero:
+            messages.error(request, "Informe o número do chamado contábil.")
+            return redirect("execucao:chamado_detalhe", chamado_id=chamado.id)
+
+        chamado.contabilidade_numero = numero
+        chamado.status = Chamado.Status.AGUARDANDO_NF
+
+        try:
+            chamado.full_clean()
+        except ValidationError as exc:
+            _push_validation_error_messages(request, exc)
+            return redirect("execucao:chamado_detalhe", chamado_id=chamado.id)
+
+        chamado.save(update_fields=["contabilidade_numero", "status"])
+        messages.success(request, "Chamado contábil informado.")
+        return redirect("execucao:chamado_detalhe", chamado_id=chamado.id)
+
+
+class ChamadoInformarNFSaidaView(CapabilityRequiredMixin, View):
+    """
+    Define nf_saida_numero.
+    Regra: exige contabilidade_numero.
+    Ao informar, o chamado vai para AGUARDANDO_COLETA.
+    """
+
+    required_capability = "execucao.chamado.editar_referencias"
+
+    @transaction.atomic
+    def post(self, request, chamado_id, *args, **kwargs):
+        chamado = get_object_or_404(Chamado, pk=chamado_id)
+
+        if chamado.status == Chamado.Status.FINALIZADO:
+            messages.error(request, "Chamado finalizado. Não é possível alterar.")
+            return redirect("execucao:chamado_detalhe", chamado_id=chamado.id)
+
+        if chamado.tipo != Chamado.Tipo.ENVIO:
+            messages.error(request, "Ação disponível apenas para chamados do tipo ENVIO.")
+            return redirect("execucao:chamado_detalhe", chamado_id=chamado.id)
+
+        if not (chamado.contabilidade_numero or "").strip():
+            messages.error(request, "Informe o chamado contábil antes da NF de saída.")
+            return redirect("execucao:chamado_detalhe", chamado_id=chamado.id)
+
+        numero = (request.POST.get("nf_saida_numero") or "").strip()
+        if not numero:
+            messages.error(request, "Informe o número da NF de saída.")
+            return redirect("execucao:chamado_detalhe", chamado_id=chamado.id)
+
+        chamado.nf_saida_numero = numero
+        chamado.status = Chamado.Status.AGUARDANDO_COLETA
+
+        try:
+            chamado.full_clean()
+        except ValidationError as exc:
+            _push_validation_error_messages(request, exc)
+            return redirect("execucao:chamado_detalhe", chamado_id=chamado.id)
+
+        chamado.save(update_fields=["nf_saida_numero", "status"])
+        messages.success(request, "NF de saída informada.")
+        return redirect("execucao:chamado_detalhe", chamado_id=chamado.id)
+
+
+class ChamadoConfirmarColetaView(CapabilityRequiredMixin, View):
+    """
+    Confirma coleta (coleta_confirmada_em=now).
+    Regra: exige nf_saida_numero.
+    """
+
+    required_capability = "execucao.chamado.confirmar_coleta"
+
+    @transaction.atomic
+    def post(self, request, chamado_id, *args, **kwargs):
+        chamado = get_object_or_404(Chamado, pk=chamado_id)
+
+        if chamado.status == Chamado.Status.FINALIZADO:
+            messages.error(request, "Chamado finalizado. Não é possível alterar.")
+            return redirect("execucao:chamado_detalhe", chamado_id=chamado.id)
+
+        if chamado.tipo != Chamado.Tipo.ENVIO:
+            messages.error(request, "Ação disponível apenas para chamados do tipo ENVIO.")
+            return redirect("execucao:chamado_detalhe", chamado_id=chamado.id)
+
+        if not (chamado.nf_saida_numero or "").strip():
+            messages.error(request, "Informe a NF de saída antes de confirmar a coleta.")
+            return redirect("execucao:chamado_detalhe", chamado_id=chamado.id)
+
+        if chamado.coleta_confirmada_em is not None:
+            messages.info(request, "Coleta já confirmada.")
+            return redirect("execucao:chamado_detalhe", chamado_id=chamado.id)
+
+        chamado.coleta_confirmada_em = timezone.now()
+
+        try:
+            chamado.full_clean()
+        except ValidationError as exc:
+            _push_validation_error_messages(request, exc)
+            return redirect("execucao:chamado_detalhe", chamado_id=chamado.id)
+
+        chamado.save(update_fields=["coleta_confirmada_em"])
+        messages.success(request, "Coleta confirmada.")
+        return redirect("execucao:chamado_detalhe", chamado_id=chamado.id)
 
 
 class ChamadoAtualizarItensView(CapabilityRequiredMixin, View):
@@ -310,6 +506,7 @@ class ChamadoAtualizarItensView(CapabilityRequiredMixin, View):
 class ChamadoFinalizarView(CapabilityRequiredMixin, View):
     required_capability = "execucao.chamado.finalizar"
 
+    @transaction.atomic
     def post(self, request, chamado_id, *args, **kwargs):
         chamado = get_object_or_404(Chamado, pk=chamado_id)
         chamado.gerar_itens_de_instalacao()
@@ -317,8 +514,7 @@ class ChamadoFinalizarView(CapabilityRequiredMixin, View):
         try:
             chamado.finalizar()
         except ValidationError as exc:
-            for msg in getattr(exc, "messages", [str(exc)]):
-                messages.error(request, msg)
+            _push_validation_error_messages(request, exc)
             return redirect("execucao:chamado_detalhe", chamado_id=chamado.id)
 
         messages.success(request, "Chamado finalizado com sucesso.")
@@ -381,6 +577,7 @@ class EvidenciaRemoverView(CapabilityRequiredMixin, View):
 class ItemSetStatusConfiguracaoView(CapabilityRequiredMixin, View):
     required_capability = "execucao.item_configuracao.alterar_status"
 
+    @transaction.atomic
     def post(self, request, chamado_id, item_id, *args, **kwargs):
         chamado = get_object_or_404(Chamado, pk=chamado_id)
 

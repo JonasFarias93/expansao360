@@ -2,6 +2,8 @@ from cadastro.models import Kit, Loja, Projeto, Subprojeto
 from django import forms
 from django.urls import reverse
 
+from .models import Chamado
+
 
 class ChamadoCreateForm(forms.Form):
     loja = forms.ModelChoiceField(
@@ -23,6 +25,27 @@ class ChamadoCreateForm(forms.Form):
         queryset=Kit.objects.order_by("nome"),
         required=True,
         label="Kit",
+    )
+
+    # ✅ NOVO: Ticket Externo (obrigatório)
+    ticket_externo_sistema = forms.CharField(
+        required=True,
+        max_length=50,
+        label="Sistema do ticket externo",
+        help_text="Ex.: ServiceNow, Jira, GLPI…",
+    )
+    ticket_externo_id = forms.CharField(
+        required=True,
+        max_length=50,
+        label="Número do ticket externo",
+    )
+
+    # ✅ Prioridade (opcional, default MAIS_ANTIGO no model)
+    prioridade = forms.ChoiceField(
+        required=False,
+        choices=Chamado.Prioridade.choices,
+        label="Prioridade",
+        help_text="Se não informar, entra como Mais antigo (padrão).",
     )
 
     def __init__(self, *args, **kwargs):

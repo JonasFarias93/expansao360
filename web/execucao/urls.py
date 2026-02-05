@@ -1,4 +1,4 @@
-# execucao/urls
+# execucao/urls.py
 
 from django.urls import path
 
@@ -20,6 +20,21 @@ urlpatterns = [
         "chamados/<int:chamado_id>/itens/",
         views.ChamadoAtualizarItensView.as_view(),
         name="chamado_atualizar_itens",
+    ),
+    path(
+        "chamados/<int:chamado_id>/contabil/",
+        views.ChamadoInformarContabilView.as_view(),
+        name="chamado_informar_contabil",
+    ),
+    path(
+        "chamados/<int:chamado_id>/nf-saida/",
+        views.ChamadoInformarNFSaidaView.as_view(),
+        name="chamado_informar_nf_saida",
+    ),
+    path(
+        "chamados/<int:chamado_id>/confirmar-coleta/",
+        views.ChamadoConfirmarColetaView.as_view(),
+        name="chamado_confirmar_coleta",
     ),
     path(
         "chamados/<int:chamado_id>/finalizar/",

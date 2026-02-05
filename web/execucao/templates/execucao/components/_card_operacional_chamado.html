@@ -1,4 +1,4 @@
-
+{# web/execucao/templates/execucao/components/_card_operacional_chamado.html #}
 
 <div class="bg-white shadow rounded p-4 border hover:bg-gray-50 transition-colors">
   <div class="flex items-start justify-between gap-4">
@@ -21,6 +21,14 @@
         {% elif chamado.status == "EM_EXECUCAO" %}
           <span class="inline-flex items-center rounded-full bg-blue-100 px-2 py-1 text-xs font-medium text-blue-700">
             Em execução
+          </span>
+        {% elif chamado.status == "AGUARDANDO_NF" %}
+          <span class="inline-flex items-center rounded-full bg-amber-100 px-2 py-1 text-xs font-medium text-amber-800">
+            Aguardando NF
+          </span>
+        {% elif chamado.status == "AGUARDANDO_COLETA" %}
+          <span class="inline-flex items-center rounded-full bg-amber-100 px-2 py-1 text-xs font-medium text-amber-800">
+            Aguardando coleta
           </span>
         {% elif chamado.status == "FINALIZADO" %}
           <span class="inline-flex items-center rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-700">
@@ -55,15 +63,24 @@
           {% endif %}
         </div>
 
+        {# Referências (somente leitura no card) #}
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-2">
           <div class="bg-gray-50 border rounded p-2">
-            <div class="text-xs text-gray-500">ServiceNow</div>
-            <div class="text-sm truncate">{{ chamado.servicenow_numero|default:"—" }}</div>
+            <div class="text-xs text-gray-500">Ticket externo</div>
+            <div class="text-sm truncate">
+              {% if chamado.ticket_externo_sistema or chamado.ticket_externo_id %}
+                {{ chamado.ticket_externo_sistema|default:"—" }} — {{ chamado.ticket_externo_id|default:"—" }}
+              {% else %}
+                —
+              {% endif %}
+            </div>
           </div>
+
           <div class="bg-gray-50 border rounded p-2">
             <div class="text-xs text-gray-500">Contabilidade</div>
             <div class="text-sm truncate">{{ chamado.contabilidade_numero|default:"—" }}</div>
           </div>
+
           <div class="bg-gray-50 border rounded p-2">
             <div class="text-xs text-gray-500">NF Saída</div>
             <div class="text-sm truncate">{{ chamado.nf_saida_numero|default:"—" }}</div>
@@ -73,7 +90,7 @@
     </div>
 
     <div class="flex flex-col items-end gap-2 shrink-0">
-      {# CTA simples (não muda regra de negócio) #}
+      {# CTA simples (fila) #}
       <a
         href="{% url 'execucao:chamado_detalhe' chamado.id %}"
         class="px-3 py-2 border rounded hover:bg-white text-sm"
@@ -94,4 +111,7 @@
       {% endif %}
     </div>
   </div>
+
+  {# NOTA: evidências e ações operacionais (gates/finalizar/assumir) pertencem ao card do detalhe,
+     não ao card da fila. Este componente é "card compacto" para listagem. #}
 </div>

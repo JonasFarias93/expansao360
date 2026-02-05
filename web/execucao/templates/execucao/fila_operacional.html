@@ -1,6 +1,4 @@
-<!--fila.html-->
-
-
+{# web/execucao/templates/execucao/fila_operacional.html #}
 {% extends "base.html" %}
 
 {% block content %}
@@ -15,7 +13,7 @@
   {% if chamados %}
     <div class="space-y-3">
       {% for chamado in chamados %}
-        {% include "execucao/components/_chamado_card.html" with chamado=chamado %}
+        {% include "execucao/components/_card_operacional_chamado.html" with chamado=chamado only %}
       {% endfor %}
     </div>
   {% else %}
