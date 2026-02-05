@@ -14,10 +14,7 @@
       </div>
 
       <div class="flex items-center gap-2">
-        <a
-          href="{% url 'registry:equipamento_create' %}"
-          class="btn btn-primary"
-        >
+        <a href="{% url 'registry:equipamento_create' %}" class="btn btn-primary">
           Novo equipamento
         </a>
       </div>
@@ -54,17 +51,25 @@
 
                 <td class="py-3 pr-4">
                   {% if e.tem_ativo %}
-                    <span class="badge badge-running">Sim</span>
+                    <span class="inline-flex items-center rounded-full bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-700 border border-emerald-100">
+                      Sim
+                    </span>
                   {% else %}
-                    <span class="badge badge-muted">Não</span>
+                    <span class="inline-flex items-center rounded-full bg-slate-100 px-2 py-1 text-xs font-medium text-slate-700">
+                      Não
+                    </span>
                   {% endif %}
                 </td>
 
                 <td class="py-3 pr-4">
                   {% if e.configuravel %}
-                    <span class="badge badge-running">Sim</span>
+                    <span class="inline-flex items-center rounded-full bg-violet-50 px-2 py-1 text-xs font-medium text-violet-700 border border-violet-100">
+                      Sim
+                    </span>
                   {% else %}
-                    <span class="badge badge-muted">Não</span>
+                    <span class="inline-flex items-center rounded-full bg-slate-100 px-2 py-1 text-xs font-medium text-slate-700">
+                      Não
+                    </span>
                   {% endif %}
                 </td>
               </tr>
