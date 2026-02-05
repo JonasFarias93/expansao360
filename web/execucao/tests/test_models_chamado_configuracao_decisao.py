@@ -1,5 +1,7 @@
 # web/execucao/tests/test_models_chamado_configuracao_decisao.py
 
+from __future__ import annotations
+
 from cadastro.models import (
     Categoria,
     Equipamento,
@@ -12,6 +14,7 @@ from cadastro.models import (
 )
 from django.core.exceptions import ValidationError
 from django.test import TestCase
+from django.utils import timezone
 
 from execucao.models import Chamado, StatusConfiguracao
 
@@ -73,6 +76,16 @@ class ChamadoConfiguracaoDecididaNoChamadoTests(TestCase):
                 item.confirmado = True
                 item.save(update_fields=["confirmado"])
 
+    def _liberar_gates_envio(self, chamado: Chamado) -> None:
+        """
+        A partir da regra nova, Chamado ENVIO só finaliza se:
+        - nf_saida_numero preenchido
+        - coleta_confirmada_em preenchido
+        """
+        chamado.nf_saida_numero = "NF-123"
+        chamado.coleta_confirmada_em = timezone.now()
+        chamado.save(update_fields=["nf_saida_numero", "coleta_confirmada_em"])
+
     def test_item_configuravel_nao_exige_ip_se_nao_for_marcado_para_configurar(self):
         """
         Regra: mesmo que o Equipamento seja configurável, se o Chamado NÃO marcar
@@ -80,16 +93,15 @@ class ChamadoConfiguracaoDecididaNoChamadoTests(TestCase):
         """
         chamado = self._criar_chamado_envio_com_itens()
         self._bipar_todos_os_itens(chamado)
+        self._liberar_gates_envio(chamado)
 
         item = chamado.itens.get()
 
-        # AQUI É O PONTO DO TDD:
-        # vamos introduzir um campo novo na execução:
-        # item.deve_configurar (bool) que por padrão deve ser False.
-        self.assertFalse(item.deve_configurar)  # vai falhar hoje (não existe)
+        # item.deve_configurar (bool) por padrão deve ser False.
+        self.assertFalse(item.deve_configurar)
 
         # não marcamos pra configurar => deve finalizar sem exigir IP/configuração
-        chamado.finalizar()  # hoje passa por outros motivos; depois, deve continuar passando
+        chamado.finalizar()
 
     def test_se_marcado_para_configurar_entao_exige_status_configurado_e_ip(self):
         """
@@ -100,10 +112,12 @@ class ChamadoConfiguracaoDecididaNoChamadoTests(TestCase):
         """
         chamado = self._criar_chamado_envio_com_itens()
         self._bipar_todos_os_itens(chamado)
+        self._liberar_gates_envio(chamado)
+
         item = chamado.itens.get()
 
         # marca decisão do chamado
-        item.deve_configurar = True  # vai falhar hoje (não existe)
+        item.deve_configurar = True
         item.save(update_fields=["deve_configurar"])
 
         # 1) Sem status CONFIGURADO => deve falhar
@@ -118,7 +132,7 @@ class ChamadoConfiguracaoDecididaNoChamadoTests(TestCase):
             chamado.finalizar()
 
         # 3) Com status CONFIGURADO e IP => deve passar
-        item.ip = "10.0.0.10"  # vai falhar hoje (não existe)
+        item.ip = "10.0.0.10"
         item.save(update_fields=["ip"])
 
         chamado.finalizar()
