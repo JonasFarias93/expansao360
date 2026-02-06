@@ -1,6 +1,8 @@
 {# web/execucao/templates/execucao/components/_card_operacional_chamado.html #}
+{% load execucao_ui %}
 
 <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden hover:shadow transition">
+  <div class="h-1.5 {% projeto_color_bar chamado.projeto %}"></div>
   <div class="p-5">
     <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
       <div class="min-w-0">

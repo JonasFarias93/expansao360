@@ -150,6 +150,22 @@ class Projeto(models.Model):
     codigo = models.CharField(max_length=50, unique=True)
     nome = models.CharField(max_length=120)
 
+    class Cor(models.TextChoices):
+        SLATE = "SLATE", "Cinza"
+        BLUE = "BLUE", "Azul"
+        EMERALD = "EMERALD", "Verde"
+        VIOLET = "VIOLET", "Roxo"
+        AMBER = "AMBER", "Amarelo"
+        ROSE = "ROSE", "Rosa"
+        CYAN = "CYAN", "Ciano"
+        LIME = "LIME", "Lima"
+
+    cor_slug = models.CharField(
+        max_length=20,
+        choices=Cor.choices,
+        default=Cor.SLATE,
+    )
+
     class Meta:
         verbose_name = "Projeto"
         verbose_name_plural = "Projetos"

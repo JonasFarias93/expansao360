@@ -492,3 +492,18 @@ A view não representava uma tela apenas de leitura, mas sim a execução operac
 - O nome da classe passa a refletir sua responsabilidade real.
 - A URL e o `url name` são mantidos para compatibilidade.
 - O botão “Detalhes” da fila deixa de depender de view e passa a ser um preview inline.
+
+---
+
+## 2026-02-05 — Cor do Projeto no Cadastro para identidade visual na Fila Operacional
+
+**Decisão**
+Adicionar ao cadastro de `Projeto` um campo `cor_slug` (paleta fechada). A fila operacional usa essa cor para renderizar uma faixa no card do chamado.
+
+**Contexto**
+Mapear cor por código no frontend não escala e deixa projetos novos sem cor, degradando a consistência visual.
+
+**Consequências**
+- Migration em `cadastro`.
+- Form de Projeto expõe seleção de cor (paleta limitada).
+- `execucao` apenas consome `projeto.cor_slug` para UI.
