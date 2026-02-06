@@ -1,0 +1,44 @@
+{# execucao/components/_fila_header.html #}
+
+<div class="space-y-3">
+  {% if prio_selected %}
+    <div class="flex items-center gap-2">
+      <span class="inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1 text-xs text-slate-700">
+        Filtro: <span class="ml-1 font-semibold">{{ prio_selected }}</span>
+      </span>
+      <a href="?" class="text-xs font-medium text-slate-700 hover:text-slate-900">Limpar</a>
+    </div>
+  {% endif %}
+
+  <div class="grid grid-cols-2 gap-3 sm:grid-cols-5">
+    {% if prio_selected %}
+      {% include "execucao/components/_fila_header_card.html" with label="Total" value=counts.total active=False url="?" only %}
+    {% else %}
+      {% include "execucao/components/_fila_header_card.html" with label="Total" value=counts.total active=True url="?" only %}
+    {% endif %}
+
+    {% if prio_selected == "CRITICO" %}
+      {% include "execucao/components/_fila_header_card.html" with label="Crítico" value=counts.critico active=True url="?prio=CRITICO" only %}
+    {% else %}
+      {% include "execucao/components/_fila_header_card.html" with label="Crítico" value=counts.critico active=False url="?prio=CRITICO" only %}
+    {% endif %}
+
+    {% if prio_selected == "ALTO" %}
+      {% include "execucao/components/_fila_header_card.html" with label="Alto" value=counts.alto active=True url="?prio=ALTO" only %}
+    {% else %}
+      {% include "execucao/components/_fila_header_card.html" with label="Alto" value=counts.alto active=False url="?prio=ALTO" only %}
+    {% endif %}
+
+    {% if prio_selected == "MEDIO" %}
+      {% include "execucao/components/_fila_header_card.html" with label="Médio" value=counts.medio active=True url="?prio=MEDIO" only %}
+    {% else %}
+      {% include "execucao/components/_fila_header_card.html" with label="Médio" value=counts.medio active=False url="?prio=MEDIO" only %}
+    {% endif %}
+
+    {% if prio_selected == "BAIXO" %}
+      {% include "execucao/components/_fila_header_card.html" with label="Baixo" value=counts.baixo active=True url="?prio=BAIXO" only %}
+    {% else %}
+      {% include "execucao/components/_fila_header_card.html" with label="Baixo" value=counts.baixo active=False url="?prio=BAIXO" only %}
+    {% endif %}
+  </div>
+</div>

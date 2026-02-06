@@ -6,7 +6,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
 from django.db import transaction
-from django.db.models import Case, IntegerField, Q, Value, When
+from django.db.models import Case, Count, IntegerField, Q, Value, When
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
@@ -202,13 +202,21 @@ class ChamadoFilaView(CapabilityRequiredMixin, TemplateView):
     template_name = "execucao/fila_operacional.html"
     required_capability = "execucao.chamado.visualizar"
 
+    # URL -> Enum do model
+    PRIO_MAP = {
+        "CRITICO": Chamado.Prioridade.CRITICA,
+        "ALTO": Chamado.Prioridade.ALTA,
+        "MEDIO": Chamado.Prioridade.MEDIA,
+        "BAIXO": Chamado.Prioridade.BAIXA,
+    }
+
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
 
-        chamados = (
+        # 1) queryset base da fila (sem filtro de prioridade)
+        base_qs = (
             Chamado.objects.filter(
                 status__in=[
-                    # ✅ Fila é ABERTO+
                     Chamado.Status.ABERTO,
                     Chamado.Status.EM_EXECUCAO,
                     Chamado.Status.AGUARDANDO_NF,
@@ -217,28 +225,47 @@ class ChamadoFilaView(CapabilityRequiredMixin, TemplateView):
             )
             .select_related("loja", "projeto", "subprojeto", "kit")
             .prefetch_related("itens")
-            .annotate(
-                status_rank=Case(
-                    When(status=Chamado.Status.EM_EXECUCAO, then=Value(0)),
-                    When(status=Chamado.Status.ABERTO, then=Value(1)),
-                    When(status=Chamado.Status.AGUARDANDO_NF, then=Value(2)),
-                    When(status=Chamado.Status.AGUARDANDO_COLETA, then=Value(3)),
-                    default=Value(9),
-                    output_field=IntegerField(),
-                ),
-                prio_rank=Case(
-                    When(prioridade=Chamado.Prioridade.CRITICA, then=Value(0)),
-                    When(prioridade=Chamado.Prioridade.ALTA, then=Value(1)),
-                    When(prioridade=Chamado.Prioridade.MEDIA, then=Value(2)),
-                    When(prioridade=Chamado.Prioridade.BAIXA, then=Value(3)),
-                    When(prioridade=Chamado.Prioridade.PADRAO, then=Value(4)),
-                    default=Value(4),
-                    output_field=IntegerField(),
-                ),
-            )
-            .order_by("status_rank", "prio_rank", "criado_em")
         )
 
+        # 2) counts (sempre do conjunto "fila", independente do filtro)
+        counts = base_qs.aggregate(
+            total=Count("id"),
+            critico=Count("id", filter=Q(prioridade=Chamado.Prioridade.CRITICA)),
+            alto=Count("id", filter=Q(prioridade=Chamado.Prioridade.ALTA)),
+            medio=Count("id", filter=Q(prioridade=Chamado.Prioridade.MEDIA)),
+            baixo=Count("id", filter=Q(prioridade=Chamado.Prioridade.BAIXA)),
+        )
+
+        # 3) filtro por prioridade (stateless via querystring)
+        prio_key = (self.request.GET.get("prio") or "").strip().upper()
+        prio_value = self.PRIO_MAP.get(prio_key)  # Enum ou None
+
+        qs = base_qs
+        if prio_value is not None:
+            qs = qs.filter(prioridade=prio_value)
+
+        # 4) ordenação/annotate (aplicar depois do filtro)
+        chamados = qs.annotate(
+            status_rank=Case(
+                When(status=Chamado.Status.EM_EXECUCAO, then=Value(0)),
+                When(status=Chamado.Status.ABERTO, then=Value(1)),
+                When(status=Chamado.Status.AGUARDANDO_NF, then=Value(2)),
+                When(status=Chamado.Status.AGUARDANDO_COLETA, then=Value(3)),
+                default=Value(9),
+                output_field=IntegerField(),
+            ),
+            prio_rank=Case(
+                When(prioridade=Chamado.Prioridade.CRITICA, then=Value(0)),
+                When(prioridade=Chamado.Prioridade.ALTA, then=Value(1)),
+                When(prioridade=Chamado.Prioridade.MEDIA, then=Value(2)),
+                When(prioridade=Chamado.Prioridade.BAIXA, then=Value(3)),
+                When(prioridade=Chamado.Prioridade.PADRAO, then=Value(4)),
+                default=Value(4),
+                output_field=IntegerField(),
+            ),
+        ).order_by("status_rank", "prio_rank", "criado_em")
+
+        # 5) montar rows (e expor rows como "chamados" pro template atual)
         rows: list[dict[str, object]] = []
         for ch in chamados:
             itens = list(ch.itens.all())
@@ -267,7 +294,11 @@ class ChamadoFilaView(CapabilityRequiredMixin, TemplateView):
                 }
             )
 
-        ctx["chamados"] = chamados
+        ctx["counts"] = counts
+        ctx["prio_selected"] = prio_key if prio_value is not None else None
+
+        # importante: manter compat com seu template atual
+        ctx["chamados"] = rows
         ctx["rows"] = rows
         return ctx
 
