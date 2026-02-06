@@ -1,8 +1,9 @@
 {# web/execucao/templates/execucao/components/_card_operacional_chamado.html #}
-{% load execucao_ui %}
+{% load execucao_projeto_cores execucao_urgencia %}
 
 <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden hover:shadow transition">
   <div class="h-1.5 {% projeto_color_bar chamado.projeto %}"></div>
+
   <div class="p-5">
     <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
       <div class="min-w-0">
@@ -15,6 +16,15 @@
               Chamado {{ chamado.protocolo|default:chamado.id }}
             </a>
           </h3>
+
+          {# Badge de urgência visual (prioridade) #}
+          <span
+            class="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-semibold {% urgencia_badge_class chamado %}"
+            title="Urgência visual (prioridade)"
+          >
+            <span class="h-1.5 w-1.5 rounded-full bg-current opacity-70"></span>
+            {% urgencia_label chamado %}
+          </span>
 
           {# Badge de status (mesma lógica do detalhe/histórico) #}
           {% if chamado.status == "ABERTO" %}
@@ -64,15 +74,16 @@
         >
           Abrir
         </a>
-          <button
-            type="button"
-            class="btn btn-ghost"
-            data-details-toggle="{{ chamado.id }}"
-            aria-expanded="false"
-            aria-controls="details-{{ chamado.id }}"
-            >
+
+        <button
+          type="button"
+          class="btn btn-ghost"
+          data-details-toggle="{{ chamado.id }}"
+          aria-expanded="false"
+          aria-controls="details-{{ chamado.id }}"
+        >
           Detalhes
-      </button>
+        </button>
       </div>
     </div>
 
@@ -108,12 +119,13 @@
       id="details-{{ chamado.id }}"
       class="mt-4 hidden rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700"
       data-details-panel="{{ chamado.id }}"
-      >
+    >
       <div class="font-semibold text-slate-900">Detalhes (em breve)</div>
       <p class="mt-1 text-slate-600">
         Aqui vai ter detalhes do chamado (resumo, progresso, últimas alterações, técnicos envolvidos).
       </p>
-   </div>
+    </div>
+
     <div class="mt-4 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-end text-xs text-slate-500">
       {% if chamado.criado_em %}
         <div>Criado: {{ chamado.criado_em|date:"d/m/Y H:i" }}</div>
