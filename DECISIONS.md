@@ -1234,3 +1234,22 @@ Mapear cor por código no frontend não escala e deixa projetos novos sem cor, d
 - Form de Projeto expõe seleção de cor (paleta limitada).
 - `execucao` apenas consome `projeto.cor_slug` para UI.
 >>>>>>> develop
+
+
+---
+## 2026-02-06 — Modularização de templatetags por tema de UI (cores e urgência)
+
+**Decisão**  
+Separar os templatetags de UI do app `execucao` em módulos semânticos por responsabilidade
+(ex.: cores de projeto, urgência visual), mantendo `execucao_ui.py` como fachada de compatibilidade.
+
+**Contexto**  
+O arquivo `execucao_ui.py` começou com uma única responsabilidade (cores do projeto), mas a UI
+da execução está evoluindo e novas regras visuais (ex.: urgência) tendem a crescer. Para evitar
+um “arquivo deus” e manter o projeto saudável, optamos por separar por tema.
+
+**Consequências**  
+- Novos templatetags devem ser criados em módulos dedicados (ex.: `execucao_projeto_cores.py`,
+  `execucao_urgencia.py`).
+- `execucao_ui.py` permanece como facade/reexport para não quebrar templates existentes.
+- Testes passam a ser organizados por tema (ex.: `test_ui_projeto_cores_templatetags.py`).
