@@ -11,34 +11,57 @@
   {% endif %}
 
   <div class="grid grid-cols-2 gap-3 sm:grid-cols-5">
+
+    {# TOTAL nunca desabilita #}
     {% if prio_selected %}
-      {% include "execucao/components/_fila_header_card.html" with label="Total" value=counts.total active=False url="?" only %}
+      {% include "execucao/components/_fila_header_card.html" with label="Total" value=counts.total active=False disabled=False url="?" only %}
     {% else %}
-      {% include "execucao/components/_fila_header_card.html" with label="Total" value=counts.total active=True url="?" only %}
+      {% include "execucao/components/_fila_header_card.html" with label="Total" value=counts.total active=True disabled=False url="?" only %}
     {% endif %}
 
+    {# CRITICO #}
     {% if prio_selected == "CRITICO" %}
-      {% include "execucao/components/_fila_header_card.html" with label="Crítico" value=counts.critico active=True url="?prio=CRITICO" only %}
+      {% include "execucao/components/_fila_header_card.html" with label="Crítico" value=counts.critico active=True disabled=False url="?prio=CRITICO" only %}
     {% else %}
-      {% include "execucao/components/_fila_header_card.html" with label="Crítico" value=counts.critico active=False url="?prio=CRITICO" only %}
+      {% if counts.critico %}
+        {% include "execucao/components/_fila_header_card.html" with label="Crítico" value=counts.critico active=False disabled=False url="?prio=CRITICO" only %}
+      {% else %}
+        {% include "execucao/components/_fila_header_card.html" with label="Crítico" value=counts.critico active=False disabled=True url="?prio=CRITICO" only %}
+      {% endif %}
     {% endif %}
 
+    {# ALTO #}
     {% if prio_selected == "ALTO" %}
-      {% include "execucao/components/_fila_header_card.html" with label="Alto" value=counts.alto active=True url="?prio=ALTO" only %}
+      {% include "execucao/components/_fila_header_card.html" with label="Alto" value=counts.alto active=True disabled=False url="?prio=ALTO" only %}
     {% else %}
-      {% include "execucao/components/_fila_header_card.html" with label="Alto" value=counts.alto active=False url="?prio=ALTO" only %}
+      {% if counts.alto %}
+        {% include "execucao/components/_fila_header_card.html" with label="Alto" value=counts.alto active=False disabled=False url="?prio=ALTO" only %}
+      {% else %}
+        {% include "execucao/components/_fila_header_card.html" with label="Alto" value=counts.alto active=False disabled=True url="?prio=ALTO" only %}
+      {% endif %}
     {% endif %}
 
+    {# MEDIO #}
     {% if prio_selected == "MEDIO" %}
-      {% include "execucao/components/_fila_header_card.html" with label="Médio" value=counts.medio active=True url="?prio=MEDIO" only %}
+      {% include "execucao/components/_fila_header_card.html" with label="Médio" value=counts.medio active=True disabled=False url="?prio=MEDIO" only %}
     {% else %}
-      {% include "execucao/components/_fila_header_card.html" with label="Médio" value=counts.medio active=False url="?prio=MEDIO" only %}
+      {% if counts.medio %}
+        {% include "execucao/components/_fila_header_card.html" with label="Médio" value=counts.medio active=False disabled=False url="?prio=MEDIO" only %}
+      {% else %}
+        {% include "execucao/components/_fila_header_card.html" with label="Médio" value=counts.medio active=False disabled=True url="?prio=MEDIO" only %}
+      {% endif %}
     {% endif %}
 
+    {# BAIXO #}
     {% if prio_selected == "BAIXO" %}
-      {% include "execucao/components/_fila_header_card.html" with label="Baixo" value=counts.baixo active=True url="?prio=BAIXO" only %}
+      {% include "execucao/components/_fila_header_card.html" with label="Baixo" value=counts.baixo active=True disabled=False url="?prio=BAIXO" only %}
     {% else %}
-      {% include "execucao/components/_fila_header_card.html" with label="Baixo" value=counts.baixo active=False url="?prio=BAIXO" only %}
+      {% if counts.baixo %}
+        {% include "execucao/components/_fila_header_card.html" with label="Baixo" value=counts.baixo active=False disabled=False url="?prio=BAIXO" only %}
+      {% else %}
+        {% include "execucao/components/_fila_header_card.html" with label="Baixo" value=counts.baixo active=False disabled=True url="?prio=BAIXO" only %}
+      {% endif %}
     {% endif %}
+
   </div>
 </div>

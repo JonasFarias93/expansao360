@@ -1,7 +1,9 @@
 {# execucao/components/_fila_header_card.html #}
 
 <a
-  href="{{ url }}"
+  href="{% if disabled %}#{% else %}{{ url }}{% endif %}"
+  {% if disabled %}aria-disabled="true"{% endif %}
+  {% if active %}aria-current="true"{% endif %}
   class="
     block rounded-2xl border bg-white p-4 transition
     {% if active %}
@@ -9,7 +11,11 @@
     {% else %}
       border-slate-200 hover:border-slate-300 hover:bg-slate-50
     {% endif %}
+    {% if disabled %}
+      opacity-60 pointer-events-none
+    {% endif %}
   "
+  title="{% if disabled %}Sem chamados{% else %}Filtrar por {{ label }}{% endif %}"
 >
   <div class="text-xs font-medium tracking-wide text-slate-500 uppercase">
     {{ label }}
