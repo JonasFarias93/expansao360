@@ -1253,3 +1253,27 @@ um “arquivo deus” e manter o projeto saudável, optamos por separar por tema
   `execucao_urgencia.py`).
 - `execucao_ui.py` permanece como facade/reexport para não quebrar templates existentes.
 - Testes passam a ser organizados por tema (ex.: `test_ui_projeto_cores_templatetags.py`).
+
+---
+---
+
+## 2026-02-06 — Cards-resumo interativos na Fila Operacional (prioridade)
+
+**Status:** Aceito
+
+**Decisão**  
+Adicionar um header na tela de **Fila Operacional** contendo **cards-resumo clicáveis** para:
+- Total de chamados na fila
+- Quantidade por prioridade (Crítico/Alto/Médio/Baixo)
+
+Os cards funcionam também como **filtro rápido** via querystring (`?prio=CRITICO|ALTO|MEDIO|BAIXO`).
+
+**Contexto**  
+A fila operacional precisa oferecer leitura imediata da carga de trabalho e reduzir o custo de “caçar” chamados.
+A UI já é baseada em cards e ações rápidas; faltava uma visão agregada e um mecanismo direto de filtragem.
+
+**Consequências**  
+- A view da fila passa a expor contadores agregados (`counts`) e o filtro atual (`prio_selected`).
+- A filtragem é stateless (URL), facilitando compartilhamento e testes.
+- Mantemos o princípio “UI simples”: template só renderiza, regra de filtro e agregações ficam na view.
+- Evolução prevista: adicionar filtros por projeto no mesmo header (decisão futura / nova ADR).
