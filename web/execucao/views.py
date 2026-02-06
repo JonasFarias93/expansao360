@@ -308,9 +308,9 @@ class HistoricoView(CapabilityRequiredMixin, TemplateView):
 
 
 # ==================
-# CHAMADO (EXECUÇÃO / DETALHE)
+# CHAMADO (EXECUÇÃO)
 # ==================
-class ChamadoDetailView(CapabilityRequiredMixin, TemplateView):
+class ChamadoExecucaoView(CapabilityRequiredMixin, TemplateView):
     template_name = "execucao/chamado_execucao.html"
     required_capability = "execucao.chamado.visualizar"
 

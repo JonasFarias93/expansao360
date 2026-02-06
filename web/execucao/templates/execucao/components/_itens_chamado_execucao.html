@@ -268,39 +268,3 @@
     {% endif %}
   {% endfor %}
 </div>
-
-<script>
-  (function () {
-    // Ativa edição do IP item a item (sem dependências)
-    const buttons = document.querySelectorAll("[data-ip-edit-btn]");
-    buttons.forEach((btn) => {
-      const id = btn.getAttribute("data-ip-edit-btn");
-      if (!id) return;
-
-      const readBox = document.querySelector(`[data-ip-read="${id}"]`);
-      const editBox = document.querySelector(`[data-ip-edit="${id}"]`);
-      const input = document.querySelector(`[data-ip-input="${id}"]`);
-      const hidden = document.querySelector(`[data-ip-hidden="${id}"]`);
-      const cancelBtn = document.querySelector(`[data-ip-cancel-btn="${id}"]`);
-
-      if (!readBox || !editBox || !hidden) return;
-
-      btn.addEventListener("click", () => {
-        readBox.classList.add("hidden");
-        editBox.classList.remove("hidden");
-        hidden.disabled = true; // evita enviar dois ip_{{id}} no POST
-        if (input) input.focus();
-      });
-
-      if (cancelBtn) {
-        cancelBtn.addEventListener("click", () => {
-          editBox.classList.add("hidden");
-          readBox.classList.remove("hidden");
-          hidden.disabled = false;
-          // volta o valor do input para o original (opcional)
-          if (input) input.value = hidden.value || "";
-        });
-      }
-    });
-  })();
-</script>

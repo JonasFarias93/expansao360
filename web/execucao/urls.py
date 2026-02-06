@@ -29,8 +29,8 @@ urlpatterns = [
     # Detalhe / Execução — status != ABERTO
     path(
         "chamados/<int:chamado_id>/",
-        views.ChamadoDetailView.as_view(),
-        name="chamado_detalhe",
+        views.ChamadoExecucaoView.as_view(),
+        name="chamado_detalhe",  # mantido por compatibilidade
     ),
     # ======================
     # ITENS DO CHAMADO

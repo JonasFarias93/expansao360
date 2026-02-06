@@ -1,6 +1,8 @@
 {# web/execucao/templates/execucao/components/_card_operacional_chamado.html #}
+{% load execucao_ui %}
 
 <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden hover:shadow transition">
+  <div class="h-1.5 {% projeto_color_bar chamado.projeto %}"></div>
   <div class="p-5">
     <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
       <div class="min-w-0">
@@ -62,12 +64,15 @@
         >
           Abrir
         </a>
-        <a
-          href="{% url 'execucao:chamado_detalhe' chamado.id %}"
-          class="btn btn-ghost"
-        >
+          <button
+            type="button"
+            class="btn btn-ghost"
+            data-details-toggle="{{ chamado.id }}"
+            aria-expanded="false"
+            aria-controls="details-{{ chamado.id }}"
+            >
           Detalhes
-        </a>
+      </button>
       </div>
     </div>
 
@@ -99,6 +104,16 @@
       </div>
     </div>
 
+    <div
+      id="details-{{ chamado.id }}"
+      class="mt-4 hidden rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700"
+      data-details-panel="{{ chamado.id }}"
+      >
+      <div class="font-semibold text-slate-900">Detalhes (em breve)</div>
+      <p class="mt-1 text-slate-600">
+        Aqui vai ter detalhes do chamado (resumo, progresso, últimas alterações, técnicos envolvidos).
+      </p>
+   </div>
     <div class="mt-4 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-end text-xs text-slate-500">
       {% if chamado.criado_em %}
         <div>Criado: {{ chamado.criado_em|date:"d/m/Y H:i" }}</div>
@@ -110,6 +125,6 @@
     </div>
   </div>
 
-  {# NOTA: evidências e ações operacionais (gates/finalizar/assumir) pertencem ao card do detalhe,
-     não ao card da fila. Este componente é "card compacto" para listagem. #}
+  <!--{# NOTA: evidências e ações operacionais (gates/finalizar/assumir) pertencem ao card do detalhe,
+     não ao card da fila. Este componente é "card compacto" para listagem. #}-->
 </div>

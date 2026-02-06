@@ -109,7 +109,12 @@ class LojaForm(forms.ModelForm):
 class ProjetoForm(forms.ModelForm):
     class Meta:
         model = Projeto
-        fields = ["codigo", "nome"]
+        fields = ["codigo", "nome", "cor_slug"]
+        labels = {
+            "codigo": "Código",
+            "nome": "Nome",
+            "cor_slug": "Cor do projeto",
+        }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

@@ -22,10 +22,8 @@
 
         {# Evidências / bloco operacional FULL (se/quando habilitado) #}
         {# TODO(UI): reativar quando o componente full estiver pronto e estabilizado #}
-        {#
-          {% include "execucao/components/_card_operacional_chamado_full.html"
-            with chamado=chamado evidencias=evidencias evidencia_tipos=evidencia_tipos pode_liberar_nf=pode_liberar_nf only %}
-        #}
+
+        {% include "execucao/components/_card_operacional_chamado_full.html" with chamado=chamado evidencias=evidencias evidencia_tipos=evidencia_tipos only %}
       </div>
 
       {# Coluna lateral (resumo / ações rápidas / lembretes) #}
@@ -47,5 +45,5 @@
 {% endblock %}
 
 {% block extra_js %}
-  <script src="{% static 'execucao/js/chamado_detalhe.js' %}"></script>
+  <script src="{% static 'execucao/js/chamado_detalhe.js' %}" defer></script>
 {% endblock %}

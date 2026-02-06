@@ -1,0 +1,13 @@
+{# web/execucao/templates/execucao/components/_card_operacional_chamado_full.html #}
+
+<div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+  <div class="flex items-center justify-between mb-3">
+    <h2 class="font-semibold text-slate-900">Evidências</h2>
+    <div class="text-sm text-slate-500">{{ evidencias|length }} arquivo(s)</div>
+  </div>
+
+  {% include "execucao/components/_evidencias_chamado.html" with chamado=chamado evidencias=evidencias evidencia_tipos=evidencia_tipos only %}
+
+  {# Espaço futuro (sem regra agora): gates / ações operacionais #}
+  {# <div class="mt-6 border-t pt-4 text-sm text-slate-600">Ações operacionais (em breve)</div> #}
+</div>
