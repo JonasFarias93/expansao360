@@ -1,4 +1,12 @@
 from __future__ import annotations
 
-# Importa tags para manter compatibilidade com {% load execucao_ui %}
-from .execucao_projeto_cores import projeto_color_bar  # noqa: F401
+from django import template
+
+from .execucao_projeto_cores import projeto_color_bar as _projeto_color_bar
+
+register = template.Library()
+
+
+@register.simple_tag
+def projeto_color_bar(projeto) -> str:
+    return _projeto_color_bar(projeto)

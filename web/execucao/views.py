@@ -92,7 +92,7 @@ class ChamadoCreateView(CapabilityRequiredMixin, View):
         if not form.is_valid():
             return render(request, self.template_name, {"form": form})
 
-        prioridade = form.cleaned_data.get("prioridade") or Chamado.Prioridade.MAIS_ANTIGO
+        prioridade = form.cleaned_data.get("prioridade") or Chamado.Prioridade.PADRAO
 
         chamado = Chamado(
             loja=form.cleaned_data["loja"],
@@ -231,7 +231,7 @@ class ChamadoFilaView(CapabilityRequiredMixin, TemplateView):
                     When(prioridade=Chamado.Prioridade.ALTA, then=Value(1)),
                     When(prioridade=Chamado.Prioridade.MEDIA, then=Value(2)),
                     When(prioridade=Chamado.Prioridade.BAIXA, then=Value(3)),
-                    When(prioridade=Chamado.Prioridade.MAIS_ANTIGO, then=Value(4)),
+                    When(prioridade=Chamado.Prioridade.PADRAO, then=Value(4)),
                     default=Value(4),
                     output_field=IntegerField(),
                 ),
