@@ -2,7 +2,7 @@
 
 <div class="space-y-4">
 
-  {# Filtros ativos (prioridade/projeto) — sempre reserva espaço e usa 1 único Limpar #}
+  {# Filtros ativos — sempre visível #}
   <div class="flex items-center gap-2 min-h-[32px]">
     {% if prio_selected or projeto_selected %}
       {% if prio_selected %}
@@ -20,19 +20,15 @@
         </span>
       {% endif %}
 
-      {# 1 único limpar (zera tudo) #}
       <a href="?" class="text-xs font-medium text-slate-700 hover:text-slate-900">
         Limpar
       </a>
     {% else %}
-      {# placeholder invisível pra não "pular" layout #}
-      <span class="inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1 text-xs text-slate-700 opacity-0 pointer-events-none select-none">
-        Prioridade: <span class="ml-1 font-semibold">—</span>
+      <span class="inline-flex items-center rounded-full border border-dashed border-slate-300 bg-slate-50 px-3 py-1 text-xs text-slate-500">
+        Filtro: <span class="ml-1">Todos</span>
       </span>
-      <span class="inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1 text-xs text-slate-700 opacity-0 pointer-events-none select-none">
-        Projeto: <span class="ml-1 font-semibold">—</span>
-      </span>
-      <span class="text-xs font-medium text-slate-700 opacity-0 pointer-events-none select-none">
+
+      <span class="text-xs font-medium text-slate-400 cursor-not-allowed">
         Limpar
       </span>
     {% endif %}
