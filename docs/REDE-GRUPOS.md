@@ -4,13 +4,13 @@ Este documento define o **contrato padrão** para grupos de rede no EXPANSÃO360
 
 Um **Grupo de Rede** representa um conjunto lógico de equipamentos que:
 
-* compartilham a mesma intenção operacional
-* seguem regras homogêneas de endereçamento
-* possuem padrões previsíveis de hostname
-* são validados de forma consistente e testável
+- compartilham a mesma intenção operacional
+- seguem regras homogêneas de endereçamento
+- possuem padrões previsíveis de hostname
+- são validados de forma consistente e testável
 
-O grupo **RETAGUARDA_LOJA** é definido como **template oficial**
-e deve servir de base para todos os grupos futuros.
+O grupo **RETAGUARDA_LOJA** é o **primeiro grupo oficial**
+e serve como **referência prática** deste template.
 
 ---
 
@@ -18,148 +18,71 @@ e deve servir de base para todos os grupos futuros.
 
 Todo grupo de rede **DEVE** documentar os campos abaixo.
 
+---
+
 ### 1. Identificação do Grupo
 
-| Campo                        | Descrição                     |
-| ---------------------------- | ----------------------------- |
-| **Nome do grupo**            | Identificador único e estável |
-| **Descrição / Intenção**     | Papel do grupo na operação    |
-| **Perfil de Rede aplicável** | `LEGACY_FLAT` ou `SEGMENTADO` |
+| Campo | Descrição |
+|-----|----------|
+| **Nome do grupo** | Identificador único e estável |
+| **Descrição / Intenção** | Papel do grupo na operação |
+| **Perfis de Rede suportados** | Ex.: `LEGACY_FLAT`, `RD_SEGMENTADO` |
 
 ---
 
-### 2. Configuração Base de Rede
+### 2. Configuração de Rede (por Perfil)
 
-| Campo         | Descrição                                       |
-| ------------- | ----------------------------------------------- |
-| **Rede base** | IP base derivado de bandeira + código histórico |
-| **Máscara**   | Máscara de rede aplicável ao grupo              |
-| **Gateway**   | Gateway padrão do grupo                         |
+Cada grupo **DEVE** explicitar suas configurações **por perfil de rede**.
 
-> A rede base **não é um IP fixo**, mas uma derivação padronizada.
+Para cada perfil:
+
+| Campo | Descrição |
+|-----|----------|
+| **Máscara padrão** | Máscara esperada para o grupo |
+| **Gateway padrão** | Gateway esperado |
+| **Observações** | Restrições ou exceções do perfil |
+
+> Caso um item **divirja** da máscara/gateway padrão do perfil,  
+> isso **DEVE** ser documentado no nível do item.
 
 ---
 
 ### 3. Itens do Grupo (Sub-itens)
 
-Cada grupo define **itens internos**, normalmente correspondendo a tipos de equipamento.
+Cada grupo define seus **itens internos**, normalmente associados
+a tipos de equipamento ou papéis funcionais.
 
 Para **cada item**, devem ser definidos:
 
-| Campo                 | Descrição                        |
-| --------------------- | -------------------------------- |
-| **Nome do item**      | Ex: PDV, TC, SERVIDOR_LOCAL      |
-| **Regra de IP**       | OFFSET_FIXO | FAIXA | SEQUENCIAL |
-| **Parâmetros de IP**  | Offset / Faixa / Base            |
-| **Hostname pattern**  | Padrão esperado de hostname      |
-| **Severidade padrão** | ERROR ou WARN                    |
+| Campo | Descrição |
+|-----|----------|
+| **Nome do item** | Ex.: Banco12, Gerência, RH |
+| **Perfil aplicável** | LEGACY / SEGMENTADO / ambos |
+| **Regra de IP** | OFFSET_FIXO \| FAIXA \| SEQUENCIAL |
+| **Parâmetros de IP** | Offset / Faixa / Base |
+| **Hostname pattern** | Padrão esperado de hostname |
+| **Máscara / Gateway próprios** | Opcional, se divergir do perfil |
+| **Severidade padrão** | ERROR ou WARN |
+| **Observações de domínio** | Exceções semânticas ou históricas |
 
 ---
 
-## Grupo: RETAGUARDA_LOJA
+### 4. Regras de Governança
 
-### 1. Intenção do Grupo
-
-**Retaguarda fixa da loja**, composta por equipamentos de baixo volume (baixo N),
-endereçamento previsível e papéis administrativos/operacionais.
-
-Características principais:
-
-* IPs convencionais e estáveis
-* Pouca variação de quantidade por loja
-* Alta criticidade operacional (impacto administrativo)
+- Todo novo grupo **DEVE** seguir este contrato.
+- Todo novo item **DEVE** ser documentado explicitamente.
+- Divergências físicas vs semânticas **DEVEM** ser registradas.
+- Alterações estruturais exigem **ADR**.
+- O grupo + seu backlog de testes formam um **contrato vivo**.
 
 ---
 
-### 2. Perfis de Rede Suportados
+## Referência Oficial
 
-O grupo **RETAGUARDA_LOJA** é aplicável aos seguintes perfis:
+- **Grupo exemplo:** `RETAGUARDA_LOJA`
+- **Status:** Grupo oficial fechado
+- **Uso:** Base obrigatória para criação de novos grupos
 
-#### RD_SEGMENTADO_2024 / 2025
-
-| Campo       | Valor                       |
-| ----------- | --------------------------- |
-| **Máscara** | /27                         |
-| **Gateway** | Offset fixo do bloco (`.1`) |
-
-> Bloco segmentado dedicado à retaguarda, com controle explícito de ocupação.
-
----
-
-#### LEGACY_FLAT_2023
-
-| Campo       | Valor                       |
-| ----------- | --------------------------- |
-| **Máscara** | /24                         |
-| **Gateway** | Offset legado padrão (`.1`) |
-
-> Mantém compatibilidade com o modelo clássico de rede flat.
-
----
-
-### 3. Itens do Grupo (Oficiais)
-
-Os itens abaixo são **fixos e obrigatórios** para o grupo RETAGUARDA_LOJA.
-
----
-
-#### Item: BANCO12
-
-| Campo                         | Valor             |
-| ----------------------------- | ----------------- |
-| **Regra de IP**               | OFFSET_FIXO       |
-| **Offset**                    | .12               |
-| **Hostname pattern (padrão)** | `F{codigo}-BDD12` |
-| **Severidade**                | ERROR             |
-
----
-
-#### Item: MICRO_GERENCIA
-
-| Campo                         | Valor              |
-| ----------------------------- | ------------------ |
-| **Regra de IP**               | OFFSET_FIXO        |
-| **Offset**                    | .130               |
-| **Hostname pattern (padrão)** | `F{codigo}-GER130` |
-| **Severidade**                | ERROR              |
-
-**Exceção Drogasil:**
-
-* Hostname permitido: `GER{cod_historico}`
-
----
-
-#### Item: PORTAL_DO_SABER (RH)
-
-| Campo                | Valor              |
-| -------------------- | ------------------ |
-| **Regra de IP**      | OFFSET_FIXO        |
-| **Offset**           | .140               |
-| **Hostname pattern** | `F{codigo}-PSB140` |
-| **Severidade**       | WARN               |
-
----
-
-#### Item: MICRO_FARMA
-
-| Campo                | Valor              |
-| -------------------- | ------------------ |
-| **Regra de IP**      | OFFSET_FIXO        |
-| **Offset**           | .150               |
-| **Hostname pattern** | `F{codigo}-FAR150` |
-| **Severidade**       | WARN               |
-
----
-
-### 4. Observações de Governança
-
-* Todos os itens utilizam **OFFSET_FIXO**, sem crescimento dinâmico.
-* Alterações de offset exigem justificativa operacional.
-* Novos itens **não podem** ser adicionados ao grupo sem ADR.
-
----
-
-### Status
-
-* **RETAGUARDA_LOJA**: Grupo fechado e oficial
-* **Uso**: Template obrigatório para grupos futuros
+Este template, aliado ao ADR  
+**“Grupos de Rede definem IP, máscara, gateway e hostname”**,  
+protege o domínio contra regressões conceituais e validações parciais.

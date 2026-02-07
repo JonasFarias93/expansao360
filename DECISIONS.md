@@ -1131,3 +1131,305 @@ esteja explícito, testável e alinhado antes de qualquer código.
 * Inclusão de novos cenários exige atualização deste backlog.
 * O backlog de testes é parte do **contrato vivo** do grupo.
 
+
+---
+
+
+# ADR — Grupos de Rede definem IP, máscara, gateway e hostname
+
+---
+
+## Data
+
+2026-02-07
+
+---
+
+## Decisão
+
+Os **Grupos de Rede** passam a ser responsáveis por definir, de forma explícita e documentada:
+
+* política e regra de **IP**
+* **máscara** de rede
+* **gateway**
+* **hostname pattern** esperado
+
+Esses elementos compõem o **contrato do grupo**, e não devem ser tratados de forma isolada ou implícita.
+
+---
+
+## Contexto
+
+Historicamente, erros operacionais de rede não se limitam à escolha do IP.
+Problemas recorrentes incluem:
+
+* uso de máscara incorreta
+* gateway divergente do padrão esperado
+* hostname fora do padrão operacional
+
+Tratar apenas o IP como regra de validação é insuficiente e deixa lacunas
+que não podem ser detectadas automaticamente.
+
+Para reduzir erro humano e aumentar previsibilidade, o domínio precisa
+conhecer **toda a configuração mínima de rede esperada**, e não apenas o endereço IP.
+
+---
+
+## Consequências
+
+* Grupos de rede tornam-se a **fonte de verdade** para configuração lógica de rede.
+* Validações futuras poderão abranger IP, máscara, gateway e hostname.
+* Evita regressões conceituais onde apenas IP é considerado regra de rede.
+* Facilita automação, auditoria e testes de conformidade.
+
+---
+
+## Referência
+
+O grupo **RETAGUARDA_LOJA** é o **primeiro exemplo oficial** que aplica este contrato completo,
+servindo como template para todos os grupos futuros.
+
+---
+
+## Status
+
+* **RETAGUARDA_LOJA**: Grupo fechado e oficial
+* **Uso**: Template obrigatório para grupos futuros
+
+---
+
+## Backlog de Testes — RETAGUARDA_LOJA (Contrato Vivo)
+
+Esta seção define a **matriz de cenários de teste** do grupo RETAGUARDA_LOJA.
+
+Os testes **não são implementados neste ciclo**; o objetivo é garantir que o contrato
+esteja explícito, testável e alinhado antes de qualquer código.
+
+---
+
+### 1. Regras de IP — Banco12
+
+**Cenários esperados:**
+
+* Aceita IP com **offset .12** dentro do bloco do grupo
+
+**Cenários inválidos:**
+
+* Rejeita offset pertencente a outros itens do grupo (ex.: Gerência, PSB, Farma)
+* Rejeita offsets típicos de **TC/PDV** (faixa operacional)
+
+---
+
+### 2. Regras de IP — Gerência / PSB / Farma
+
+**Cenários esperados:**
+
+* Aceitam apenas seus **offsets fixos definidos**
+
+**Cenários inválidos:**
+
+* Rejeitam qualquer IP dentro de **faixa de TC**
+* Rejeitam offsets não documentados no contrato do grupo
+
+---
+
+### 3. Máscara e Gateway (por perfil)
+
+**Cenários esperados (quando implementado):**
+
+* Valida máscara correta conforme o perfil de rede:
+
+  * RD_SEGMENTADO_2024/2025 → /27
+  * LEGACY_FLAT_2023 → /24
+* Valida gateway conforme offset esperado do perfil
+
+**Cenários inválidos:**
+
+* Máscara divergente do perfil aplicado
+* Gateway fora do padrão definido para o perfil
+
+---
+
+### 4. Hostname Pattern
+
+**Cenários esperados (quando implementado):**
+
+* Hostname segue o padrão documentado por item
+
+**Cenários inválidos:**
+
+* Hostname fora do pattern
+* Hostname válido para outro item do grupo
+* Hostname válido para outro grupo
+
+---
+
+### Diretriz de Evolução
+
+* Cada cenário acima deve se tornar **teste automatizado** quando a validação for implementada.
+* Inclusão de novos cenários exige atualização deste backlog.
+* O backlog de testes é parte do **contrato vivo** do grupo.
+
+
+---
+
+
+# ADR — Grupos de Rede definem IP, máscara, gateway e hostname
+
+---
+
+## Data
+
+2026-02-07
+
+---
+
+## Decisão
+
+Os **Grupos de Rede** passam a ser responsáveis por definir, de forma explícita e documentada:
+
+* política e regra de **IP**
+* **máscara** de rede
+* **gateway**
+* **hostname pattern** esperado
+
+Esses elementos compõem o **contrato do grupo**, e não devem ser tratados de forma isolada ou implícita.
+
+---
+
+## Contexto
+
+Historicamente, erros operacionais de rede não se limitam à escolha do IP.
+Problemas recorrentes incluem:
+
+* uso de máscara incorreta
+* gateway divergente do padrão esperado
+* hostname fora do padrão operacional
+
+Tratar apenas o IP como regra de validação é insuficiente e deixa lacunas
+que não podem ser detectadas automaticamente.
+
+Para reduzir erro humano e aumentar previsibilidade, o domínio precisa
+conhecer **toda a configuração mínima de rede esperada**, e não apenas o endereço IP.
+
+---
+
+## Consequências
+
+* Grupos de rede tornam-se a **fonte de verdade** para configuração lógica de rede.
+* Validações futuras poderão abranger IP, máscara, gateway e hostname.
+* Evita regressões conceituais onde apenas IP é considerado regra de rede.
+* Facilita automação, auditoria e testes de conformidade.
+
+---
+
+## Referência
+
+O grupo **RETAGUARDA_LOJA** é o **primeiro exemplo oficial** que aplica este contrato completo,
+servindo como template para todos os grupos futuros.
+
+---
+
+## Status
+
+* **RETAGUARDA_LOJA**: Grupo fechado e oficial
+* **Uso**: Template obrigatório para grupos futuros
+
+---
+
+## Backlog de Testes — RETAGUARDA_LOJA (Contrato Vivo)
+
+Esta seção define a **matriz mínima de cenários de teste** do grupo RETAGUARDA_LOJA,
+separada por **perfil de rede**.
+
+Os testes **não são implementados neste ciclo**; este backlog existe para garantir
+que o contrato do grupo seja explícito, verificável e não sofra regressões futuras.
+
+---
+
+## PERFIL: LEGACY_FLAT
+
+### Regras de IP — Itens
+
+**Micro Gerência**
+
+* Aceita offset **.30**
+* Rejeita offset **.130**
+
+**Micro Farma**
+
+* Aceita offset **.60**
+* Rejeita offset **.131**
+
+**Portal do Saber (RH)**
+
+* Aceita offset **.70**
+* Rejeita offset **.129**
+
+**Banco12**
+
+* Aceita offset **.12**
+* Rejeita offset **.13**
+
+---
+
+### Gateway e Máscara
+
+**Cenários esperados:**
+
+* Gateway esperado: **.222**
+* Máscara esperada: **/24**
+
+**Cenários inválidos:**
+
+* Gateway diferente de .222
+* Máscara diferente de /24
+
+---
+
+## PERFIL: RD_SEGMENTADO
+
+### Regras de IP — Itens
+
+**Portal do Saber (RH)**
+
+* Aceita offset **.129**
+* Rejeita offset **.70**
+
+**Micro Gerência**
+
+* Aceita offset **.130**
+* Rejeita offset **.30**
+
+**Micro Farma**
+
+* Aceita offset **.131**
+* Rejeita offset **.60**
+
+**Banco12**
+
+* Aceita offset **.12**
+* Rejeita offset **.11** (quando colidir com TC/legado)
+
+---
+
+### Gateway e Máscara — Micros de Retaguarda
+
+**Cenários esperados:**
+
+* Gateway esperado: **.158**
+* Máscara esperada: **/27**
+
+**Cenários inválidos:**
+
+* Gateway diferente de .158
+* Máscara diferente de /27
+
+---
+
+### Diretriz de Evolução
+
+* Cada cenário listado deve se tornar **teste automatizado** quando a validação for implementada.
+* Alterações nos offsets, máscara ou gateway exigem atualização deste backlog.
+* O backlog de testes faz parte do **contrato vivo** do grupo.
+
