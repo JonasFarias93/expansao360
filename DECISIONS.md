@@ -1233,4 +1233,47 @@ Mapear cor por código no frontend não escala e deixa projetos novos sem cor, d
 - Migration em `cadastro`.
 - Form de Projeto expõe seleção de cor (paleta limitada).
 - `execucao` apenas consome `projeto.cor_slug` para UI.
-<!-- merge resolved during v0.3.6 -->
+>>>>>>> develop
+
+
+---
+## 2026-02-06 — Modularização de templatetags por tema de UI (cores e urgência)
+
+**Decisão**  
+Separar os templatetags de UI do app `execucao` em módulos semânticos por responsabilidade
+(ex.: cores de projeto, urgência visual), mantendo `execucao_ui.py` como fachada de compatibilidade.
+
+**Contexto**  
+O arquivo `execucao_ui.py` começou com uma única responsabilidade (cores do projeto), mas a UI
+da execução está evoluindo e novas regras visuais (ex.: urgência) tendem a crescer. Para evitar
+um “arquivo deus” e manter o projeto saudável, optamos por separar por tema.
+
+**Consequências**  
+- Novos templatetags devem ser criados em módulos dedicados (ex.: `execucao_projeto_cores.py`,
+  `execucao_urgencia.py`).
+- `execucao_ui.py` permanece como facade/reexport para não quebrar templates existentes.
+- Testes passam a ser organizados por tema (ex.: `test_ui_projeto_cores_templatetags.py`).
+
+---
+---
+
+## 2026-02-06 — Cards-resumo interativos na Fila Operacional (prioridade)
+
+**Status:** Aceito
+
+**Decisão**  
+Adicionar um header na tela de **Fila Operacional** contendo **cards-resumo clicáveis** para:
+- Total de chamados na fila
+- Quantidade por prioridade (Crítico/Alto/Médio/Baixo)
+
+Os cards funcionam também como **filtro rápido** via querystring (`?prio=CRITICO|ALTO|MEDIO|BAIXO`).
+
+**Contexto**  
+A fila operacional precisa oferecer leitura imediata da carga de trabalho e reduzir o custo de “caçar” chamados.
+A UI já é baseada em cards e ações rápidas; faltava uma visão agregada e um mecanismo direto de filtragem.
+
+**Consequências**  
+- A view da fila passa a expor contadores agregados (`counts`) e o filtro atual (`prio_selected`).
+- A filtragem é stateless (URL), facilitando compartilhamento e testes.
+- Mantemos o princípio “UI simples”: template só renderiza, regra de filtro e agregações ficam na view.
+- Evolução prevista: adicionar filtros por projeto no mesmo header (decisão futura / nova ADR).
