@@ -872,5 +872,262 @@ entre planejamento e execução.
   não no cadastro.
 - Validações de IP poderão evoluir de WARN para ERROR conforme maturidade
   do fluxo e aderência do cadastro.
-=======
->>>>>>> bb917310a3296d4d6d8e51bf1e55aa4869c237d4
+
+
+---
+
+## 2026-02-07 — Grupos de Rede descrevem o papel completo na rede
+
+**Status:** Aceito
+
+### Decisão
+
+A entidade atualmente representada como `RegraRedeEquipamento` passa a ser entendida conceitualmente como um **Grupo de Rede**, responsável por descrever **o papel completo de um conjunto de equipamentos na rede**, e não apenas a atribuição de IP.
+
+Cada Grupo de Rede passa a definir, de forma explícita:
+
+* Política de IP (offset fixo, sequencial ou faixa)
+* Máscara de rede
+* Gateway
+* Padrão de hostname
+
+A regra continua sendo **de domínio**, não de instância. A numeração ou indexação de equipamentos (ex.: `PDV1`, `TC3`) pertence exclusivamente à camada de execução e não ao cadastro ou às regras de rede.
+
+---
+
+### Contexto
+
+Na prática operacional, a maioria dos erros de rede não ocorre por IP incorreto, mas por inconsistências associadas, tais como:
+
+* IP correto com máscara incorreta
+* IP correto com gateway incorreto
+* Hostname fora do padrão esperado (impactando DNS, monitoramento e automação)
+
+O modelo anterior tratava regras de rede como simples políticas de IP, o que exigia conhecimento implícito para completar corretamente a configuração de um equipamento. Isso dificultava validação automática, padronização entre lojas e evolução do domínio.
+
+Além disso, a expansão do domínio de redes no Ciclo 2 exige uma base conceitual que permita evoluir validações futuras sem acoplamento à execução ou à UI.
+
+---
+
+### Consequências
+
+* `RegraRedeEquipamento` evolui conceitualmente para representar um **Grupo de Rede**, descrevendo o papel completo na rede.
+* As regras passam a permitir validações multidimensionais (IP, máscara, gateway e hostname), sem conhecimento da instância física do equipamento.
+* A consistência entre lojas e perfis de rede (LEGACY vs SEGMENTADO) torna-se explícita e validável.
+* O domínio passa a servir também como **documentação viva da topologia de rede**.
+* Esta decisão cria a base para automação futura, sem introduzir implementação prematura.
+
+---
+
+### Observações de escopo
+
+Esta decisão **não** inclui:
+
+* Criação de instâncias de equipamentos
+* Automação de aplicação de configurações de rede
+* UI, fila ou workflow operacional
+* Bloqueios de execução
+
+Esses pontos permanecem fora de escopo e serão tratados em ciclos posteriores, quando o domínio e os dados estiverem estabilizados.
+
+---
+
+# ADR — Grupos de Rede definem IP, máscara, gateway e hostname
+
+---
+
+## Data
+
+2026-02-07
+
+---
+
+## Decisão
+
+Os **Grupos de Rede** passam a ser responsáveis por definir, de forma explícita e documentada:
+
+* política e regra de **IP**
+* **máscara** de rede
+* **gateway**
+* **hostname pattern** esperado
+
+Esses elementos compõem o **contrato do grupo**, e não devem ser tratados de forma isolada ou implícita.
+
+---
+
+## Contexto
+
+Historicamente, erros operacionais de rede não se limitam à escolha do IP.
+Problemas recorrentes incluem:
+
+* uso de máscara incorreta
+* gateway divergente do padrão esperado
+* hostname fora do padrão operacional
+
+Tratar apenas o IP como regra de validação é insuficiente e deixa lacunas
+que não podem ser detectadas automaticamente.
+
+Para reduzir erro humano e aumentar previsibilidade, o domínio precisa
+conhecer **toda a configuração mínima de rede esperada**, e não apenas o endereço IP.
+
+---
+
+## Consequências
+
+* Grupos de rede tornam-se a **fonte de verdade** para configuração lógica de rede.
+* Validações futuras poderão abranger IP, máscara, gateway e hostname.
+* Evita regressões conceituais onde apenas IP é considerado regra de rede.
+* Facilita automação, auditoria e testes de conformidade.
+
+---
+
+## Referência
+
+O grupo **RETAGUARDA_LOJA** é o **primeiro exemplo oficial** que aplica este contrato completo,
+servindo como template para todos os grupos futuros.
+
+---
+
+## Status
+
+Aceito
+
+
+
+---
+
+# ADR — Grupos de Rede definem IP, máscara, gateway e hostname
+
+---
+
+## Data
+
+2026-02-07
+
+---
+
+## Decisão
+
+Os **Grupos de Rede** passam a ser responsáveis por definir, de forma explícita e documentada:
+
+* política e regra de **IP**
+* **máscara** de rede
+* **gateway**
+* **hostname pattern** esperado
+
+Esses elementos compõem o **contrato do grupo**, e não devem ser tratados de forma isolada ou implícita.
+
+---
+
+## Contexto
+
+Historicamente, erros operacionais de rede não se limitam à escolha do IP.
+Problemas recorrentes incluem:
+
+* uso de máscara incorreta
+* gateway divergente do padrão esperado
+* hostname fora do padrão operacional
+
+Tratar apenas o IP como regra de validação é insuficiente e deixa lacunas
+que não podem ser detectadas automaticamente.
+
+Para reduzir erro humano e aumentar previsibilidade, o domínio precisa
+conhecer **toda a configuração mínima de rede esperada**, e não apenas o endereço IP.
+
+---
+
+## Consequências
+
+* Grupos de rede tornam-se a **fonte de verdade** para configuração lógica de rede.
+* Validações futuras poderão abranger IP, máscara, gateway e hostname.
+* Evita regressões conceituais onde apenas IP é considerado regra de rede.
+* Facilita automação, auditoria e testes de conformidade.
+
+---
+
+## Referência
+
+O grupo **RETAGUARDA_LOJA** é o **primeiro exemplo oficial** que aplica este contrato completo,
+servindo como template para todos os grupos futuros.
+
+---
+
+## Status
+
+* **RETAGUARDA_LOJA**: Grupo fechado e oficial
+* **Uso**: Template obrigatório para grupos futuros
+
+---
+
+## Backlog de Testes — RETAGUARDA_LOJA (Contrato Vivo)
+
+Esta seção define a **matriz de cenários de teste** do grupo RETAGUARDA_LOJA.
+
+Os testes **não são implementados neste ciclo**; o objetivo é garantir que o contrato
+esteja explícito, testável e alinhado antes de qualquer código.
+
+---
+
+### 1. Regras de IP — Banco12
+
+**Cenários esperados:**
+
+* Aceita IP com **offset .12** dentro do bloco do grupo
+
+**Cenários inválidos:**
+
+* Rejeita offset pertencente a outros itens do grupo (ex.: Gerência, PSB, Farma)
+* Rejeita offsets típicos de **TC/PDV** (faixa operacional)
+
+---
+
+### 2. Regras de IP — Gerência / PSB / Farma
+
+**Cenários esperados:**
+
+* Aceitam apenas seus **offsets fixos definidos**
+
+**Cenários inválidos:**
+
+* Rejeitam qualquer IP dentro de **faixa de TC**
+* Rejeitam offsets não documentados no contrato do grupo
+
+---
+
+### 3. Máscara e Gateway (por perfil)
+
+**Cenários esperados (quando implementado):**
+
+* Valida máscara correta conforme o perfil de rede:
+
+  * RD_SEGMENTADO_2024/2025 → /27
+  * LEGACY_FLAT_2023 → /24
+* Valida gateway conforme offset esperado do perfil
+
+**Cenários inválidos:**
+
+* Máscara divergente do perfil aplicado
+* Gateway fora do padrão definido para o perfil
+
+---
+
+### 4. Hostname Pattern
+
+**Cenários esperados (quando implementado):**
+
+* Hostname segue o padrão documentado por item
+
+**Cenários inválidos:**
+
+* Hostname fora do pattern
+* Hostname válido para outro item do grupo
+* Hostname válido para outro grupo
+
+---
+
+### Diretriz de Evolução
+
+* Cada cenário acima deve se tornar **teste automatizado** quando a validação for implementada.
+* Inclusão de novos cenários exige atualização deste backlog.
+* O backlog de testes é parte do **contrato vivo** do grupo.
+
