@@ -781,6 +781,7 @@ Bugs em linhas adicionadas dinamicamente não são cobertos por testes backend.
 - Node/npm passam a ser dependência de desenvolvimento.
 - Testes JS ficam próximos aos arquivos estáticos do app.
 - Integração `pytest` + `jest` no fluxo de desenvolvimento (quando aplicável).
+<<<<<<< HEAD
 
 ---
 
@@ -871,3 +872,5 @@ entre planejamento e execução.
   não no cadastro.
 - Validações de IP poderão evoluir de WARN para ERROR conforme maturidade
   do fluxo e aderência do cadastro.
+=======
+>>>>>>> bb917310a3296d4d6d8e51bf1e55aa4869c237d4
