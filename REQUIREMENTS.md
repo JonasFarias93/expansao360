@@ -1,241 +1,300 @@
-# Requisitos — EXPANSÃO360
+# REQUIREMENTS — EXPANSÃO360
 
-## 1. Contexto
+Este documento descreve requisitos **funcionais**, **não funcionais** e **restrições** do EXPANSÃO360,
+alinhados com:
 
-O **EXPANSÃO360** é uma plataforma para gestão de expansão e operação de campo,
-baseada na separação clara e intencional entre:
+* `README.md`
+* `ARCHITECTURE.md`
+* `DECISIONS.md`
+* Dependências reais registradas em `environment.yml` e no `pip` instalado
 
-### Registry (Cadastro Mestre)
-Define **o que existe** e **como deve ser padronizado**.
-
-Exemplos:
-- Lojas
-- Projetos e Subprojetos
-- Equipamentos
-- Kits e seus itens
-
-### Operation (Execução de Campo)
-Registra **o que foi executado na prática**, com histórico,
-rastreabilidade e impacto operacional e contábil.
-
-Exemplos:
-- Chamados
-- Itens de Execução
-- Evidências
-- Fluxos diretos e inversos
+> Regra: requisitos aqui descritos devem ser **testáveis** (por teste automatizado, inspeção objetiva ou validação operacional).
 
 ---
 
-## 2. Definições de Domínio
+## 1) Escopo do Produto
 
-### Loja (Registry)
-Unidade física cadastrada onde a execução ocorre.
+### 1.1 Objetivo
 
----
+Padronizar e governar a expansão de operações físicas, garantindo que o planejamento (Registry)
+seja executado em campo (Operation) com **histórico imutável**, **rastreabilidade** e **evidências**.
 
-### Projeto / Subprojeto (Registry)
-Contexto organizacional da execução.
+### 1.2 Conceito central
 
-- **Projeto**: iniciativa macro (ex.: rollout, refresh, piloto).
-- **Subprojeto**: recorte operacional do projeto (ex.: fase, região, tipo de loja).
+O sistema separa rigorosamente:
 
-> Detalhamento funcional do Subprojeto será definido em etapa posterior.
-
----
-
-### Equipamento (Registry)
-Item padronizado utilizado na execução.
-
-Classificação:
-- **Rastreável (`tem_ativo=True`)**
-- **Contável (`tem_ativo=False`)**
+* **Registry (Cadastro Mestre)**: define o que existe e como deve ser
+* **Operation (Execução)**: registra o que foi executado, quando, por quem e com quais evidências
 
 ---
 
-### Kit (Registry)
-Conjunto padronizado de equipamentos e quantidades
-previstos para execução.
+## 2) Requisitos Funcionais
 
-O Kit representa **planejamento aprovado**.
+### RF-01 — Cadastro mestre de entidades (Registry)
 
----
+O sistema deve permitir manter cadastros mestres governados para:
 
-### Chamado (Operation)
-Unidade central de execução operacional.
+* Lojas
+* Projetos e Subprojetos
+* Categorias e Tipos de Equipamento
+* Equipamentos
+* Kits e Itens de Kit
 
-Representa:
-- Envio
-- Instalação
-- Retorno
-- Correção operacional
-
-Possui status, histórico, itens e evidências.
+**Critério de aceitação**: CRUD disponível via camada Web (Django) e/ou Admin; alterações afetam apenas execuções futuras.
 
 ---
 
-### Item de Execução (Operation)
-Instância operacional de um equipamento dentro de um Chamado,
-gerada automaticamente a partir de um Kit.
+### RF-02 — Abertura de Chamado a partir de Kit (snapshot operacional)
 
-Funciona como um **snapshot operacional** do planejamento.
+Ao criar um Chamado, o sistema deve gerar automaticamente os **Itens de Execução** a partir do Kit,
+formando um **snapshot operacional** imutável.
 
----
-
-## 3. Regras de Negócio (Core)
-
-### RN-001 — Execução depende do cadastro mestre
-
-Um Chamado **só pode ser criado** se existirem previamente:
-
-- Loja válida
-- Projeto válido
-- Kit válido
-
-**Critério de Aceite**
-- Dado que algum cadastro obrigatório não exista  
-- Quando tentar criar um Chamado  
-- Então o sistema deve **recusar** a criação  
+**Critério de aceitação**: mudanças posteriores no Kit não alteram Itens de Execução de Chamados já criados.
 
 ---
 
-### RN-002 — Geração automática de Itens de Execução
+### RF-03 — Separação explícita entre Setup e Execução
 
-Ao criar um Chamado associado a um Kit,
-o sistema deve gerar automaticamente os Itens de Execução
-com base nos Itens do Kit.
+O sistema deve suportar um estágio de **setup/planejamento** do Chamado distinto da **execução operacional**.
 
-**Critério de Aceite**
-- Cada `ItemKit` gera exatamente um `Item de Execução`.
-- Equipamento, tipo, quantidade e flags devem ser preservados.
-- Alterações futuras no Kit **não impactam Chamados já criados**.
+Regras:
 
----
+* Chamado nasce em `EM_ABERTURA` após a criação
+* Ao salvar o setup, o Chamado é promovido explicitamente para `ABERTO`
+* A fila operacional lista apenas Chamados `ABERTO` em diante
 
-### RN-003 — Rastreabilidade por tipo de equipamento
-
-Equipamentos são classificados como:
-
-#### Rastreáveis (`tem_ativo=True`)
-- Exigem:
-  - Ativo
-  - Número de Série
-
-#### Contáveis (`tem_ativo=False`)
-- Exigem confirmação explícita de execução.
-
-**Critério de Aceite**
-- Um Chamado **não pode ser finalizado** se:
-  - existir Item rastreável sem Ativo ou Série
-  - existir Item contável não confirmado
+**Critério de aceitação**: Chamados em `EM_ABERTURA` não aparecem na fila operacional.
 
 ---
 
-### RN-004 — Workflow de status do Chamado
+### RF-04 — Execução do Chamado em fila operacional
 
-Todo Chamado segue o fluxo básico:
+O sistema deve permitir executar Chamados em fila, registrando o andamento por status e por item.
 
-- **ABERTO**
-- **EM_EXECUCAO**
-- **FINALIZADO**
-
-**Critério de Aceite**
-- Todo Chamado inicia em **ABERTO**.
-- Ao salvar itens, pode transitar para **EM_EXECUCAO**.
-- Apenas Chamados válidos podem ser **FINALIZADOS**.
+**Critério de aceitação**: UI exibe fila operacional com chamadas para execução; templates não implementam regras de negócio.
 
 ---
 
-### RN-005 — Identificação e rastreabilidade do Chamado
+### RF-05 — Evidências vinculadas ao Chamado
 
-Todo Chamado deve possuir:
+O sistema deve permitir registrar evidências associadas a Chamados, como:
 
-- Protocolo único (gerado automaticamente)
-- Referências externas únicas (quando informadas):
-  - ServiceNow
-  - Contabilidade
-  - NF de saída
+* NF
+* Carta de Conteúdo
+* Documentos de exceção
 
-**Critério de Aceite**
-- Protocolos não podem se repetir.
-- Referências externas não podem ser duplicadas no sistema.
+**Critério de aceitação**: evidências são entidades próprias e consultáveis no contexto do Chamado.
 
 ---
 
-### RN-006 — Fluxo inverso de execução (retorno)
+### RF-06 — Gates operacionais (NF / coleta / finalização)
 
-Correções ou retornos **não alteram Chamados finalizados**.
+O sistema deve restringir transições de estado por regras explícitas:
 
-Um novo Chamado deve ser criado,
-representando o fluxo inverso (**Loja → Matriz**).
+* Liberação de NF apenas quando:
 
-**Critério de Aceite**
-- Chamados finalizados são imutáveis.
-- Chamados de retorno:
-  - referenciam o Chamado de origem
-  - exigem decisão explícita na finalização:
-    - Retornado para a matriz
-    - Não retornado (extravio / perda / exceção)
+  * itens rastreáveis estiverem bipados
+  * itens contáveis estiverem confirmados
 
----
+* Finalização exige:
 
-### RN-007 — Evidências por Chamado
+  * NF registrada (quando aplicável)
+  * confirmação de coleta (quando aplicável)
+  * evidências mínimas conforme o fluxo
 
-Chamados podem (ou devem) possuir evidências,
-conforme o tipo de operação.
-
-Exemplos:
-- NF de saída
-- NF de retorno
-- Carta de Conteúdo
-- Documento de exceção
-
-**Critério de Aceite**
-- Evidências ficam vinculadas ao Chamado.
-- Chamados de retorno exigem evidência ou decisão explícita.
+**Critério de aceitação**: tentativa de avanço inválido é bloqueada por validação objetiva.
 
 ---
 
-## 4. Princípios Não Funcionais
+### RF-07 — Fluxo direto e fluxo inverso
 
-- O core de domínio **não depende de frameworks**.
-- Interfaces (CLI / Web / futuras APIs):
-  - apenas orquestram casos de uso
-  - não contêm regras de negócio
-- Persistência pode variar sem impacto nas regras do core.
-- Histórico operacional **nunca é apagado**.
+O sistema deve suportar:
+
+* Envio (Matriz → Loja)
+* Retorno (Loja → Matriz)
+
+**Critério de aceitação**: fluxos são rastreáveis e não apagam histórico; retorno/correção gera novo Chamado.
 
 ---
 
-## 5. Fora de Escopo (por enquanto)
+### RF-08 — Imutabilidade operacional
 
-- Campos definitivos de Subprojeto
-- Regras específicas por tipo de Projeto
-- Integração com ERP / ServiceNow
-- API pública
-- Mobile / offline-first
+O sistema deve preservar histórico operacional:
 
+* Chamados finalizados não são editados destrutivamente
+* Correções e retornos geram **novo Chamado**
 
-### Subprojeto (Registry — detalhamento funcional mínimo)
+**Critério de aceitação**: operações de correção não alteram registros de eventos já concluídos.
 
-O Subprojeto representa um **recorte organizacional e operacional**
-dentro de um Projeto, utilizado para:
+---
 
-- segmentação de execução
-- consolidação de histórico
-- análise e dashboards
+### RF-09 — Chamado externo padronizado
 
-Exemplos de Subprojeto:
-- Fase
-- Região
-- Linha de entrega
-- Tipo de iniciativa (ex.: Sala Sua Saúde, Impressoras, Tablets)
+O sistema deve suportar identificadores externos por:
 
-#### Características
-- Todo Subprojeto **pertence a um único Projeto**
-- Um Projeto pode possuir **zero ou mais Subprojetos**
-- Subprojetos possuem ciclo de vida próprio
+* `ticket_externo_sistema`
+* `ticket_externo_id`
 
-#### Status de Subprojeto
-- **ATIVO** — pode receber novos Chamados
-- **INATIVO** — não recebe novos Chamados, histórico preservado
-- **ENCERRADO** — finalizado, não reativável
+**Critério de aceitação**:
+
+* UI exibe "Chamado Externo" como `<sistema>: <id>`
+* `ticket_externo_id` é único globalmente quando preenchido
+
+---
+
+### RF-10 — Autorização por capabilities (camada Web)
+
+A camada Web deve aplicar autorização baseada em **capabilities** para ações sensíveis.
+
+**Critério de aceitação**: enforcement no backend; templates apenas refletem permissões.
+
+---
+
+## 3) Requisitos Não Funcionais
+
+### RNF-01 — Separação de camadas (arquitetura)
+
+O sistema deve manter:
+
+* Domínio independente de framework
+* Web/CLI como adapters
+* Regras de negócio fora de views/templates
+
+**Verificação**: inspeção arquitetural + cobertura de testes de domínio/usecases.
+
+---
+
+### RNF-02 — Qualidade e estilo de código (Python)
+
+O projeto deve manter padronização automática com:
+
+* `ruff`
+* `black`
+* `pre-commit`
+
+**Verificação**: execução em CI/local; hooks impedem drift.
+
+---
+
+### RNF-03 — Testes automatizados (Python)
+
+O projeto deve possuir testes automatizados usando:
+
+* `pytest`
+* `pytest-cov`
+* `pytest-django`
+
+**Verificação**: execução de suíte de testes e relatório de cobertura.
+
+---
+
+### RNF-04 — Testes automatizados (JavaScript)
+
+O projeto deve testar JavaScript puro crítico (ex.: formsets dinâmicos) com:
+
+* Jest + jsdom (via Node)
+
+**Verificação**: suíte de testes JS executável por comando único.
+
+---
+
+### RNF-05 — Observabilidade mínima de execução (dev)
+
+O projeto deve oferecer feedback rápido em desenvolvimento:
+
+* `pytest-watch`/`ptw` para ciclo rápido de testes
+
+**Verificação**: comando de watch funcional no ambiente local.
+
+---
+
+### RNF-06 — Evolução segura e rastreabilidade de mudanças
+
+Mudanças devem ser entregues em microtarefas e commits pequenos, com rastreabilidade.
+
+**Verificação**: histórico de commits e branches descritivas (`feat/`, `fix/`, `docs/`).
+
+---
+
+## 4) Restrições Técnicas
+
+### RT-01 — Plataforma / Runtime
+
+* Python **3.11**
+* Ambiente gerenciado por **Conda** (`environment.yml`)
+
+---
+
+### RT-02 — Framework web
+
+* Django é o framework adotado para a camada Web
+
+---
+
+### RT-03 — Sem build frontend obrigatório
+
+* Tailwind via CDN (setup leve)
+
+---
+
+### RT-04 — Stack de testes JS
+
+* Dependência de desenvolvimento: Node/npm (para Jest/jsdom)
+
+---
+
+## 5) Dependências reais do projeto (baseline)
+
+> A lista abaixo é **informativa** e serve para evitar documentação desatualizada. Não substitui o `environment.yml`.
+
+### 5.1 Python (Conda / Base)
+
+* python=3.11
+* pytest
+* ruff
+* black
+* pre-commit
+
+### 5.2 Python (pip)
+
+* django
+* pytest-cov
+* pytest-django
+* pytest-watch / ptw
+* typer, rich (CLI)
+
+### 5.3 Utilitários observados no ambiente
+
+* factory_boy, Faker (testes/fábricas)
+* requests (HTTP)
+* pillow (imagens)
+* openpyxl (Excel)
+* PyYAML (configs)
+* docker (automação/integração de dev)
+* nodeenv, virtualenv (suporte a tooling)
+
+> Nota: dependências listadas como “observadas” devem ser confirmadas quanto ao uso efetivo no repositório.
+
+---
+
+## 6) Fora de Escopo (por enquanto)
+
+* APIs públicas
+* Integrações corporativas profundas
+* Hardening de infraestrutura
+* Multitenancy
+* Mobile / offline-first
+
+---
+
+## 7) Microtarefas recomendadas para fechar a lacuna de doc vs ambiente
+
+1. **[DOC] Atualizar `environment.yml` (pip indentação e consistência)**
+2. **[DOC] Criar/atualizar seção "Dependências" no README (curta)**
+3. **[DOC] Criar `docs/dependencies.md` (opcional) com racional de cada pacote "extra"**
+4. **[DOC] Revisar se Jest/jsdom estão registrados (package.json / instruções)**
+
+### Commits sugeridos
+
+* `docs(requirements): registrar requisitos e baseline de dependencias reais`
+* `docs(deps): documentar dependencias instaladas e racional`

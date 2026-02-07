@@ -8,7 +8,7 @@ garantindo **rastreabilidade, histórico e governança de ponta a ponta**.
 
 ## Objetivo
 
-O EXPANSÃO360 tem como objetivo estruturar e padronizar a expansão de operações físicas,
+O **EXPANSÃO360** tem como objetivo estruturar e padronizar a expansão de operações físicas,
 assegurando que o que foi definido no planejamento seja corretamente executado em campo,
 com evidências, histórico auditável e regras claras de operação.
 
@@ -21,8 +21,41 @@ O sistema foi concebido para evitar:
 
 O foco do sistema é **rastreabilidade, consistência e evolução segura** dos processos.
 
-🚀 **Release atual:** `v0.3.1 — Importação de Lojas & UX de Cadastro`
+🚀 **Release atual:** `v0.3.5 — Execução operacional mais clara`
 🚧 **Sprint atual:** Sprint 4 — UX Operacional & Views
+
+---
+
+## ✨ O que mudou na versão atual
+
+### Execução
+
+* Separação explícita entre **setup (planejamento)** e **execução operacional**
+* Reativação do bloco de **Evidências** na tela de execução
+* Novo componente `_card_operacional_chamado_full.html`
+
+### UI / UX
+
+* Projetos agora possuem **cor definida no cadastro**
+* Fila operacional com **identificação visual por projeto**
+* Header e cards da fila mais informativos
+
+### Arquitetura
+
+* Introdução de **templatetags de UI** (`execucao_ui`)
+* Contratos de templates respeitados
+* Refatoração incremental sem quebra de compatibilidade
+
+### Qualidade
+
+* Testes adicionados para:
+
+  * Views de execução
+  * Template tags de UI
+* Ruff / Black / Pre-commit ativos
+
+> 🔖 Esta versão consolida a transição do fluxo de execução e prepara o terreno
+> para evolução visual e operacional da fila.
 
 ---
 
@@ -33,10 +66,10 @@ O foco do sistema é **rastreabilidade, consistência e evolução segura** dos 
 * Regras de negócio explícitas e testadas (TDD)
 * Execução operacional baseada em **Chamados**
 * Suporte a **fluxo direto (Matriz → Loja)** e **fluxo inverso (Loja → Matriz)**
-* Registro de **Itens de Execução** (snapshot operacional)
+* Registro de **Itens de Execução** como *snapshot operacional*
 * Registro de **Evidências** (NF, Carta de Conteúdo, exceções)
 * IAM mínimo baseado em **capabilities**
-* Camada Web (Django) funcional
+* Camada Web (Django) atuando como **adapter**
 * CLI **experimental** como interface de referência do core
 * Testes automatizados e hooks de qualidade (ruff, black, pre-commit)
 
@@ -44,7 +77,8 @@ O foco do sistema é **rastreabilidade, consistência e evolução segura** dos 
 
 ## Conceito Central
 
-O sistema é baseado em uma separação clara e intencional de responsabilidades:
+O sistema é baseado em uma separação **clara, explícita e intencional** de responsabilidades,
+que orienta toda a modelagem do domínio e evita acoplamentos indevidos.
 
 ### Registry (Cadastro Mestre)
 
@@ -55,14 +89,16 @@ Exemplos:
 * Lojas
 * Projetos / Subprojetos
 * Equipamentos
+* Categorias e Tipos de Equipamento
 * Kits e seus itens
 
 **Características**
 
 * Fonte da verdade
-* Alterações controladas
-* Governança e estabilidade
+* Alterações controladas e governadas
+* Estável ao longo do tempo
 * Não registra execução
+* Não depende do domínio operacional
 
 ---
 
@@ -81,7 +117,7 @@ Exemplos:
 
 * Histórico imutável
 * Rastreabilidade completa
-* Suporte a auditoria
+* Suporte a auditoria e contabilidade
 * Não altera o cadastro mestre
 
 ---
@@ -90,7 +126,8 @@ Exemplos:
 
 O **Chamado** é a unidade central de execução operacional.
 
-* Representa um **evento real**
+* Representa um **evento real** no mundo físico
+* Possui ciclo de vida explícito
 * Nunca é editado de forma destrutiva após finalização
 * Correções e retornos geram **novos Chamados**
 * Pode representar:
@@ -99,6 +136,73 @@ O **Chamado** é a unidade central de execução operacional.
   * Retorno (Loja → Matriz)
 
 O Chamado atua como a **ponte controlada** entre planejamento (Registry) e execução (Operation).
+
+---
+
+## Ciclo de Vida do Chamado
+
+O ciclo de vida do Chamado separa explicitamente **planejamento** de **execução**:
+
+1. **EM_ABERTURA**
+
+   * Criação do chamado
+   * Geração dos itens de execução
+   * Decisão de configuração (ex.: necessidade de IP)
+   * Planejamento técnico
+
+2. **ABERTO**
+
+   * Chamado promovido explicitamente após salvar o setup
+   * Entra na fila operacional
+
+3. **EM_EXECUCAO / AGUARDANDO_***
+
+   * Execução em campo
+   * Bipagem, conferências e coleta de evidências
+
+4. **FINALIZADO**
+
+   * Estado terminal
+   * Histórico preservado
+
+Chamados em **EM_ABERTURA** **nunca aparecem** na fila operacional.
+
+---
+
+## Gates Operacionais
+
+O avanço do Chamado é protegido por regras explícitas:
+
+* Liberação de NF exige:
+
+  * Todos os itens rastreáveis bipados
+  * Todos os itens contáveis confirmados
+
+* Finalização do Chamado exige:
+
+  * NF registrada (quando aplicável)
+  * Confirmação de coleta
+  * Evidências mínimas conforme o fluxo
+
+Essas regras garantem consistência operacional e auditabilidade.
+
+---
+
+## Chamado Externo
+
+Chamados podem ser associados a sistemas externos através dos campos:
+
+* `ticket_externo_sistema`
+* `ticket_externo_id`
+
+Na UI, o Chamado Externo é exibido no formato:
+
+```
+<sistema>: <id>
+```
+
+O campo `ticket_externo_id` é **globalmente único** quando preenchido,
+garantindo buscas e auditoria sem ambiguidade.
 
 ---
 
@@ -126,10 +230,10 @@ A CLI existe como **interface de referência** para demonstrar o core em camadas
 
 > **Status:** experimental
 >
-> A CLI pode não refletir todas as regras, fluxos e validações do sistema Web (Django).
-> O produto principal e a fonte da verdade operacional/administrativa é a **camada Web**.
+> A CLI pode não refletir todos os fluxos e validações do sistema Web.
+> A **camada Web (Django)** é o produto principal e a fonte da verdade operacional.
 
-Use a CLI quando for útil para:
+Casos de uso da CLI:
 
 * validações rápidas do core
 * demonstrações e experimentos locais
@@ -143,10 +247,10 @@ python -m expansao360 mount --help
 
 ### Nota sobre futuras integrações (APIs)
 
-Integrações externas (ex.: transportadoras, sistemas parceiros) devem ser implementadas
-como **adapters (APIs/serviços)** consumindo os mesmos **use cases** do core.
+Integrações externas devem ser implementadas como **adapters (APIs/serviços)**,
+consumindo os mesmos **use cases** do core.
 
-A existência do CLI **não é pré-requisito** para APIs.
+A existência da CLI **não é pré-requisito** para APIs.
 
 ---
 
@@ -157,6 +261,7 @@ A camada Web atua como **adapter**, oferecendo:
 * Cadastro administrativo (Registry)
 * Execução operacional via Chamados
 * Abertura de Chamados a partir de Kits
+* Separação clara entre setup e execução
 * Suporte a fluxo direto e inverso
 * Registro e visualização de evidências
 * IAM por capabilities
@@ -176,9 +281,9 @@ python web/manage.py test
 
 * `ARCHITECTURE.md` — visão arquitetural
 * `DECISIONS.md` — ADRs e decisões técnicas
-* `REQUIREMENTS.md` — requisitos
-* `GLOSSARIO.md` — terminologia oficial
-* `STATUS.md` — status por sprint/release
+* `REQUIREMENTS.md` — requisitos funcionais e não funcionais
+* `GLOSSARIO.md` — terminologia oficial do domínio
+* `STATUS.md` — status por sprint e release
 
 ---
 
