@@ -11,6 +11,7 @@ from cadastro.models import Equipamento, Kit, Loja, Projeto, Subprojeto
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, models, transaction
+from django.db.models import Q
 from django.utils import timezone
 
 
@@ -92,13 +93,6 @@ class Chamado(models.Model):
     # =========================
     coleta_confirmada_em = models.DateTimeField(null=True, blank=True)
 
-    # =========================
-    # Legado / compatibilidade
-    # =========================
-    # manter por enquanto para não quebrar templates/tests/DB;
-    # depois migraremos para ticket_externo_* e removeremos.
-    servicenow_numero = models.CharField(max_length=40, unique=True, null=True, blank=True)
-
     # Administrativo/financeiro (já existia)
     contabilidade_numero = models.CharField(max_length=40, unique=True, null=True, blank=True)
     nf_saida_numero = models.CharField(max_length=40, unique=True, null=True, blank=True)
@@ -134,6 +128,20 @@ class Chamado(models.Model):
                 raise ValidationError(
                     {"chamado_origem": "Chamado de envio não deve possuir chamado de origem."}
                 )
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["ticket_externo_sistema", "ticket_externo_id"],
+                condition=(
+                    Q(ticket_externo_sistema__isnull=False)
+                    & ~Q(ticket_externo_sistema="")
+                    & Q(ticket_externo_id__isnull=False)
+                    & ~Q(ticket_externo_id="")
+                ),
+                name="uq_chamado_ticket_externo_sistema_id",
+            ),
+        ]
 
     # -------------------------
     # geração de itens do chamado
