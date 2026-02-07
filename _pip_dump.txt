@@ -1,0 +1,57 @@
+asgiref @ file:///home/conda/feedstock_root/build_artifacts/bld/rattler-build_asgiref_1767729187/work
+black @ file:///home/conda/feedstock_root/build_artifacts/black-recipe_1765222641831/work
+certifi==2026.1.4
+cffi @ file:///home/conda/feedstock_root/build_artifacts/cffi_1761202849623/work
+cfgv @ file:///home/conda/feedstock_root/build_artifacts/cfgv_1763607870856/work
+charset-normalizer==3.4.4
+click @ file:///home/conda/feedstock_root/build_artifacts/bld/rattler-build_click_1764518652/work
+colorama @ file:///home/conda/feedstock_root/build_artifacts/colorama_1733218098505/work
+coverage @ file:///home/conda/feedstock_root/build_artifacts/coverage_1766951147229/work
+distlib @ file:///home/conda/feedstock_root/build_artifacts/distlib_1752822973799/work
+Django @ file:///home/conda/feedstock_root/build_artifacts/django_1764693175125/work
+docker==7.1.0
+docopt==0.6.2
+et_xmlfile==2.0.0
+exceptiongroup @ file:///home/conda/feedstock_root/build_artifacts/exceptiongroup_1763918002538/work
+-e git+ssh://git@github.com/JonasFarias93/expansao360.git@fc562b48b1f8b2c0e07f4943d5c78df593024e06#egg=expansao360
+factory_boy==3.3.3
+Faker==40.1.2
+filelock @ file:///home/conda/feedstock_root/build_artifacts/filelock_1768022204021/work
+identify @ file:///home/conda/feedstock_root/build_artifacts/identify_1768295198534/work
+idna==3.11
+iniconfig @ file:///home/conda/feedstock_root/build_artifacts/iniconfig_1760831328738/work
+markdown-it-py @ file:///home/conda/feedstock_root/build_artifacts/markdown-it-py_1754951200865/work
+mdurl @ file:///home/conda/feedstock_root/build_artifacts/mdurl_1733255585584/work
+mypy_extensions @ file:///home/conda/feedstock_root/build_artifacts/mypy_extensions_1745776566517/work
+nodeenv @ file:///home/conda/feedstock_root/build_artifacts/nodeenv_1766261093578/work
+openpyxl==3.1.5
+packaging @ file:///home/conda/feedstock_root/build_artifacts/bld/rattler-build_packaging_1745345660/work
+pathspec @ file:///home/conda/feedstock_root/build_artifacts/pathspec_1767999045058/work
+pillow==12.1.0
+platformdirs @ file:///home/conda/feedstock_root/build_artifacts/bld/rattler-build_platformdirs_1764950726/work
+pluggy @ file:///home/conda/feedstock_root/build_artifacts/bld/rattler-build_pluggy_1764896838/work
+pre_commit @ file:///home/conda/feedstock_root/build_artifacts/pre-commit_1765937468345/work
+ptw==1.0.1
+pycparser @ file:///home/conda/feedstock_root/build_artifacts/bld/rattler-build_pycparser_1733195786/work
+Pygments @ file:///home/conda/feedstock_root/build_artifacts/pygments_1750615794071/work
+pytest @ file:///home/conda/feedstock_root/build_artifacts/bld/rattler-build_pytest_1765062031/work
+pytest-cov @ file:///home/conda/feedstock_root/build_artifacts/bld/rattler-build_pytest-cov_1757612051/work
+pytest-django==4.11.1
+pytest-watch==4.2.0
+pytokens @ file:///home/conda/feedstock_root/build_artifacts/bld/rattler-build_pytokens_1765201048/work
+PyYAML @ file:///home/conda/feedstock_root/build_artifacts/pyyaml_1758891829620/work
+requests==2.32.5
+rich @ file:///home/conda/feedstock_root/build_artifacts/bld/rattler-build_rich_1760026188/work/dist
+ruff @ file:///home/conda/feedstock_root/build_artifacts/bld/rattler-build_ruff_1768592206/work
+shellingham @ file:///home/conda/feedstock_root/build_artifacts/shellingham_1762858192781/work
+sqlparse @ file:///home/conda/feedstock_root/build_artifacts/bld/rattler-build_sqlparse_1766143791/work
+svgwrite==1.4.3
+tomli @ file:///home/conda/feedstock_root/build_artifacts/bld/rattler-build_tomli_1768146676/work
+Tree==0.2.4
+typer==0.21.1
+typer-slim==0.21.1
+typing_extensions @ file:///home/conda/feedstock_root/build_artifacts/bld/rattler-build_typing_extensions_1756220668/work
+ukkonen @ file:///home/conda/feedstock_root/build_artifacts/ukkonen_1761594541046/work
+urllib3==2.6.3
+virtualenv @ file:///home/conda/feedstock_root/build_artifacts/virtualenv_1768069679508/work
+watchdog==6.0.0
