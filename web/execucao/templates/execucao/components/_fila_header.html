@@ -2,44 +2,55 @@
 
 <div class="space-y-4">
 
-  {# Filtro ativo (prioridade) #}
-  {% if prio_selected or projeto_selected %}
+{# Filtro ativo (prioridade) #}
+  {% if prio_selected %}
     <div class="flex items-center gap-2">
       <span class="inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1 text-xs text-slate-700">
-        Filtros:
-        {% if prio_selected %}
-          <span class="ml-1 font-semibold">{{ prio_selected }}</span>
-        {% endif %}
-        {% if projeto_selected %}
-          <span class="ml-1 text-slate-400">•</span>
-          <span class="ml-1 font-semibold">Projeto</span>
-        {% endif %}
+        Filtro: <span class="ml-1 font-semibold">{{ prio_selected }}</span>
       </span>
-
       <a href="?" class="text-xs font-medium text-slate-700 hover:text-slate-900">
-        Limpar filtros
+        Limpar
       </a>
     </div>
   {% endif %}
 
-  {# Projetos (Top N) #}
+  {# Projetos (Top N) — UI only #}
   {% if projects %}
     <div>
       <div class="flex items-center justify-between mb-2">
-        <span class="text-xs font-semibold text-slate-700 uppercase">Projetos</span>
+        <span class="text-xs font-semibold text-slate-700 uppercase">
+          Projetos
+        </span>
+
+        {% if projeto_selected and projects_reset_url %}
+          <a
+            href="{{ projects_reset_url }}"
+            class="text-xs font-medium text-slate-700 hover:text-slate-900"
+          >
+            Limpar projeto
+          </a>
+        {% endif %}
       </div>
 
       <div class="grid grid-cols-2 gap-3 sm:grid-cols-5">
         {% if projects_reset_url %}
-          {% if projeto_selected %}
-            {% include "execucao/components/_fila_header_card.html" with label="Todos" value=projects_total active=False disabled=False url=projects_reset_url only %}
-          {% else %}
-            {% include "execucao/components/_fila_header_card.html" with label="Todos" value=projects_total active=True disabled=False url=projects_reset_url only %}
-          {% endif %}
+          {% include "execucao/components/_fila_header_card.html" with
+            label="Todos"
+            value="—"
+            active=not projeto_selected
+            disabled=False
+            url=projects_reset_url
+            only %}
         {% endif %}
 
         {% for p in projects %}
-          {% include "execucao/components/_fila_header_card.html" with label=p.nome value=p.count active=p.active disabled=False url=p.url only %}
+          {% include "execucao/components/_fila_header_card.html" with
+            label=p.nome
+            value=p.count
+            active=p.active
+            disabled=False
+            url=p.url
+            only %}
         {% endfor %}
       </div>
     </div>
@@ -102,5 +113,4 @@
 
     </div>
   </div>
-
 </div>
