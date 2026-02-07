@@ -51,7 +51,7 @@
         <thead>
           <tr class="text-left text-slate-600 border-b border-slate-200">
             <th class="py-3 pr-4">Protocolo</th>
-            <th class="py-3 pr-4">ServiceNow</th>
+            <th class="py-3 pr-4">Chamado Externo</th>
             <th class="py-3 pr-4">Contábil</th>
             <th class="py-3 pr-4">NF</th>
             <th class="py-3 pr-4">Java</th>
@@ -75,7 +75,17 @@
                 </a>
               </td>
 
-              <td class="py-3 pr-4">{{ c.servicenow_numero|default:"-" }}</td>
+              <td class="py-3 pr-4">
+                {% if c.ticket_externo_id %}
+                  {% if c.ticket_externo_sistema %}
+                    {{ c.ticket_externo_sistema }}: {{ c.ticket_externo_id }}
+                  {% else %}
+                    {{ c.ticket_externo_id }}
+                  {% endif %}
+                {% else %}
+                  -
+                {% endif %}
+              </td>
               <td class="py-3 pr-4">{{ c.contabilidade_numero|default:"-" }}</td>
               <td class="py-3 pr-4">{{ c.nf_saida_numero|default:"-" }}</td>
 
