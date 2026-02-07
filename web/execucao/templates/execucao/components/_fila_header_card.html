@@ -2,6 +2,7 @@
 {# Espera receber: label, value, active(bool), disabled(bool), url #}
 {# Opcional: prio ("CRITICO"|"ALTO"|"MEDIO"|"BAIXO"|"PADRAO") para colorir #}
 {# Opcional: bar_class (classe tailwind) para faixa superior (ex.: bg-blue-500) #}
+{# Opcional: active_bg_class, active_text_class para cards de projeto (quando active=True) #}
 
 <a
   href="{{ url }}"
@@ -32,6 +33,7 @@
       {% elif prio == 'ALTO' %} bg-amber-100
       {% elif prio == 'MEDIO' %} bg-blue-100
       {% elif prio == 'BAIXO' or prio == 'PADRAO' %} bg-slate-100
+      {% elif active_bg_class %} {{ active_bg_class }}
       {% else %} bg-white
       {% endif %}
     {% else %}
@@ -54,6 +56,7 @@
         {% elif prio == 'ALTO' %} text-amber-800
         {% elif prio == 'MEDIO' %} text-blue-800
         {% elif prio == 'BAIXO' or prio == 'PADRAO' %} text-slate-800
+        {% elif active_text_class %} {{ active_text_class }}
         {% else %} text-slate-700
         {% endif %}
       {% else %}
@@ -72,6 +75,7 @@
         {% elif prio == 'ALTO' %} text-amber-800
         {% elif prio == 'MEDIO' %} text-blue-800
         {% elif prio == 'BAIXO' or prio == 'PADRAO' %} text-slate-800
+        {% elif active_text_class %} {{ active_text_class }}
         {% else %} text-slate-900
         {% endif %}
       {% else %}

@@ -48,15 +48,19 @@
       <div class="grid grid-cols-2 gap-3 sm:grid-cols-5">
         {% if projects_reset_url %}
           {% if projeto_selected %}
-            {% include "execucao/components/_fila_header_card.html" with label="Todos" value=counts.total active=True disabled=False url=projects_reset_url only %}
-          {% else %}
+            {# Com projeto selecionado, "Todos" fica INATIVO #}
             {% include "execucao/components/_fila_header_card.html" with label="Todos" value=counts.total active=False disabled=False url=projects_reset_url only %}
+          {% else %}
+            {# Sem projeto selecionado, "Todos" fica ATIVO #}
+            {% include "execucao/components/_fila_header_card.html" with label="Todos" value=counts.total active=True disabled=False url=projects_reset_url only %}
           {% endif %}
         {% endif %}
 
         {% for p in projects %}
           {% projeto_color_bar p.projeto as p_bar_class %}
-          {% include "execucao/components/_fila_header_card.html" with label=p.nome value=p.count active=p.active disabled=False url=p.url bar_class=p_bar_class only %}
+          {% projeto_color_bg_active p.projeto as p_bg_active %}
+          {% projeto_color_text_active p.projeto as p_text_active %}
+          {% include "execucao/components/_fila_header_card.html" with label=p.nome value=p.count active=p.active disabled=False url=p.url bar_class=p_bar_class active_bg_class=p_bg_active active_text_class=p_text_active only %}
         {% endfor %}
       </div>
     </div>
