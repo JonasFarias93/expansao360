@@ -1,11 +1,12 @@
 {# execucao/components/_fila_header_card.html #}
 {# Espera receber: label, value, active(bool), disabled(bool), url #}
 {# Opcional: prio ("CRITICO"|"ALTO"|"MEDIO"|"BAIXO"|"PADRAO") para colorir #}
+{# Opcional: bar_class (classe tailwind) para faixa superior (ex.: bg-blue-500) #}
 
 <a
   href="{{ url }}"
   class="
-    group block rounded-xl border px-3 py-3 text-left shadow-sm transition
+    group block rounded-xl border px-3 py-3 text-left shadow-sm transition overflow-hidden
     hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2
     {% if disabled %} opacity-50 pointer-events-none {% endif %}
 
@@ -39,6 +40,12 @@
   "
   aria-disabled="{% if disabled %}true{% else %}false{% endif %}"
 >
+
+  {# Faixa superior opcional (cor do projeto) #}
+  {% if bar_class %}
+    <div class="-mx-3 -mt-3 mb-2 h-1 w-[calc(100%+1.5rem)] {{ bar_class }}"></div>
+  {% endif %}
+
   <div
     class="
       text-xs font-semibold

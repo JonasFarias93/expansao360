@@ -1,13 +1,13 @@
 # web/execucao/views.py
 from __future__ import annotations
 
-from cadastro.models import Subprojeto
+from cadastro.models import Projeto, Subprojeto
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import Case, Count, IntegerField, Q, Value, When
-from django.http import HttpRequest, HttpResponse
+from django.http import HttpRequest, HttpResponse, QueryDict
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.utils.decorators import method_decorator
@@ -195,14 +195,9 @@ class ChamadoSetupView(CapabilityRequiredMixin, View):
 # FILA (HOME)
 # ==================
 class ChamadoFilaView(CapabilityRequiredMixin, TemplateView):
-    """
-    Fila operacional de chamados ativos.
-    """
-
     template_name = "execucao/fila_operacional.html"
     required_capability = "execucao.chamado.visualizar"
 
-    # URL -> Enum do model
     PRIO_MAP = {
         "CRITICO": Chamado.Prioridade.CRITICA,
         "ALTO": Chamado.Prioridade.ALTA,
@@ -210,10 +205,27 @@ class ChamadoFilaView(CapabilityRequiredMixin, TemplateView):
         "BAIXO": Chamado.Prioridade.BAIXA,
     }
 
+    def _url_with_query(self, **params: object) -> str:
+        """
+        Monta URL preservando querystring atual e aplicando overrides.
+        Para remover um parâmetro, passe None (ex.: projeto=None).
+        """
+        q = QueryDict(mutable=True)
+        q.update(self.request.GET)
+
+        for k, v in params.items():
+            if v is None:
+                q.pop(k, None)
+            else:
+                q[k] = str(v)
+
+        encoded = q.urlencode()
+        return f"{self.request.path}?{encoded}" if encoded else self.request.path
+
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
 
-        # 1) queryset base da fila (sem filtro de prioridade)
+        # 1) queryset base da fila (sem filtro)
         base_qs = (
             Chamado.objects.filter(
                 status__in=[
@@ -236,13 +248,75 @@ class ChamadoFilaView(CapabilityRequiredMixin, TemplateView):
             baixo=Count("id", filter=Q(prioridade=Chamado.Prioridade.BAIXA)),
         )
 
-        # 3) filtro por prioridade (stateless via querystring)
+        # 3) filtros stateless via querystring (prio + projeto)
         prio_key = (self.request.GET.get("prio") or "").strip().upper()
         prio_value = self.PRIO_MAP.get(prio_key)  # Enum ou None
+
+        raw_projeto = (self.request.GET.get("projeto") or "").strip()
+        projeto_id: int | None = None
+        if raw_projeto:
+            try:
+                projeto_id = int(raw_projeto)
+            except ValueError:
+                projeto_id = None  # ignora lixo sem quebrar
 
         qs = base_qs
         if prio_value is not None:
             qs = qs.filter(prioridade=prio_value)
+
+        if projeto_id is not None:
+            qs = qs.filter(projeto_id=projeto_id)
+
+        # 3.1) contexto pros chips/cards
+        ctx["counts"] = counts
+        ctx["prio_selected"] = prio_key if prio_value is not None else None
+
+        ctx["projeto_selected"] = projeto_id
+        ctx["projeto_selected_label"] = None
+        if projeto_id is not None:
+            ctx["projeto_selected_label"] = (
+                base_qs.filter(projeto_id=projeto_id)
+                .values_list("projeto__nome", flat=True)
+                .first()
+            )
+
+        # URLs pra UI (se quiser usar depois)
+        ctx["url_clear_prio"] = self._url_with_query(prio=None)
+        ctx["url_clear_projeto"] = self._url_with_query(projeto=None)
+
+        # 3.2) lista de projetos (cards)
+        # Seu template usa:
+        # - projects_reset_url
+        # - projects -> itens com nome, count, url, active (e agora projeto para cor)
+        ctx["projects_reset_url"] = self._url_with_query(projeto=None)
+
+        proj_rows = base_qs.values("projeto_id").annotate(count=Count("id")).order_by("-count")
+
+        proj_ids = [r["projeto_id"] for r in proj_rows if r["projeto_id"] is not None]
+        proj_map = Projeto.objects.in_bulk(proj_ids)
+
+        projects: list[dict[str, object]] = []
+        for r in proj_rows:
+            pid = r["projeto_id"]
+            if pid is None:
+                continue
+
+            proj = proj_map.get(pid)
+            if not proj:
+                continue
+
+            projects.append(
+                {
+                    "id": pid,
+                    "projeto": proj,  # <- objeto Projeto (pra cor via template tag)
+                    "nome": proj.nome,
+                    "count": r["count"],  # <- seu template usa p.count
+                    "url": self._url_with_query(projeto=pid),
+                    "active": projeto_id == pid,
+                }
+            )
+
+        ctx["projects"] = projects
 
         # 4) ordenação/annotate (aplicar depois do filtro)
         chamados = qs.annotate(
@@ -265,7 +339,7 @@ class ChamadoFilaView(CapabilityRequiredMixin, TemplateView):
             ),
         ).order_by("status_rank", "prio_rank", "criado_em")
 
-        # 5) montar rows (e expor rows como "chamados" pro template atual)
+        # 5) montar rows (compat com template atual)
         rows: list[dict[str, object]] = []
         for ch in chamados:
             itens = list(ch.itens.all())
@@ -294,10 +368,6 @@ class ChamadoFilaView(CapabilityRequiredMixin, TemplateView):
                 }
             )
 
-        ctx["counts"] = counts
-        ctx["prio_selected"] = prio_key if prio_value is not None else None
-
-        # importante: manter compat com seu template atual
         ctx["chamados"] = rows
         ctx["rows"] = rows
         return ctx

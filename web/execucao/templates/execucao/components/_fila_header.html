@@ -1,4 +1,5 @@
 {# execucao/components/_fila_header.html #}
+{% load execucao_projeto_cores %}
 
 <div class="space-y-4">
 
@@ -20,7 +21,7 @@
         </span>
       {% endif %}
 
-      <a href="?" class="text-xs font-medium text-slate-700 hover:text-slate-900">
+      <a href="{{ request.path }}" class="text-xs font-medium text-slate-700 hover:text-slate-900">
         Limpar
       </a>
     {% else %}
@@ -38,35 +39,24 @@
   {% if projects %}
     <div>
       <div class="flex items-center justify-between mb-2 min-h-[20px]">
-        <span class="text-xs font-semibold text-slate-700 uppercase">
-          Projetos
-        </span>
+        <span class="text-xs font-semibold text-slate-700 uppercase">Projetos</span>
 
         {# espaço reservado (não exibe botão limpar aqui) #}
-        <span class="text-xs font-medium text-slate-700 opacity-0 pointer-events-none select-none">
-          Limpar
-        </span>
+        <span class="text-xs font-medium text-slate-700 opacity-0 pointer-events-none select-none">Limpar</span>
       </div>
 
       <div class="grid grid-cols-2 gap-3 sm:grid-cols-5">
         {% if projects_reset_url %}
-          {% include "execucao/components/_fila_header_card.html" with
-            label="Todos"
-            value="—"
-            active=not projeto_selected
-            disabled=False
-            url=projects_reset_url
-            only %}
+          {% if projeto_selected %}
+            {% include "execucao/components/_fila_header_card.html" with label="Todos" value=counts.total active=True disabled=False url=projects_reset_url only %}
+          {% else %}
+            {% include "execucao/components/_fila_header_card.html" with label="Todos" value=counts.total active=False disabled=False url=projects_reset_url only %}
+          {% endif %}
         {% endif %}
 
         {% for p in projects %}
-          {% include "execucao/components/_fila_header_card.html" with
-            label=p.nome
-            value=p.count
-            active=p.active
-            disabled=False
-            url=p.url
-            only %}
+          {% projeto_color_bar p.projeto as p_bar_class %}
+          {% include "execucao/components/_fila_header_card.html" with label=p.nome value=p.count active=p.active disabled=False url=p.url bar_class=p_bar_class only %}
         {% endfor %}
       </div>
     </div>
