@@ -1,4 +1,3 @@
-body { outline: 8px solid red !important; }
 
 :root {
   /* Brand / UI */
@@ -96,14 +95,8 @@ body { outline: 8px solid red !important; }
 .badge-danger { background: #fef2f2; color: #991b1b; border-color: #fecaca; }
 .badge-warning { background: #fffbeb; color: #92400e; border-color: #fde68a; }
 
-
-
-/* web/static/css/ui.css */
-body {
-  outline: 5px solid red;
-}
-
-.test-ui-css {
-  background: red !important;
-  color: white !important;
+@layer base {
+  html {
+    scrollbar-gutter: stable;
+  }
 }
