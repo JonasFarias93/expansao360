@@ -2,34 +2,54 @@
 
 <div class="space-y-4">
 
-{# Filtro ativo (prioridade) #}
-  {% if prio_selected %}
-    <div class="flex items-center gap-2">
-      <span class="inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1 text-xs text-slate-700">
-        Filtro: <span class="ml-1 font-semibold">{{ prio_selected }}</span>
-      </span>
+  {# Filtros ativos (prioridade/projeto) — sempre reserva espaço e usa 1 único Limpar #}
+  <div class="flex items-center gap-2 min-h-[32px]">
+    {% if prio_selected or projeto_selected %}
+      {% if prio_selected %}
+        <span class="inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1 text-xs text-slate-700">
+          Prioridade: <span class="ml-1 font-semibold">{{ prio_selected }}</span>
+        </span>
+      {% endif %}
+
+      {% if projeto_selected %}
+        <span class="inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1 text-xs text-slate-700">
+          Projeto:
+          <span class="ml-1 font-semibold">
+            {{ projeto_selected_label|default:projeto_selected }}
+          </span>
+        </span>
+      {% endif %}
+
+      {# 1 único limpar (zera tudo) #}
       <a href="?" class="text-xs font-medium text-slate-700 hover:text-slate-900">
         Limpar
       </a>
-    </div>
-  {% endif %}
+    {% else %}
+      {# placeholder invisível pra não "pular" layout #}
+      <span class="inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1 text-xs text-slate-700 opacity-0 pointer-events-none select-none">
+        Prioridade: <span class="ml-1 font-semibold">—</span>
+      </span>
+      <span class="inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1 text-xs text-slate-700 opacity-0 pointer-events-none select-none">
+        Projeto: <span class="ml-1 font-semibold">—</span>
+      </span>
+      <span class="text-xs font-medium text-slate-700 opacity-0 pointer-events-none select-none">
+        Limpar
+      </span>
+    {% endif %}
+  </div>
 
-  {# Projetos (Top N) — UI only #}
+  {# Projetos (Top N) — UI only (sem "limpar" próprio) #}
   {% if projects %}
     <div>
-      <div class="flex items-center justify-between mb-2">
+      <div class="flex items-center justify-between mb-2 min-h-[20px]">
         <span class="text-xs font-semibold text-slate-700 uppercase">
           Projetos
         </span>
 
-        {% if projeto_selected and projects_reset_url %}
-          <a
-            href="{{ projects_reset_url }}"
-            class="text-xs font-medium text-slate-700 hover:text-slate-900"
-          >
-            Limpar projeto
-          </a>
-        {% endif %}
+        {# espaço reservado (não exibe botão limpar aqui) #}
+        <span class="text-xs font-medium text-slate-700 opacity-0 pointer-events-none select-none">
+          Limpar
+        </span>
       </div>
 
       <div class="grid grid-cols-2 gap-3 sm:grid-cols-5">
@@ -113,4 +133,5 @@
 
     </div>
   </div>
+
 </div>
