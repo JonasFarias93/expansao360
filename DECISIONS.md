@@ -782,6 +782,7 @@ Bugs em linhas adicionadas dinamicamente não são cobertos por testes backend.
 - Testes JS ficam próximos aos arquivos estáticos do app.
 - Integração `pytest` + `jest` no fluxo de desenvolvimento (quando aplicável).
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 ---
 
@@ -1433,3 +1434,5 @@ que o contrato do grupo seja explícito, verificável e não sofra regressões f
 * Alterações nos offsets, máscara ou gateway exigem atualização deste backlog.
 * O backlog de testes faz parte do **contrato vivo** do grupo.
 
+=======
+>>>>>>> c759cd0d91289faae4bd5b36dd5197864e43a577
