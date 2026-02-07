@@ -16,6 +16,15 @@
             </a>
           </h3>
 
+          {# Badge de urgência visual (prioridade) #}
+          <span
+            class="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-semibold {% urgencia_badge_class chamado %}"
+            title="Urgência visual (prioridade)"
+          >
+            <span class="h-1.5 w-1.5 rounded-full bg-current opacity-70"></span>
+            {% urgencia_label chamado %}
+          </span>
+
           {# Badge de status (mesma lógica do detalhe/histórico) #}
           {% if chamado.status == "ABERTO" %}
             <span class="badge badge-open">Aberto</span>

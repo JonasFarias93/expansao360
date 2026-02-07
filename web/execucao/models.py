@@ -40,7 +40,7 @@ class Chamado(models.Model):
         RETORNO = "RETORNO", "Retorno (Loja → Matriz)"
 
     class Prioridade(models.TextChoices):
-        MAIS_ANTIGO = "MAIS_ANTIGO", "Mais antigo (padrão)"
+        PADRAO = "MAIS_ANTIGO", "Padrão"
         BAIXA = "BAIXA", "Baixa"
         MEDIA = "MEDIA", "Média"
         ALTA = "ALTA", "Alta"
@@ -71,7 +71,7 @@ class Chamado(models.Model):
     prioridade = models.CharField(
         max_length=20,
         choices=Prioridade.choices,
-        default=Prioridade.MAIS_ANTIGO,
+        default=Prioridade.PADRAO,
         db_index=True,
     )
 

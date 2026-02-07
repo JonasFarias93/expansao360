@@ -17,11 +17,11 @@
       </a>
     </div>
   </div>
-
+  {% include "execucao/components/_fila_header.html" %}
   {% if chamados %}
     <div class="space-y-3">
-      {% for chamado in chamados %}
-        {% include "execucao/components/_card_operacional_chamado.html" with chamado=chamado only %}
+      {% for row in chamados %}
+        {% include "execucao/components/_card_operacional_chamado.html" with chamado=row.chamado only %}
       {% endfor %}
     </div>
   {% else %}

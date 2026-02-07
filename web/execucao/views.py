@@ -1,13 +1,13 @@
 # web/execucao/views.py
 from __future__ import annotations
 
-from cadastro.models import Subprojeto
+from cadastro.models import Projeto, Subprojeto
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
 from django.db import transaction
-from django.db.models import Case, IntegerField, Q, Value, When
-from django.http import HttpRequest, HttpResponse
+from django.db.models import Case, Count, IntegerField, Q, Value, When
+from django.http import HttpRequest, HttpResponse, QueryDict
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.utils.decorators import method_decorator
@@ -92,7 +92,7 @@ class ChamadoCreateView(CapabilityRequiredMixin, View):
         if not form.is_valid():
             return render(request, self.template_name, {"form": form})
 
-        prioridade = form.cleaned_data.get("prioridade") or Chamado.Prioridade.MAIS_ANTIGO
+        prioridade = form.cleaned_data.get("prioridade") or Chamado.Prioridade.PADRAO
 
         chamado = Chamado(
             loja=form.cleaned_data["loja"],
@@ -195,20 +195,40 @@ class ChamadoSetupView(CapabilityRequiredMixin, View):
 # FILA (HOME)
 # ==================
 class ChamadoFilaView(CapabilityRequiredMixin, TemplateView):
-    """
-    Fila operacional de chamados ativos.
-    """
-
     template_name = "execucao/fila_operacional.html"
     required_capability = "execucao.chamado.visualizar"
+
+    PRIO_MAP = {
+        "CRITICO": Chamado.Prioridade.CRITICA,
+        "ALTO": Chamado.Prioridade.ALTA,
+        "MEDIO": Chamado.Prioridade.MEDIA,
+        "BAIXO": Chamado.Prioridade.BAIXA,
+    }
+
+    def _url_with_query(self, **params: object) -> str:
+        """
+        Monta URL preservando querystring atual e aplicando overrides.
+        Para remover um parâmetro, passe None (ex.: projeto=None).
+        """
+        q = QueryDict(mutable=True)
+        q.update(self.request.GET)
+
+        for k, v in params.items():
+            if v is None:
+                q.pop(k, None)
+            else:
+                q[k] = str(v)
+
+        encoded = q.urlencode()
+        return f"{self.request.path}?{encoded}" if encoded else self.request.path
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
 
-        chamados = (
+        # 1) queryset base da fila (sem filtro)
+        base_qs = (
             Chamado.objects.filter(
                 status__in=[
-                    # ✅ Fila é ABERTO+
                     Chamado.Status.ABERTO,
                     Chamado.Status.EM_EXECUCAO,
                     Chamado.Status.AGUARDANDO_NF,
@@ -217,28 +237,109 @@ class ChamadoFilaView(CapabilityRequiredMixin, TemplateView):
             )
             .select_related("loja", "projeto", "subprojeto", "kit")
             .prefetch_related("itens")
-            .annotate(
-                status_rank=Case(
-                    When(status=Chamado.Status.EM_EXECUCAO, then=Value(0)),
-                    When(status=Chamado.Status.ABERTO, then=Value(1)),
-                    When(status=Chamado.Status.AGUARDANDO_NF, then=Value(2)),
-                    When(status=Chamado.Status.AGUARDANDO_COLETA, then=Value(3)),
-                    default=Value(9),
-                    output_field=IntegerField(),
-                ),
-                prio_rank=Case(
-                    When(prioridade=Chamado.Prioridade.CRITICA, then=Value(0)),
-                    When(prioridade=Chamado.Prioridade.ALTA, then=Value(1)),
-                    When(prioridade=Chamado.Prioridade.MEDIA, then=Value(2)),
-                    When(prioridade=Chamado.Prioridade.BAIXA, then=Value(3)),
-                    When(prioridade=Chamado.Prioridade.MAIS_ANTIGO, then=Value(4)),
-                    default=Value(4),
-                    output_field=IntegerField(),
-                ),
-            )
-            .order_by("status_rank", "prio_rank", "criado_em")
         )
 
+        # 2) counts (sempre do conjunto "fila", independente do filtro)
+        counts = base_qs.aggregate(
+            total=Count("id"),
+            critico=Count("id", filter=Q(prioridade=Chamado.Prioridade.CRITICA)),
+            alto=Count("id", filter=Q(prioridade=Chamado.Prioridade.ALTA)),
+            medio=Count("id", filter=Q(prioridade=Chamado.Prioridade.MEDIA)),
+            baixo=Count("id", filter=Q(prioridade=Chamado.Prioridade.BAIXA)),
+        )
+
+        # 3) filtros stateless via querystring (prio + projeto)
+        prio_key = (self.request.GET.get("prio") or "").strip().upper()
+        prio_value = self.PRIO_MAP.get(prio_key)  # Enum ou None
+
+        raw_projeto = (self.request.GET.get("projeto") or "").strip()
+        projeto_id: int | None = None
+        if raw_projeto:
+            try:
+                projeto_id = int(raw_projeto)
+            except ValueError:
+                projeto_id = None  # ignora lixo sem quebrar
+
+        qs = base_qs
+        if prio_value is not None:
+            qs = qs.filter(prioridade=prio_value)
+
+        if projeto_id is not None:
+            qs = qs.filter(projeto_id=projeto_id)
+
+        # 3.1) contexto pros chips/cards
+        ctx["counts"] = counts
+        ctx["prio_selected"] = prio_key if prio_value is not None else None
+
+        ctx["projeto_selected"] = projeto_id
+        ctx["projeto_selected_label"] = None
+        if projeto_id is not None:
+            ctx["projeto_selected_label"] = (
+                base_qs.filter(projeto_id=projeto_id)
+                .values_list("projeto__nome", flat=True)
+                .first()
+            )
+
+        # URLs pra UI (se quiser usar depois)
+        ctx["url_clear_prio"] = self._url_with_query(prio=None)
+        ctx["url_clear_projeto"] = self._url_with_query(projeto=None)
+
+        # 3.2) lista de projetos (cards)
+        # Seu template usa:
+        # - projects_reset_url
+        # - projects -> itens com nome, count, url, active (e agora projeto para cor)
+        ctx["projects_reset_url"] = self._url_with_query(projeto=None)
+
+        proj_rows = base_qs.values("projeto_id").annotate(count=Count("id")).order_by("-count")
+
+        proj_ids = [r["projeto_id"] for r in proj_rows if r["projeto_id"] is not None]
+        proj_map = Projeto.objects.in_bulk(proj_ids)
+
+        projects: list[dict[str, object]] = []
+        for r in proj_rows:
+            pid = r["projeto_id"]
+            if pid is None:
+                continue
+
+            proj = proj_map.get(pid)
+            if not proj:
+                continue
+
+            projects.append(
+                {
+                    "id": pid,
+                    "projeto": proj,  # <- objeto Projeto (pra cor via template tag)
+                    "nome": proj.nome,
+                    "count": r["count"],  # <- seu template usa p.count
+                    "url": self._url_with_query(projeto=pid),
+                    "active": projeto_id == pid,
+                }
+            )
+
+        ctx["projects"] = projects
+
+        # 4) ordenação/annotate (aplicar depois do filtro)
+        chamados = qs.annotate(
+            status_rank=Case(
+                When(status=Chamado.Status.EM_EXECUCAO, then=Value(0)),
+                When(status=Chamado.Status.ABERTO, then=Value(1)),
+                When(status=Chamado.Status.AGUARDANDO_NF, then=Value(2)),
+                When(status=Chamado.Status.AGUARDANDO_COLETA, then=Value(3)),
+                default=Value(9),
+                output_field=IntegerField(),
+            ),
+            prio_rank=Case(
+                When(prioridade=Chamado.Prioridade.CRITICA, then=Value(0)),
+                When(prioridade=Chamado.Prioridade.ALTA, then=Value(1)),
+                When(prioridade=Chamado.Prioridade.MEDIA, then=Value(2)),
+                When(prioridade=Chamado.Prioridade.BAIXA, then=Value(3)),
+                When(prioridade=Chamado.Prioridade.PADRAO, then=Value(4)),
+                default=Value(4),
+                output_field=IntegerField(),
+            ),
+        ).order_by("status_rank", "prio_rank", "criado_em")
+
+        # 5) montar rows (compat com template atual)
         rows: list[dict[str, object]] = []
         for ch in chamados:
             itens = list(ch.itens.all())
@@ -267,7 +368,7 @@ class ChamadoFilaView(CapabilityRequiredMixin, TemplateView):
                 }
             )
 
-        ctx["chamados"] = chamados
+        ctx["chamados"] = rows
         ctx["rows"] = rows
         return ctx
 

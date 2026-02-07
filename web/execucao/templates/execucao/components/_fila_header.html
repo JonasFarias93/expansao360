@@ -1,0 +1,127 @@
+{# execucao/components/_fila_header.html #}
+{% load execucao_projeto_cores %}
+
+<div class="space-y-4">
+
+  {# Filtros ativos — sempre visível #}
+  <div class="flex items-center gap-2 min-h-[32px]">
+    {% if prio_selected or projeto_selected %}
+      {% if prio_selected %}
+        <span class="inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1 text-xs text-slate-700">
+          Prioridade: <span class="ml-1 font-semibold">{{ prio_selected }}</span>
+        </span>
+      {% endif %}
+
+      {% if projeto_selected %}
+        <span class="inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1 text-xs text-slate-700">
+          Projeto:
+          <span class="ml-1 font-semibold">
+            {{ projeto_selected_label|default:projeto_selected }}
+          </span>
+        </span>
+      {% endif %}
+
+      <a href="{{ request.path }}" class="text-xs font-medium text-slate-700 hover:text-slate-900">
+        Limpar
+      </a>
+    {% else %}
+      <span class="inline-flex items-center rounded-full border border-dashed border-slate-300 bg-slate-50 px-3 py-1 text-xs text-slate-500">
+        Filtro: <span class="ml-1">Todos</span>
+      </span>
+
+      <span class="text-xs font-medium text-slate-400 cursor-not-allowed">
+        Limpar
+      </span>
+    {% endif %}
+  </div>
+
+  {# Projetos (Top N) — UI only (sem "limpar" próprio) #}
+  {% if projects %}
+    <div>
+      <div class="flex items-center justify-between mb-2 min-h-[20px]">
+        <span class="text-xs font-semibold text-slate-700 uppercase">Projetos</span>
+
+        {# espaço reservado (não exibe botão limpar aqui) #}
+        <span class="text-xs font-medium text-slate-700 opacity-0 pointer-events-none select-none">Limpar</span>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3 sm:grid-cols-5">
+        {% if projects_reset_url %}
+          {% if projeto_selected %}
+            {# Com projeto selecionado, "Todos" fica INATIVO #}
+            {% include "execucao/components/_fila_header_card.html" with label="Todos" value=counts.total active=False disabled=False url=projects_reset_url only %}
+          {% else %}
+            {# Sem projeto selecionado, "Todos" fica ATIVO #}
+            {% include "execucao/components/_fila_header_card.html" with label="Todos" value=counts.total active=True disabled=False url=projects_reset_url only %}
+          {% endif %}
+        {% endif %}
+
+        {% for p in projects %}
+          {% projeto_color_bar p.projeto as p_bar_class %}
+          {% projeto_color_bg_active p.projeto as p_bg_active %}
+          {% projeto_color_text_active p.projeto as p_text_active %}
+          {% include "execucao/components/_fila_header_card.html" with label=p.nome value=p.count active=p.active disabled=False url=p.url bar_class=p_bar_class active_bg_class=p_bg_active active_text_class=p_text_active only %}
+        {% endfor %}
+      </div>
+    </div>
+  {% endif %}
+
+  {# Prioridades (bloco original) #}
+  <div>
+    <div class="grid grid-cols-2 gap-3 sm:grid-cols-5">
+
+      {# TOTAL nunca desabilita #}
+      {% if prio_selected %}
+        {% include "execucao/components/_fila_header_card.html" with label="Total" value=counts.total active=False disabled=False url="?" only %}
+      {% else %}
+        {% include "execucao/components/_fila_header_card.html" with label="Total" value=counts.total active=True disabled=False url="?" only %}
+      {% endif %}
+
+      {# CRITICO #}
+      {% if prio_selected == "CRITICO" %}
+        {% include "execucao/components/_fila_header_card.html" with label="Crítico" value=counts.critico active=True disabled=False url="?prio=CRITICO" prio="CRITICO" only %}
+      {% else %}
+        {% if counts.critico %}
+          {% include "execucao/components/_fila_header_card.html" with label="Crítico" value=counts.critico active=False disabled=False url="?prio=CRITICO" prio="CRITICO" only %}
+        {% else %}
+          {% include "execucao/components/_fila_header_card.html" with label="Crítico" value=counts.critico active=False disabled=True url="?prio=CRITICO" prio="CRITICO" only %}
+        {% endif %}
+      {% endif %}
+
+      {# ALTO #}
+      {% if prio_selected == "ALTO" %}
+        {% include "execucao/components/_fila_header_card.html" with label="Alto" value=counts.alto active=True disabled=False url="?prio=ALTO" prio="ALTO" only %}
+      {% else %}
+        {% if counts.alto %}
+          {% include "execucao/components/_fila_header_card.html" with label="Alto" value=counts.alto active=False disabled=False url="?prio=ALTO" prio="ALTO" only %}
+        {% else %}
+          {% include "execucao/components/_fila_header_card.html" with label="Alto" value=counts.alto active=False disabled=True url="?prio=ALTO" prio="ALTO" only %}
+        {% endif %}
+      {% endif %}
+
+      {# MEDIO #}
+      {% if prio_selected == "MEDIO" %}
+        {% include "execucao/components/_fila_header_card.html" with label="Médio" value=counts.medio active=True disabled=False url="?prio=MEDIO" prio="MEDIO" only %}
+      {% else %}
+        {% if counts.medio %}
+          {% include "execucao/components/_fila_header_card.html" with label="Médio" value=counts.medio active=False disabled=False url="?prio=MEDIO" prio="MEDIO" only %}
+        {% else %}
+          {% include "execucao/components/_fila_header_card.html" with label="Médio" value=counts.medio active=False disabled=True url="?prio=MEDIO" prio="MEDIO" only %}
+        {% endif %}
+      {% endif %}
+
+      {# BAIXO #}
+      {% if prio_selected == "BAIXO" %}
+        {% include "execucao/components/_fila_header_card.html" with label="Baixo" value=counts.baixo active=True disabled=False url="?prio=BAIXO" prio="BAIXO" only %}
+      {% else %}
+        {% if counts.baixo %}
+          {% include "execucao/components/_fila_header_card.html" with label="Baixo" value=counts.baixo active=False disabled=False url="?prio=BAIXO" prio="BAIXO" only %}
+        {% else %}
+          {% include "execucao/components/_fila_header_card.html" with label="Baixo" value=counts.baixo active=False disabled=True url="?prio=BAIXO" prio="BAIXO" only %}
+        {% endif %}
+      {% endif %}
+
+    </div>
+  </div>
+
+</div>
