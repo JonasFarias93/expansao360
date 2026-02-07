@@ -823,3 +823,51 @@ Permitir repetição por sistema poderia gerar ambiguidade na busca, na auditori
 - Adição de `UniqueConstraint` condicional em `ticket_externo_id`.
 - Testes atualizados para refletir unicidade global.
 - `ticket_externo_sistema` permanece como metadado informativo.
+
+
+---
+
+## 2026-02-07 — Criação do app `rede` para governança e validação de regras de rede
+
+**Status:** Proposto
+
+### Decisão
+Criar o app Django `rede` para centralizar regras de rede (legado e segmentado), com foco inicial em:
+- Classificação e validação de IP por tipo de equipamento
+- Suporte a múltiplos perfis (ex.: LEGACY_FLAT_2023, RD_SEGMENTADO_2024/2025)
+- Uso de `bandeira` + `cod_historico` como base para cálculo/validação de prefixo de rede
+
+### Contexto
+Hoje existe preenchimento manual de IPs em processos de abertura/rollout/adição. A validação ocorre de forma manual
+(e em planilhas), aumentando o risco de erro. As regras de rede são simples, mas dependem de memória e conferência humana.
+
+### Consequências
+- Regras deixam de ficar dispersas (HTML/planilha/memória) e passam a existir como domínio versionado no sistema.
+- O sistema passa a alertar inconsistências (ex.: “IP típico de TC preenchido em PDV”).
+- A transição para fila operacional poderá exigir dados validados (reduzindo erro a ~0 na entrada da fila).
+
+---
+## 2026-02-07 — Integração futura entre Cadastro de Equipamentos e Regras de Rede
+
+**Decisão**  
+Planejar a integração entre o cadastro de tipos de equipamento e as regras de rede,
+introduzindo futuramente uma **FK opcional** de `TipoEquipamento` para
+`RegraRedeEquipamento`.
+
+Além disso, **não modelar variações como tipos distintos** (ex.: `PDV1`, `PDV2`);
+a diferenciação por índice/unidade será responsabilidade da **instância em execução**,
+não do cadastro mestre.
+
+**Contexto**  
+As regras de IP variam por perfil de rede e tipo de equipamento, mas o mesmo tipo
+(PDV, TC, etc.) pode possuir múltiplas instâncias em campo. Criar tipos artificiais
+(`PDV1`, `PDV2`) gera explosão de cadastro, ambiguidade e acoplamento indevido
+entre planejamento e execução.
+
+**Consequências**  
+- `TipoEquipamento` poderá (no futuro) referenciar `RegraRedeEquipamento`,
+  mas a FK será **opcional** (permite cadastro neutro).
+- O índice do equipamento (ex.: PDV #1, #2, #3) será tratado **na execução**,
+  não no cadastro.
+- Validações de IP poderão evoluir de WARN para ERROR conforme maturidade
+  do fluxo e aderência do cadastro.
