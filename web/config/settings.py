@@ -54,6 +54,7 @@ INSTALLED_APPS = [
     "cadastro",
     "execucao",
     "iam",
+    "redes",
 ]
 
 MIDDLEWARE = [

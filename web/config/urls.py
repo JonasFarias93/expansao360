@@ -21,6 +21,7 @@ urlpatterns = [
     path("cadastro/", include(("cadastro.urls", "cadastro"), namespace="cadastro")),
     # IAM (se você expõe alguma tela/admin extra; senão pode remover)
     path("iam/", include(("iam.urls", "iam"), namespace="iam")),
+    path("redes/", include(("redes.urls", "redes"), namespace="redes")),
 ]
 
 
