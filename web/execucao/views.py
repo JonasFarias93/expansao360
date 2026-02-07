@@ -384,9 +384,15 @@ class HistoricoView(CapabilityRequiredMixin, TemplateView):
         ctx = super().get_context_data(**kwargs)
 
         q = (self.request.GET.get("q") or "").strip()
+        java = (self.request.GET.get("java") or "").strip()
 
         chamados = Chamado.objects.all().select_related("loja", "projeto").order_by("-criado_em")
 
+        # Filtro dedicado: Java (código da loja)
+        if java:
+            chamados = chamados.filter(loja__codigo__startswith=java)
+
+        # Busca livre
         if q:
             chamados = chamados.filter(
                 Q(protocolo__icontains=q)
@@ -404,6 +410,7 @@ class HistoricoView(CapabilityRequiredMixin, TemplateView):
             ).distinct()
 
         ctx["q"] = q
+        ctx["java"] = java
         ctx["chamados"] = chamados[:200]
         return ctx
 
