@@ -1233,4 +1233,4 @@ Mapear cor por código no frontend não escala e deixa projetos novos sem cor, d
 - Migration em `cadastro`.
 - Form de Projeto expõe seleção de cor (paleta limitada).
 - `execucao` apenas consome `projeto.cor_slug` para UI.
->>>>>>> develop
+<!-- merge resolved during v0.3.6 -->
