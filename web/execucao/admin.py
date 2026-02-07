@@ -25,7 +25,6 @@ class ChamadoAdmin(admin.ModelAdmin):
     list_display = (
         "id",
         "protocolo",
-        "servicenow_numero",
         "contabilidade_numero",
         "nf_saida_numero",
         "loja",
@@ -39,7 +38,6 @@ class ChamadoAdmin(admin.ModelAdmin):
     list_filter = ("status", "projeto")
     search_fields = (
         "protocolo",
-        "servicenow_numero",
         "contabilidade_numero",
         "nf_saida_numero",
         "loja__codigo",

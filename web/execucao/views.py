@@ -398,7 +398,6 @@ class HistoricoView(CapabilityRequiredMixin, TemplateView):
                 Q(protocolo__icontains=q)
                 | Q(ticket_externo_id__icontains=q)
                 | Q(ticket_externo_sistema__icontains=q)
-                | Q(servicenow_numero__icontains=q)  # legado
                 | Q(contabilidade_numero__icontains=q)
                 | Q(nf_saida_numero__icontains=q)
                 | Q(loja__codigo__icontains=q)

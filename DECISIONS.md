@@ -724,7 +724,6 @@ Os cards funcionam também como **filtro rápido** via querystring (`?prio=CRITI
 A fila operacional precisa oferecer leitura imediata da carga de trabalho e reduzir o custo de “caçar” chamados.
 A UI já é baseada em cards e ações rápidas; faltava uma visão agregada e um mecanismo direto de filtragem.
 
-<<<<<<< HEAD
 **Consequências**
 - A view da fila expõe contadores agregados (`counts`) e o filtro atual (`prio_selected`).
 - Filtragem stateless (URL), facilitando compartilhamento e testes.
@@ -782,12 +781,6 @@ Bugs em linhas adicionadas dinamicamente não são cobertos por testes backend.
 - Node/npm passam a ser dependência de desenvolvimento.
 - Testes JS ficam próximos aos arquivos estáticos do app.
 - Integração `pytest` + `jest` no fluxo de desenvolvimento (quando aplicável).
-=======
-**Consequências**  
-- A view da fila passa a expor contadores agregados (`counts`) e o filtro atual (`prio_selected`).
-- A filtragem é stateless (URL), facilitando compartilhamento e testes.
-- Mantemos o princípio “UI simples”: template só renderiza, regra de filtro e agregações ficam na view.
-- Evolução prevista: adicionar filtros por projeto no mesmo header (decisão futura / nova ADR).
 
 ---
 
@@ -802,8 +795,6 @@ exclusivamente através dos campos:
 - `ticket_externo_sistema`
 - `ticket_externo_id`
 
-O campo legado `servicenow_numero` deixa de ser utilizado pela aplicação.
-
 ## Contexto
 O ServiceNow será descontinuado e a aplicação já possuía campos genéricos
 para integração externa. A UI ainda referenciava um campo específico,
@@ -812,5 +803,23 @@ gerando confusão e ocultando dados válidos.
 ## Consequências
 - UI passa a exibir "Chamado Externo" no formato `<sistema>: <id>`
 - Filtros e buscas passam a funcionar corretamente
-- `servicenow_numero` torna-se campo legado e candidato à remoção futura
->>>>>>> 9b5136b (refactor(execucao-ui): exibir chamado externo via ticket_externo_*)
+- `servicenow_numero` foi removido do modelo e do banco
+
+---
+
+# 2026-02-07 — Unicidade global do ticket externo
+
+**Status:** Aceito
+
+## Decisão
+Garantir que `ticket_externo_id` seja único globalmente em `Chamado`, independentemente de `ticket_externo_sistema`.
+A restrição aplica-se apenas quando `ticket_externo_id` estiver preenchido.
+
+## Contexto
+Apesar de existirem múltiplos sistemas externos, o identificador do ticket é tratado como único no ecossistema.
+Permitir repetição por sistema poderia gerar ambiguidade na busca, na auditoria e em integrações.
+
+## Consequências
+- Adição de `UniqueConstraint` condicional em `ticket_externo_id`.
+- Testes atualizados para refletir unicidade global.
+- `ticket_externo_sistema` permanece como metadado informativo.
