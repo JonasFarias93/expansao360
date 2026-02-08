@@ -317,7 +317,6 @@ class Chamado(models.Model):
     def save(self, *args, **kwargs):  # type: ignore[override]
         if self.protocolo:
             return super().save(*args, **kwargs)
-
         # tentativa pequena de retry por segurança (embora select_for_update já resolva)
         for _ in range(3):
             self.protocolo = generate_code("CHA")

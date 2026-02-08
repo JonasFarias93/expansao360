@@ -2,16 +2,14 @@ from __future__ import annotations
 
 from django.db import transaction
 
-from cadastro.models import CodeSequence
-
 
 def generate_code(prefix: str, width: int = 6) -> str:
-    """
-    Gera um código no formato PREFIXO-000001 com lock por prefixo.
-    """
     prefix = (prefix or "").strip().upper()
     if not prefix:
         raise ValueError("prefix não pode ser vazio")
+
+    # ✅ import local evita circular import durante app loading
+    from cadastro.models import CodeSequence
 
     with transaction.atomic():
         seq, _ = CodeSequence.objects.select_for_update().get_or_create(prefix=prefix)
