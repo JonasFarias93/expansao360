@@ -354,6 +354,8 @@ class CategoriaUpdateView(CapabilityRequiredMixin, UpdateView):
 # -----------------------
 # KITS (com itens inline)
 # -----------------------
+
+
 class KitListView(CapabilityRequiredMixin, ListView):
     model = Kit
     template_name = "cadastro/kits_list.html"
@@ -409,3 +411,36 @@ class KitUpdateView(CapabilityRequiredMixin, UpdateView):
             self.template_name,
             {"form": form, "formset": formset, "kit": self.object},
         )
+
+
+class KitItensApiView(CapabilityRequiredMixin, View):
+    """
+    Endpoint read-only para lazy-load dos itens do kit.
+    Permissões: mesmas regras da visualização da listagem (KitListView).
+    """
+
+    required_capability = "cadastro.visualizar"
+
+    def get(self, request, pk: int, *args, **kwargs):
+        kit = get_object_or_404(Kit, pk=pk)
+
+        itens_qs = kit.itens.select_related("equipamento", "tipo").order_by(
+            "equipamento__nome",
+            "tipo__nome",
+        )
+
+        itens = [
+            {
+                "nome": i.nome_exibicao,  # "Equipamento Tipo"
+                "quantidade": i.quantidade,
+                "tipo": i.tipo.nome,
+                "requer_configuracao": i.requer_configuracao,
+            }
+            for i in itens_qs
+        ]
+
+        payload = {
+            "kit": {"id": kit.id, "nome": kit.nome},  # nome opcional (ok manter)
+            "itens": itens,
+        }
+        return JsonResponse(payload)
