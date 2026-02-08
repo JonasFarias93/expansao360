@@ -4,16 +4,44 @@ import re
 from django.core.exceptions import ValidationError
 from django.db import models
 
+from cadastro.services.codes import generate_code
 
-class Categoria(models.Model):
-    nome = models.CharField(max_length=80, unique=True)
+
+class CodeSequence(models.Model):
+    """
+    Contador por prefixo para geração de códigos no formato PREFIXO-000001.
+    """
+
+    prefix = models.CharField(max_length=8, primary_key=True)
+    last_value = models.PositiveIntegerField(default=0)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        verbose_name = "Categoria"
-        verbose_name_plural = "Categorias"
+        verbose_name = "Sequência de Código"
+        verbose_name_plural = "Sequências de Código"
 
     def __str__(self) -> str:
-        return self.nome
+        return f"{self.prefix}={self.last_value}"
+
+
+class Categoria(models.Model):
+    codigo = models.CharField(max_length=50, unique=True, blank=True)
+    nome = models.CharField(max_length=80, unique=True)
+    disponivel = models.BooleanField(default=True)
+
+    def clean(self):
+        super().clean()
+        self.nome = (self.nome or "").strip()
+        if self.pk:
+            old = self.__class__.objects.filter(pk=self.pk).values_list("codigo", flat=True).first()
+            if old is not None and (self.codigo or "") != old:
+                raise ValidationError({"codigo": "Código é imutável após criação."})
+
+    def save(self, *args, **kwargs):  # type: ignore[override]
+        self.nome = (self.nome or "").strip()
+        if not (self.codigo or "").strip():
+            self.codigo = generate_code("CAT")
+        return super().save(*args, **kwargs)
 
 
 def _normalize_code(value: str) -> str:
@@ -32,7 +60,7 @@ def _normalize_code(value: str) -> str:
 
 
 class Equipamento(models.Model):
-    codigo = models.CharField(max_length=50, unique=True)  # MICRO, MONITOR
+    codigo = models.CharField(max_length=50, unique=True, blank=True)  # EQP-000001
     nome = models.CharField(max_length=120)  # Micro, Monitor
     categoria = models.ForeignKey(
         Categoria,
@@ -45,6 +73,27 @@ class Equipamento(models.Model):
     class Meta:
         verbose_name = "Equipamento"
         verbose_name_plural = "Equipamentos"
+
+    def clean(self):
+        super().clean()
+        self.nome = (self.nome or "").strip()
+
+        # imutabilidade do codigo após criação
+        if self.pk:
+            old = Equipamento.objects.filter(pk=self.pk).values_list("codigo", flat=True).first()
+            if old is not None and (self.codigo or "") != old:
+                raise ValidationError({"codigo": "Código é imutável após criação."})
+
+    def save(self, *args, **kwargs):  # type: ignore[override]
+        self.nome = (self.nome or "").strip()
+
+        if not (self.codigo or "").strip():
+            # ✅ import local para evitar circular import durante app loading
+            from cadastro.services.codes import generate_code
+
+            self.codigo = generate_code("EQP")
+
+        return super().save(*args, **kwargs)
 
     def __str__(self) -> str:
         return f"{self.nome} ({self.codigo})"
@@ -120,6 +169,10 @@ class Loja(models.Model):
     class Meta:
         verbose_name = "Loja"
         verbose_name_plural = "Lojas"
+        indexes = [
+            models.Index(fields=["hist"], name="loja_hist_idx"),
+            models.Index(fields=["uf"], name="loja_uf_idx"),
+        ]
 
     def clean(self):
         super().clean()
@@ -147,7 +200,7 @@ class Loja(models.Model):
 
 
 class Projeto(models.Model):
-    codigo = models.CharField(max_length=50, unique=True)
+    codigo = models.CharField(max_length=50, unique=True, blank=True)
     nome = models.CharField(max_length=120)
 
     class Cor(models.TextChoices):
@@ -170,19 +223,59 @@ class Projeto(models.Model):
         verbose_name = "Projeto"
         verbose_name_plural = "Projetos"
 
+    def clean(self):
+        super().clean()
+        self.nome = (self.nome or "").strip()
+
+        # ✅ imutabilidade do codigo após criação
+        if self.pk:
+            old = Projeto.objects.filter(pk=self.pk).values_list("codigo", flat=True).first()
+            if old is not None and (self.codigo or "") != old:
+                raise ValidationError({"codigo": "Código é imutável após criação."})
+
+    def save(self, *args, **kwargs):  # type: ignore[override]
+        self.nome = (self.nome or "").strip()
+
+        if not (self.codigo or "").strip():
+            from cadastro.services.codes import generate_code  # ✅ import local anti-ciclo
+
+            self.codigo = generate_code("PRO")
+
+        return super().save(*args, **kwargs)
+
     def __str__(self) -> str:
         return f"{self.codigo} - {self.nome}"
 
 
 class Subprojeto(models.Model):
     projeto = models.ForeignKey(Projeto, on_delete=models.CASCADE, related_name="subprojetos")
-    codigo = models.CharField(max_length=50)
+    codigo = models.CharField(max_length=50, unique=True, blank=True)
     nome = models.CharField(max_length=120)
 
     class Meta:
         verbose_name = "Subprojeto"
         verbose_name_plural = "Subprojetos"
-        unique_together = ("projeto", "codigo")
+        # ✅ remove unique_together
+
+    def clean(self):
+        super().clean()
+        self.nome = (self.nome or "").strip()
+
+        # ✅ imutabilidade: não permitir trocar codigo após criação
+        if self.pk:
+            old = Subprojeto.objects.filter(pk=self.pk).values_list("codigo", flat=True).first()
+            if old is not None and (self.codigo or "") != old:
+                raise ValidationError({"codigo": "Código é imutável após criação."})
+
+    def save(self, *args, **kwargs):  # type: ignore[override]
+        self.nome = (self.nome or "").strip()
+
+        if not (self.codigo or "").strip():
+            from cadastro.services.codes import generate_code  # ✅ import local anti-ciclo
+
+            self.codigo = generate_code("SUB")
+
+        return super().save(*args, **kwargs)
 
     def __str__(self) -> str:
         return f"{self.projeto.codigo}/{self.codigo} - {self.nome}"

@@ -35,18 +35,20 @@ def apply_tailwind_styles(form: forms.Form) -> None:
     for _name, field in form.fields.items():
         widget = field.widget
 
+        if isinstance(widget, forms.HiddenInput):
+            continue
+
         if isinstance(widget, forms.CheckboxInput):
             widget.attrs["class"] = BASE_CHECKBOX_CSS
             continue
 
-        # ✅ Python 3.10+: `isinstance` aceita `X | Y`
-        if isinstance(widget, forms.Select | forms.SelectMultiple):
+        # ✅ isinstance precisa de type ou tuple[types]
+        if isinstance(widget, (forms.Select, forms.SelectMultiple)):  # noqa: UP038
             widget.attrs["class"] = BASE_SELECT_CSS
             continue
 
         # default: text/number/etc
-        if not isinstance(widget, forms.HiddenInput):
-            widget.attrs["class"] = BASE_INPUT_CSS
+        widget.attrs["class"] = BASE_INPUT_CSS
 
 
 # ==========================
@@ -55,7 +57,11 @@ def apply_tailwind_styles(form: forms.Form) -> None:
 class CategoriaForm(forms.ModelForm):
     class Meta:
         model = Categoria
-        fields = ["nome"]
+        fields = ["nome", "disponivel"]
+        labels = {
+            "nome": "Nome",
+            "disponivel": "Disponível",
+        }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -63,6 +69,10 @@ class CategoriaForm(forms.ModelForm):
 
 
 class LojaForm(forms.ModelForm):
+    """
+    Loja.codigo = Java (business_key legado). Continua editável e obrigatório no fluxo.
+    """
+
     LOGOMARCA_CHOICES = [
         ("RAIA", "RAIA"),
         ("DROGASIL", "DROGASIL"),
@@ -107,11 +117,14 @@ class LojaForm(forms.ModelForm):
 
 
 class ProjetoForm(forms.ModelForm):
+    """
+    Projeto.codigo é gerado automaticamente (PRO-{seq}), então não aparece no form.
+    """
+
     class Meta:
         model = Projeto
-        fields = ["codigo", "nome", "cor_slug"]
+        fields = ["nome", "cor_slug"]
         labels = {
-            "codigo": "Código",
             "nome": "Nome",
             "cor_slug": "Cor do projeto",
         }
@@ -122,9 +135,17 @@ class ProjetoForm(forms.ModelForm):
 
 
 class SubprojetoForm(forms.ModelForm):
+    """
+    Subprojeto.codigo é gerado automaticamente (SUB-{seq}), então não aparece no form.
+    """
+
     class Meta:
         model = Subprojeto
-        fields = ["projeto", "codigo", "nome"]
+        fields = ["projeto", "nome"]
+        labels = {
+            "projeto": "Projeto",
+            "nome": "Nome",
+        }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -136,9 +157,19 @@ class SubprojetoForm(forms.ModelForm):
 
 
 class EquipamentoForm(forms.ModelForm):
+    """
+    Equipamento.codigo é gerado automaticamente (EQP-{seq}), então não aparece no form.
+    """
+
     class Meta:
         model = Equipamento
-        fields = ["codigo", "nome", "categoria", "tem_ativo", "configuravel"]
+        fields = ["nome", "categoria", "tem_ativo", "configuravel"]
+        labels = {
+            "nome": "Nome",
+            "categoria": "Categoria",
+            "tem_ativo": "Tem ativo",
+            "configuravel": "Configurável",
+        }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -153,6 +184,7 @@ class KitForm(forms.ModelForm):
     class Meta:
         model = Kit
         fields = ["nome"]
+        labels = {"nome": "Nome"}
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -163,15 +195,22 @@ class ItemKitForm(forms.ModelForm):
     class Meta:
         model = ItemKit
         fields = ["equipamento", "tipo", "quantidade", "requer_configuracao"]
+        labels = {
+            "equipamento": "Equipamento",
+            "tipo": "Tipo",
+            "quantidade": "Quantidade",
+            "requer_configuracao": "Requer configuração",
+        }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+        # HTMX: ao trocar equipamento, atualizar opções de tipo (por categoria do equipamento)
         self.fields["equipamento"].widget.attrs.update(
             {
                 "hx-get": reverse_lazy("registry:ajax_tipos_por_equipamento"),
                 "hx-trigger": "change",
-                "hx-target": f"#id_{self.prefix}-tipo",
+                "hx-target": f"#id_{self.prefix}-tipo" if self.prefix else "#id_tipo",
                 "hx-swap": "innerHTML",
             }
         )
@@ -200,7 +239,7 @@ class ItemKitForm(forms.ModelForm):
 
         # Caso 2: POST (usuário selecionou equipamento no form)
         if self.data:
-            equipamento_key = f"{self.prefix}-equipamento"
+            equipamento_key = f"{self.prefix}-equipamento" if self.prefix else "equipamento"
             equip_id = self.data.get(equipamento_key)
 
             if equip_id:
@@ -227,9 +266,18 @@ ItemKitFormSet = inlineformset_factory(
 
 
 class TipoEquipamentoForm(forms.ModelForm):
+    """
+    TipoEquipamento.codigo é semântico e gerado pelo model quando vazio.
+    Não expomos codigo no form (governança).
+    """
+
     class Meta:
         model = TipoEquipamento
-        fields = ["nome", "disponivel"]  # ✅ sem codigo
+        fields = ["nome", "disponivel"]
+        labels = {
+            "nome": "Nome",
+            "disponivel": "Disponível",
+        }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

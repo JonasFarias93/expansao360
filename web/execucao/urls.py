@@ -2,6 +2,7 @@
 from django.urls import path
 
 from . import views
+from .api_views import loja_lookup_por_codigo
 
 app_name = "execucao"
 
@@ -32,6 +33,7 @@ urlpatterns = [
         views.ChamadoExecucaoView.as_view(),
         name="chamado_detalhe",  # mantido por compatibilidade
     ),
+    path("api/lojas/lookup/", loja_lookup_por_codigo, name="api_loja_lookup"),
     # ======================
     # ITENS DO CHAMADO
     # ======================
