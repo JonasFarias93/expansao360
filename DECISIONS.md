@@ -1180,3 +1180,15 @@ Data: 2026-02-08
 ## Pendência do levantamento
 - Verificar se existe endpoint de lookup/autocomplete reutilizável para Loja.
   - Se não existir, criar endpoint simples no ciclo 1.
+
+## Endpoint/estratégia de busca por “Java”
+
+### Existe endpoint?
+- Não. O módulo `cadastro` possui apenas CRUD:
+  - `GET cadastro/lojas/` (LojaListView)
+  - `GET|POST cadastro/lojas/novo/` (LojaCreateView)
+  - `GET|POST cadastro/lojas/<pk>/editar/` (LojaUpdateView)
+
+### Decisão (MVP)
+Criar um endpoint de lookup (JSON) para resolver Loja por código digitado (“Java”),
+retornando `{id, codigo, nome, display}`.
