@@ -1,7 +1,7 @@
 # web/cadastro/views.py
 
 from django.contrib import messages
-from django.db.models import IntegerField
+from django.db.models import IntegerField, Q
 from django.db.models.functions import Cast
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -86,8 +86,25 @@ class LojaListView(CapabilityRequiredMixin, ListView):
 
     def get_queryset(self):
         qs = super().get_queryset()
-        return qs.annotate(codigo_int=Cast("codigo", IntegerField())).order_by(
-            "codigo_int", "codigo"
+
+        # mantém seu comportamento atual de ordenação (já existe no seu código)
+        qs = qs.annotate(codigo_int=Cast("codigo", IntegerField())).order_by(
+            "codigo_int",
+            "nome",
+        )
+
+        q = (self.request.GET.get("q") or "").strip()
+        if not q:
+            return qs
+
+        return qs.filter(
+            Q(codigo__icontains=q)
+            | Q(hist__icontains=q)
+            | Q(nome__icontains=q)
+            | Q(cidade__icontains=q)
+            | Q(uf__icontains=q)
+            | Q(ip_banco_12__icontains=q)
+            | Q(endereco__icontains=q)
         )
 
 
