@@ -1,11 +1,18 @@
 # web/execucao/views.py
 
+# ================
+# sessao:imports_python
+# ================
 from __future__ import annotations
 
-import logging
-from typing import Any
-
+# ================
+# sessao:imports_apps_locais
+# ================
 from cadastro.models import Projeto, Subprojeto
+
+# ================
+# sessao:imports_django_core
+# ================
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
@@ -20,17 +27,15 @@ from django.views import View
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_POST
 from django.views.generic import TemplateView
-from iam.decorators import user_has_capability
-from iam.execucao_capabilities import CAP_EXECUCAO_CHAMADO_EDITAR
 from iam.mixins import CapabilityRequiredMixin
 
+from execucao.models import ExecutionSession
 from execucao.services.open_session import SessionBlockedError, open_session
 
 from .forms import ChamadoCreateForm
 from .models import (
     Chamado,
     EvidenciaChamado,
-    ExecutionSession,
     InstalacaoItem,
     ItemConfiguracaoLog,
     StatusConfiguracao,
@@ -112,6 +117,7 @@ class ChamadoCreateView(CapabilityRequiredMixin, View):
             projeto=form.cleaned_data["projeto"],
             subprojeto=form.cleaned_data["subprojeto"],
             kit=form.cleaned_data["kit"],
+            # 🔥 NOVO FLUXO:
             # Após tela 1, o chamado fica em EM_ABERTURA (setup),
             # e só vira ABERTO após "Salvar setup".
             status=Chamado.Status.EM_ABERTURA,
@@ -139,27 +145,9 @@ class ChamadoCreateView(CapabilityRequiredMixin, View):
         return redirect("execucao:chamado_setup", chamado_id=chamado.id)
 
 
-# ================
-# sessao:chamado_abrir (inicia sessão + permissões)
-# ================
-
-
-logger = logging.getLogger(__name__)
-
-
 @login_required
 @require_POST
-def chamado_abrir(request: HttpRequest, chamado_id: int) -> HttpResponse:
-    # Permissão: abrir sessão/editar chamado
-    if not user_has_capability(request.user, CAP_EXECUCAO_CHAMADO_EDITAR):
-        # 403 + UI amigável
-        return render(
-            request,
-            "iam/acesso_negado.html",
-            {"acao": "abrir chamado para execução"},
-            status=403,
-        )
-
+def chamado_abrir(request, chamado_id: int):
     chamado = get_object_or_404(Chamado, pk=chamado_id)
 
     try:
@@ -169,11 +157,13 @@ def chamado_abrir(request: HttpRequest, chamado_id: int) -> HttpResponse:
 
         active = get_active_session(chamado=chamado)
         if active is not None:
-            msg = (
-                f"Chamado em execução por {active.usuario} "
-                f"desde {active.started_at:%d/%m/%Y %H:%M}."
+            messages.error(
+                request,
+                (
+                    f"Chamado em execução por {active.usuario} "
+                    f"desde {active.started_at:%d/%m/%Y %H:%M}."
+                ),
             )
-            messages.error(request, msg)
         else:
             messages.error(request, "Chamado em execução por outro usuário.")
 
@@ -253,7 +243,6 @@ class ChamadoSetupView(CapabilityRequiredMixin, View):
 # ================
 # sessao:fila_operacional
 # ================
-@method_decorator(ensure_csrf_cookie, name="dispatch")
 class ChamadoFilaView(CapabilityRequiredMixin, TemplateView):
     template_name = "execucao/fila_operacional.html"
     required_capability = "execucao.chamado.visualizar"
@@ -282,9 +271,10 @@ class ChamadoFilaView(CapabilityRequiredMixin, TemplateView):
         encoded = q.urlencode()
         return f"{self.request.path}?{encoded}" if encoded else self.request.path
 
-    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+    def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
 
+        # 1) queryset base da fila (sem filtro)
         base_qs = (
             Chamado.objects.filter(
                 status__in=[
@@ -298,6 +288,7 @@ class ChamadoFilaView(CapabilityRequiredMixin, TemplateView):
             .prefetch_related("itens")
         )
 
+        # 2) counts (sempre do conjunto "fila", independente do filtro)
         counts = base_qs.aggregate(
             total=Count("id"),
             critico=Count("id", filter=Q(prioridade=Chamado.Prioridade.CRITICA)),
@@ -306,8 +297,9 @@ class ChamadoFilaView(CapabilityRequiredMixin, TemplateView):
             baixo=Count("id", filter=Q(prioridade=Chamado.Prioridade.BAIXA)),
         )
 
+        # 3) filtros stateless via querystring (prio + projeto)
         prio_key = (self.request.GET.get("prio") or "").strip().upper()
-        prio_value = self.PRIO_MAP.get(prio_key)
+        prio_value = self.PRIO_MAP.get(prio_key)  # Enum ou None
 
         raw_projeto = (self.request.GET.get("projeto") or "").strip()
         projeto_id: int | None = None
@@ -315,14 +307,16 @@ class ChamadoFilaView(CapabilityRequiredMixin, TemplateView):
             try:
                 projeto_id = int(raw_projeto)
             except ValueError:
-                projeto_id = None
+                projeto_id = None  # ignora lixo sem quebrar
 
         qs = base_qs
         if prio_value is not None:
             qs = qs.filter(prioridade=prio_value)
+
         if projeto_id is not None:
             qs = qs.filter(projeto_id=projeto_id)
 
+        # 3.1) contexto pros chips/cards
         ctx["counts"] = counts
         ctx["prio_selected"] = prio_key if prio_value is not None else None
 
@@ -335,12 +329,18 @@ class ChamadoFilaView(CapabilityRequiredMixin, TemplateView):
                 .first()
             )
 
+        # URLs pra UI (se quiser usar depois)
         ctx["url_clear_prio"] = self._url_with_query(prio=None)
         ctx["url_clear_projeto"] = self._url_with_query(projeto=None)
 
+        # 3.2) lista de projetos (cards)
+        # Seu template usa:
+        # - projects_reset_url
+        # - projects -> itens com nome, count, url, active (e agora projeto para cor)
         ctx["projects_reset_url"] = self._url_with_query(projeto=None)
 
         proj_rows = base_qs.values("projeto_id").annotate(count=Count("id")).order_by("-count")
+
         proj_ids = [r["projeto_id"] for r in proj_rows if r["projeto_id"] is not None]
         proj_map = Projeto.objects.in_bulk(proj_ids)
 
@@ -349,6 +349,7 @@ class ChamadoFilaView(CapabilityRequiredMixin, TemplateView):
             pid = r["projeto_id"]
             if pid is None:
                 continue
+
             proj = proj_map.get(pid)
             if not proj:
                 continue
@@ -356,15 +357,17 @@ class ChamadoFilaView(CapabilityRequiredMixin, TemplateView):
             projects.append(
                 {
                     "id": pid,
-                    "projeto": proj,
+                    "projeto": proj,  # <- objeto Projeto (pra cor via template tag)
                     "nome": proj.nome,
-                    "count": r["count"],
+                    "count": r["count"],  # <- seu template usa p.count
                     "url": self._url_with_query(projeto=pid),
                     "active": projeto_id == pid,
                 }
             )
+
         ctx["projects"] = projects
 
+        # 4) ordenação/annotate (aplicar depois do filtro)
         chamados = qs.annotate(
             status_rank=Case(
                 When(status=Chamado.Status.EM_EXECUCAO, then=Value(0)),
@@ -385,10 +388,10 @@ class ChamadoFilaView(CapabilityRequiredMixin, TemplateView):
             ),
         ).order_by("status_rank", "prio_rank", "criado_em")
 
+        # 5) montar rows (compat com template atual)
         rows: list[dict[str, object]] = []
         for ch in chamados:
             itens = list(ch.itens.all())
-
             rastreaveis = [i for i in itens if i.tem_ativo]
             contaveis = [i for i in itens if not i.tem_ativo]
             cfg = [i for i in itens if i.deve_configurar]
@@ -417,10 +420,10 @@ class ChamadoFilaView(CapabilityRequiredMixin, TemplateView):
         ctx["chamados"] = rows
         ctx["rows"] = rows
 
-        # sessões ativas (MVP lock na fila) — 1 query, sem N+1
-        chamado_ids = [row["chamado"].id for row in rows]
-        active_sessions_by_chamado: dict[int, ExecutionSession] = {}
+        # 6) sessões ativas (MVP lock na fila) — 1 query, sem N+1
+        chamado_ids = [r["chamado"].id for r in rows]
 
+        active_sessions_by_chamado: dict[int, ExecutionSession] = {}
         if chamado_ids:
             now = timezone.now()
             qs_sessions = (
@@ -448,7 +451,7 @@ class HistoricoView(CapabilityRequiredMixin, TemplateView):
     template_name = "execucao/historico_chamados.html"
     required_capability = "execucao.chamado.visualizar"
 
-    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+    def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
 
         q = (self.request.GET.get("q") or "").strip()
@@ -456,9 +459,11 @@ class HistoricoView(CapabilityRequiredMixin, TemplateView):
 
         chamados = Chamado.objects.all().select_related("loja", "projeto").order_by("-criado_em")
 
+        # Filtro dedicado: Java (código da loja)
         if java:
             chamados = chamados.filter(loja__codigo__startswith=java)
 
+        # Busca livre
         if q:
             chamados = chamados.filter(
                 Q(protocolo__icontains=q)
@@ -491,12 +496,13 @@ class ChamadoExecucaoView(CapabilityRequiredMixin, TemplateView):
         chamado_id = kwargs["chamado_id"]
         chamado = get_object_or_404(Chamado, pk=chamado_id)
 
+        # Detalhe/execução não é permitido quando ainda está em EM_ABERTURA.
         if chamado.status == Chamado.Status.EM_ABERTURA:
             return redirect("execucao:chamado_setup", chamado_id=chamado.id)
 
         return super().get(request, *args, **kwargs)
 
-    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+    def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
 
         chamado_id = kwargs["chamado_id"]
@@ -604,7 +610,6 @@ class ChamadoInformarNFSaidaView(CapabilityRequiredMixin, View):
     @transaction.atomic
     def post(self, request: HttpRequest, chamado_id: int, *args, **kwargs) -> HttpResponse:
         chamado = get_object_or_404(Chamado, pk=chamado_id)
-        chamado.gerar_itens_de_instalacao()
 
         if chamado.status == Chamado.Status.FINALIZADO:
             messages.error(request, "Chamado finalizado. Não é possível alterar.")
@@ -643,7 +648,6 @@ class ChamadoConfirmarColetaView(CapabilityRequiredMixin, View):
     @transaction.atomic
     def post(self, request: HttpRequest, chamado_id: int, *args, **kwargs) -> HttpResponse:
         chamado = get_object_or_404(Chamado, pk=chamado_id)
-        chamado.gerar_itens_de_instalacao()
 
         if chamado.status == Chamado.Status.FINALIZADO:
             messages.error(request, "Chamado finalizado. Não é possível alterar.")
@@ -700,10 +704,11 @@ class ChamadoAtualizarItensView(CapabilityRequiredMixin, View):
         # ==========================
         if chamado.status == Chamado.Status.EM_ABERTURA:
             for item in itens:
+                update_fields: list[str] = []
+
                 deve_configurar = request.POST.get(f"deve_configurar_{item.id}") == "on"
                 ip_raw = (request.POST.get(f"ip_{item.id}") or "").strip()
 
-                # equipamento não configurável => força False e sem IP
                 if not item.equipamento.configuravel:
                     deve_configurar = False
                     ip_raw = ""
@@ -718,7 +723,8 @@ class ChamadoAtualizarItensView(CapabilityRequiredMixin, View):
 
                 item.deve_configurar = deve_configurar
                 item.ip = ip_raw or None
-                item.save(update_fields=["deve_configurar", "ip"])
+                update_fields += ["deve_configurar", "ip"]
+                item.save(update_fields=update_fields)
 
             # promove para ABERTO (entra na fila)
             chamado.status = Chamado.Status.ABERTO
@@ -836,8 +842,8 @@ class EvidenciaRemoverView(CapabilityRequiredMixin, View):
             messages.error(request, "Chamado finalizado. Não é possível remover evidências.")
             return redirect("execucao:chamado_detalhe", chamado_id=chamado.id)
 
-        evidencia = get_object_or_404(EvidenciaChamado, pk=evidencia_id, chamado_id=chamado.id)
-        evidencia.delete()
+        ev = get_object_or_404(EvidenciaChamado, pk=evidencia_id, chamado_id=chamado.id)
+        ev.delete()
 
         messages.success(request, "Evidência removida.")
         return redirect("execucao:chamado_detalhe", chamado_id=chamado.id)
@@ -876,7 +882,6 @@ class ItemSetStatusConfiguracaoView(CapabilityRequiredMixin, View):
 
         status_atual = item.status_configuracao
 
-        # se está CONFIGURADO e quer voltar, motivo obrigatório
         if (
             status_atual == StatusConfiguracao.CONFIGURADO
             and status != StatusConfiguracao.CONFIGURADO
