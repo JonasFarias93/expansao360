@@ -5,6 +5,23 @@ from django.core.exceptions import ValidationError
 from django.db import models
 
 
+class CodeSequence(models.Model):
+    """
+    Contador por prefixo para geração de códigos no formato PREFIXO-000001.
+    """
+
+    prefix = models.CharField(max_length=8, primary_key=True)
+    last_value = models.PositiveIntegerField(default=0)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Sequência de Código"
+        verbose_name_plural = "Sequências de Código"
+
+    def __str__(self) -> str:
+        return f"{self.prefix}={self.last_value}"
+
+
 class Categoria(models.Model):
     nome = models.CharField(max_length=80, unique=True)
 
