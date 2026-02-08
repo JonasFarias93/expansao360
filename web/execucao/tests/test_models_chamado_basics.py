@@ -16,7 +16,41 @@ class ChamadoProtocoloEReferenciasTest(ChamadoBaseTestCase):
             kit=self.kit,
         )
         self.assertTrue(chamado.protocolo)
-        self.assertTrue(chamado.protocolo.startswith("EX360-"))
+        self.assertRegex(chamado.protocolo, r"^CHA-\d{6}$")
+
+    def test_protocolo_e_unico_e_incremental(self) -> None:
+        c1 = Chamado.objects.create(
+            loja=self.loja,
+            projeto=self.projeto,
+            subprojeto=self.sub,
+            kit=self.kit,
+        )
+        c2 = Chamado.objects.create(
+            loja=self.loja,
+            projeto=self.projeto,
+            subprojeto=self.sub,
+            kit=self.kit,
+        )
+
+        self.assertNotEqual(c1.protocolo, c2.protocolo)
+
+        n1 = int(c1.protocolo.split("-", 1)[1])
+        n2 = int(c2.protocolo.split("-", 1)[1])
+        self.assertGreater(n2, n1)
+
+    def test_protocolo_nao_muda_em_save_posterior(self) -> None:
+        chamado = Chamado.objects.create(
+            loja=self.loja,
+            projeto=self.projeto,
+            subprojeto=self.sub,
+            kit=self.kit,
+        )
+        original = chamado.protocolo
+
+        # simula um "save" posterior (alterando qualquer campo mutável)
+        chamado.save()
+        chamado.refresh_from_db()
+        self.assertEqual(chamado.protocolo, original)
 
     def test_ticket_externo_nao_repete_por_sistema(self) -> None:
         Chamado.objects.create(

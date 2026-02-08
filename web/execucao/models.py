@@ -5,9 +5,8 @@ from __future__ import annotations
 # =========
 # imports
 # =========
-import secrets
-
 from cadastro.models import Equipamento, Kit, Loja, Projeto, Subprojeto
+from cadastro.services.codes import generate_code
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, models, transaction
@@ -319,17 +318,20 @@ class Chamado(models.Model):
         if self.protocolo:
             return super().save(*args, **kwargs)
 
-        data = timezone.now().strftime("%Y%m%d")
-
-        for _ in range(5):
-            self.protocolo = f"EX360-{data}-{secrets.token_hex(3).upper()}"
+        # tentativa pequena de retry por segurança (embora select_for_update já resolva)
+        for _ in range(3):
+            self.protocolo = generate_code("CHA")
             try:
                 with transaction.atomic():
                     return super().save(*args, **kwargs)
             except IntegrityError:
                 self.protocolo = ""
 
-        return super().save(*args, **kwargs)
+        # se algo extremamente improvável acontecer, deixa o IntegrityError subir
+        # (melhor falhar do que salvar sem protocolo)
+        self.protocolo = generate_code("CHA")
+        with transaction.atomic():
+            return super().save(*args, **kwargs)
 
 
 # ================
