@@ -67,21 +67,27 @@
       </div>
 
       <div class="flex items-center gap-2 sm:shrink-0">
-        <a
-          href="{% url 'execucao:chamado_detalhe' chamado.id %}"
-          class="btn btn-primary"
+        {# "Abrir" precisa ser POST pois inicia sessão (efeito colateral) #}
+        <form
+          method="post"
+          action="{% url 'execucao:chamado_abrir' chamado_id=chamado.id %}"
+          class="inline"
         >
-          Abrir
-        </a>
-          <button
-            type="button"
-            class="btn btn-ghost"
-            data-details-toggle="{{ chamado.id }}"
-            aria-expanded="false"
-            aria-controls="details-{{ chamado.id }}"
-            >
+          {% csrf_token %}
+          <button type="submit" class="btn btn-primary">
+            Abrir
+          </button>
+        </form>
+
+        <button
+          type="button"
+          class="btn btn-ghost"
+          data-details-toggle="{{ chamado.id }}"
+          aria-expanded="false"
+          aria-controls="details-{{ chamado.id }}"
+        >
           Detalhes
-      </button>
+        </button>
       </div>
     </div>
 
@@ -117,12 +123,13 @@
       id="details-{{ chamado.id }}"
       class="mt-4 hidden rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700"
       data-details-panel="{{ chamado.id }}"
-      >
+    >
       <div class="font-semibold text-slate-900">Detalhes (em breve)</div>
       <p class="mt-1 text-slate-600">
         Aqui vai ter detalhes do chamado (resumo, progresso, últimas alterações, técnicos envolvidos).
       </p>
-   </div>
+    </div>
+
     <div class="mt-4 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-end text-xs text-slate-500">
       {% if chamado.criado_em %}
         <div>Criado: {{ chamado.criado_em|date:"d/m/Y H:i" }}</div>
@@ -134,6 +141,4 @@
     </div>
   </div>
 
-  <!--{# NOTA: evidências e ações operacionais (gates/finalizar/assumir) pertencem ao card do detalhe,
-     não ao card da fila. Este componente é "card compacto" para listagem. #}-->
 </div>

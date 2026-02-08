@@ -1278,7 +1278,7 @@ A UI já é baseada em cards e ações rápidas; faltava uma visão agregada e u
 - Mantemos o princípio “UI simples”: template só renderiza, regra de filtro e agregações ficam na view.
 - Evolução prevista: adicionar filtros por projeto no mesmo header (decisão futura / nova ADR).
 
-
+---
 ## 2026-02-08 — Sessão exclusiva de execução por chamado (lock)
 
 **Decisão**  
@@ -1293,3 +1293,18 @@ Na fila operacional, ao clicar “Abrir”, precisamos impedir edição concorre
 - Restrição no banco garante no máximo 1 sessão ativa por chamado.
 - O histórico de sessões é preservado (FK em vez de OneToOne).
 - Ainda sem job de timeout, sem tomada de sessão e sem autosave (serão decisões futuras).
+
+---
+## 2026-02-08 — Ação “Abrir” inicia sessão e bloqueia concorrência
+
+**Decisão**  
+O botão “Abrir” passa a criar/reentrar uma `ExecutionSession` ativa do chamado.  
+Se existir sessão ativa de outro usuário, a edição é bloqueada e o usuário é redirecionado para o detalhe (read-only) com mensagem “Em execução por X desde Y”.
+
+**Contexto**  
+Evitar edição concorrente e permitir reentrada do mesmo técnico com auditoria mínima.
+
+**Consequências**
+- “Abrir” é POST.
+- Auditoria mínima: `ExecutionSession.usuario` e `started_at`.
+- Redirecionamento: `ABERTO -> setup`, demais -> detalhe.
