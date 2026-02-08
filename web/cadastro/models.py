@@ -120,6 +120,10 @@ class Loja(models.Model):
     class Meta:
         verbose_name = "Loja"
         verbose_name_plural = "Lojas"
+        indexes = [
+            models.Index(fields=["hist"], name="loja_hist_idx"),
+            models.Index(fields=["uf"], name="loja_uf_idx"),
+        ]
 
     def clean(self):
         super().clean()
