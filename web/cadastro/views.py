@@ -97,15 +97,14 @@ class LojaListView(CapabilityRequiredMixin, ListView):
         if not q:
             return qs
 
-        return qs.filter(
-            Q(codigo__icontains=q)
-            | Q(hist__icontains=q)
-            | Q(nome__icontains=q)
-            | Q(cidade__icontains=q)
-            | Q(uf__icontains=q)
-            | Q(ip_banco_12__icontains=q)
-            | Q(endereco__icontains=q)
-        )
+        # Regras:
+        # - se numérico: tentar bater em Java (codigo) OU histórico (hist)
+        # - se texto: procurar por nome (icontains) e opcional cidade/uf
+        if q.isdigit():
+            return qs.filter(Q(codigo__iexact=q) | Q(hist__iexact=q))
+
+        # texto
+        return qs.filter(Q(nome__icontains=q) | Q(cidade__icontains=q) | Q(uf__icontains=q))
 
 
 class LojaCreateView(CapabilityRequiredMixin, CreateView):
