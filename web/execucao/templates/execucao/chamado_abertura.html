@@ -1,5 +1,6 @@
 {# web/execucao/templates/execucao/chamado_abertura.html #}
 {% extends "base.html" %}
+{% load static %}
 {% block title %}Abrir Chamado — Execução{% endblock %}
 
 {% block content %}
@@ -18,7 +19,7 @@
       </a>
     </div>
 
-    <form method="post" class="mt-5 space-y-4">
+    <form method="post" class="mt-5 space-y-4" id="form-chamado-abertura">
       {% csrf_token %}
 
       {% if form.non_field_errors %}
@@ -38,12 +39,63 @@
         </div>
       {% endif %}
 
-      <div>
-        <label class="block text-sm font-medium text-slate-700 mb-1">Loja</label>
-        {{ form.loja }}
+      {# ========================================================= #}
+      {# LOJA (JAVA) — input + hidden id (name="loja") + fallback   #}
+      {# ========================================================= #}
+      <div class="space-y-1">
+        <label for="id_loja_codigo" class="block text-sm font-medium text-slate-700 mb-1">
+          Loja (Java)
+        </label>
+
+        <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <input
+            type="text"
+            id="id_loja_codigo"
+            name="loja_codigo"
+            inputmode="numeric"
+            autocomplete="off"
+            placeholder="Ex: 3500"
+            class="w-full rounded-md border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-slate-400 focus:outline-none focus:ring-0"
+            value="{{ request.POST.loja_codigo|default_if_none:'' }}"
+            data-lookup-url="{% url 'execucao:api_loja_lookup' %}"
+          />
+
+          {# Campo real usado no POST pelo Django Form (ModelChoiceField: name="loja") #}
+          <input
+            type="hidden"
+            id="id_loja"
+            name="loja"
+            value="{{ request.POST.loja|default_if_none:'' }}"
+          />
+        </div>
+
+        <div class="flex items-center gap-2 mt-2">
+          <button
+            type="button"
+            id="btn-loja-validar"
+            class="inline-flex items-center rounded-md bg-slate-900 px-3 py-2 text-sm font-medium text-white hover:bg-slate-800"
+          >
+            Validar
+          </button>
+
+          <span id="loja-status" class="text-sm text-slate-600"></span>
+        </div>
+
+        {# Erros do campo real do form (loja) #}
         {% if form.loja.errors %}
           <div class="text-sm text-red-600 mt-1">{{ form.loja.errors }}</div>
         {% endif %}
+
+        {# Fallback técnico (manual) — fora do fluxo principal #}
+        <details class="mt-2 rounded-md border border-slate-200 bg-slate-50 p-3">
+          <summary class="cursor-pointer text-sm text-slate-700">
+            Lista Loja
+          </summary>
+
+          <div class="mt-3">
+            {{ form.loja }}
+          </div>
+        </details>
       </div>
 
       <div>
@@ -147,4 +199,6 @@
     </form>
   </div>
 </div>
+
+<script src="{% static 'execucao/js/chamado_abertura.js' %}"></script>
 {% endblock %}
