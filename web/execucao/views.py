@@ -29,6 +29,7 @@ from django.views.decorators.http import require_POST
 from django.views.generic import TemplateView
 from iam.mixins import CapabilityRequiredMixin
 
+from execucao.models import ExecutionSession
 from execucao.services.open_session import SessionBlockedError, open_session
 
 from .forms import ChamadoCreateForm
@@ -418,6 +419,28 @@ class ChamadoFilaView(CapabilityRequiredMixin, TemplateView):
 
         ctx["chamados"] = rows
         ctx["rows"] = rows
+
+        # 6) sessões ativas (MVP lock na fila) — 1 query, sem N+1
+        chamado_ids = [r["chamado"].id for r in rows]
+
+        active_sessions_by_chamado: dict[int, ExecutionSession] = {}
+        if chamado_ids:
+            now = timezone.now()
+            qs_sessions = (
+                ExecutionSession.objects.filter(
+                    chamado_id__in=chamado_ids,
+                    ended_at__isnull=True,
+                    expires_at__gt=now,
+                )
+                .select_related("usuario")
+                .order_by("chamado_id", "-started_at")
+            )
+
+            for s in qs_sessions:
+                if s.chamado_id not in active_sessions_by_chamado:
+                    active_sessions_by_chamado[s.chamado_id] = s
+
+        ctx["execucao_active_sessions_by_chamado"] = active_sessions_by_chamado
         return ctx
 
 

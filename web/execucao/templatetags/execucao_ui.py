@@ -25,3 +25,19 @@ def projeto_color_bar(projeto) -> str:
     """
     slug = (getattr(projeto, "cor_slug", None) or "SLATE").strip().upper()
     return COLOR_TO_CLASS.get(slug, COLOR_TO_CLASS["SLATE"])
+
+
+@register.filter
+def get_item(mapping, key):
+    """
+    Acessa mapping.get(key) de forma segura no template.
+    Retorna None se 'mapping' não for um dict-like (ex.: string).
+    """
+    if mapping is None:
+        return None
+
+    getter = getattr(mapping, "get", None)
+    if getter is None:
+        return None
+
+    return getter(key)
