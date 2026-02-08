@@ -34,12 +34,6 @@ urlpatterns = [
         name="chamado_detalhe",  # mantido por compatibilidade
     ),
     path("api/lojas/lookup/", loja_lookup_por_codigo, name="api_loja_lookup"),
-    # Abrir (inicia/reentra sessão)
-    path(
-        "chamados/<int:chamado_id>/abrir/",
-        views.chamado_abrir,
-        name="chamado_abrir",
-    ),
     # ======================
     # ITENS DO CHAMADO
     # ======================
