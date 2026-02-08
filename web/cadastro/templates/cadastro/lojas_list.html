@@ -63,19 +63,19 @@
           <span class="text-sm text-slate-600">Itens por página:</span>
 
           <a class="btn btn-secondary px-3 py-1.5 text-xs {% if request.GET.per_page == '10' %}!bg-slate-900 !text-white !border-slate-900{% endif %}"
-             href="?per_page=10">10</a>
+             href="?per_page=10{% if request.GET.q %}&q={{ request.GET.q|urlencode }}{% endif %}">10</a>
 
           <a class="btn btn-secondary px-3 py-1.5 text-xs {% if request.GET.per_page == '25' or not request.GET.per_page %}!bg-slate-900 !text-white !border-slate-900{% endif %}"
-             href="?per_page=25">25</a>
+             href="?per_page=25{% if request.GET.q %}&q={{ request.GET.q|urlencode }}{% endif %}">25</a>
 
           <a class="btn btn-secondary px-3 py-1.5 text-xs {% if request.GET.per_page == '50' %}!bg-slate-900 !text-white !border-slate-900{% endif %}"
-             href="?per_page=50">50</a>
+             href="?per_page=50{% if request.GET.q %}&q={{ request.GET.q|urlencode }}{% endif %}">50</a>
 
           <a class="btn btn-secondary px-3 py-1.5 text-xs {% if request.GET.per_page == '100' %}!bg-slate-900 !text-white !border-slate-900{% endif %}"
-             href="?per_page=100">100</a>
+             href="?per_page=100{% if request.GET.q %}&q={{ request.GET.q|urlencode }}{% endif %}">100</a>
 
           <a class="btn btn-secondary px-3 py-1.5 text-xs {% if request.GET.per_page == 'all' %}!bg-slate-900 !text-white !border-slate-900{% endif %}"
-             href="?per_page=all">Tudo</a>
+             href="?per_page=all{% if request.GET.q %}&q={{ request.GET.q|urlencode }}{% endif %}">Tudo</a>
         </div>
       </div>
 
