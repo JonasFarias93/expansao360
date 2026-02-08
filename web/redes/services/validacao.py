@@ -55,16 +55,39 @@ REASON_RETAGUARDA_SEGMENTADO_OK = "RETAGUARDA_SEGMENTADO_OK"
 REASON_RETAGUARDA_SEGMENTADO_REJECT = "RETAGUARDA_SEGMENTADO_REJECT"
 
 
+# -------------------------------------------------------------------
+# Catálogo MVP (sem DB): offsets por perfil e tipo
+# -------------------------------------------------------------------
+
+RETAGUARDA_OFFSETS_LEGACY: dict[str, int] = {
+    "BANCO12": 12,
+    "GERENCIA": 30,
+    "FARMA": 60,
+    "RH": 70,
+}
+
+RETAGUARDA_OFFSETS_SEGMENTADO: dict[str, int] = {
+    "RH": 129,
+    "GERENCIA": 130,
+    "FARMA": 131,
+    "BANCO12": 12,
+}
+
+# Aliases aceitos (mantém compatível com nomes mais “humanos”/docs)
+TIPO_ALIASES: dict[str, str] = {
+    "MICRO_GERENCIA": "GERENCIA",
+    "MICRO_FARMA": "FARMA",
+    "PORTAL_DO_SABER": "RH",
+    "PORTAL_DO_SABER_RH": "RH",
+}
+
+
 def classificar_ip(perfil: Any, base_ip: str, ip: str) -> ClassificationResult:
     """
-    classificar_ip(perfil, base_ip, ip) -> retorna tipo provável + severidade (ok/warn/erro)
-
     MVP: só classifica "TC" (demais tipos ficam como desconhecido por enquanto).
     """
-    # 1) valida formato e prefixo (regra global)
     prefix_check = _validate_prefix(base_ip, ip)
     if prefix_check is not None:
-        # erro de formato/prefixo: não tem como classificar corretamente
         return ClassificationResult(
             probable_tipo=None,
             severity=prefix_check.severity,
@@ -72,10 +95,8 @@ def classificar_ip(perfil: Any, base_ip: str, ip: str) -> ClassificationResult:
             suggestion=prefix_check.suggestion,
         )
 
-    # 2) tenta classificar como TC (única regra MVP)
     tc = validar_ip_para_tipo(perfil, base_ip, ip, "TC")
     if tc.severity == Severity.WARN and tc.reason == REASON_TYPO_WARNING:
-        # warning de typo, mas ainda “provável TC”
         return ClassificationResult(
             probable_tipo="TC",
             severity=Severity.WARN,
@@ -91,7 +112,6 @@ def classificar_ip(perfil: Any, base_ip: str, ip: str) -> ClassificationResult:
             suggestion=tc.suggestion,
         )
 
-    # 3) sem match
     return ClassificationResult(
         probable_tipo=None,
         severity=Severity.WARN,
@@ -102,28 +122,22 @@ def classificar_ip(perfil: Any, base_ip: str, ip: str) -> ClassificationResult:
 
 def validar_ip_para_tipo(perfil: Any, base_ip: str, ip: str, tipo: str) -> ValidationResult:
     """
-    validar_ip_para_tipo(perfil, base_ip, ip, tipo) -> ok/erro + motivo
-
     MVP:
-    - TC (regra existente)
-    - RETAGUARDA_LOJA (offset fixo por item e por perfil):
-      tipos aceitos: BANCO12, GERENCIA, FARMA, RH
+    - TC
+    - RETAGUARDA_LOJA: BANCO12, GERENCIA, FARMA, RH (com aliases)
     """
-    # 1) valida formato e prefixo (regra global)
     prefix_check = _validate_prefix(base_ip, ip)
     if prefix_check is not None:
         return prefix_check
 
-    tipo_norm = (tipo or "").strip().upper()
+    tipo_norm = _normalize_tipo(tipo)
     perfil_tipo = _get_perfil_tipo(perfil)
     last_octet = _last_octet(ip)
 
     # -----------------------
-    # TC (regra MVP existente)
+    # TC
     # -----------------------
     if tipo_norm == "TC":
-        # Typo warning (exigência): .111 quando esperado .11 -> WARN (não bloqueia)
-        # MVP: só dispara esse warning quando o perfil/tipo teria como caso comum o .11
         if last_octet == 111 and _tc_expects_11(perfil_tipo):
             return ValidationResult(
                 is_valid=True,
@@ -133,7 +147,6 @@ def validar_ip_para_tipo(perfil: Any, base_ip: str, ip: str, tipo: str) -> Valid
             )
 
         if perfil_tipo == "LEGACY_FLAT":
-            # Legado: TC aceita .11/.13/.14/.15 e rejeita .134
             if last_octet == 134:
                 return ValidationResult(
                     is_valid=False,
@@ -155,7 +168,6 @@ def validar_ip_para_tipo(perfil: Any, base_ip: str, ip: str, tipo: str) -> Valid
             )
 
         if perfil_tipo == "SEGMENTADO":
-            # Segmentado: TC aceita .134+ e rejeita .11
             if last_octet == 11:
                 return ValidationResult(
                     is_valid=False,
@@ -176,7 +188,6 @@ def validar_ip_para_tipo(perfil: Any, base_ip: str, ip: str, tipo: str) -> Valid
                 suggestion="No segmentado, TC deve ser .134 ou maior.",
             )
 
-        # Perfil desconhecido => falha explícita e testável
         return ValidationResult(
             is_valid=False,
             reason=REASON_NOT_IMPLEMENTED,
@@ -185,7 +196,7 @@ def validar_ip_para_tipo(perfil: Any, base_ip: str, ip: str, tipo: str) -> Valid
         )
 
     # -----------------------
-    # RETAGUARDA_LOJA (MVP)
+    # RETAGUARDA_LOJA
     # -----------------------
     if tipo_norm in {"BANCO12", "GERENCIA", "FARMA", "RH"}:
         expected = _retaguarda_expected_offset(perfil_tipo, tipo_norm)
@@ -208,7 +219,6 @@ def validar_ip_para_tipo(perfil: Any, base_ip: str, ip: str, tipo: str) -> Valid
                 severity=Severity.INFO,
             )
 
-        # Rejeição cruzada (qualquer offset diferente do esperado)
         return ValidationResult(
             is_valid=False,
             reason=(
@@ -220,9 +230,6 @@ def validar_ip_para_tipo(perfil: Any, base_ip: str, ip: str, tipo: str) -> Valid
             suggestion=_suggest_fix_last_octet(ip, expected),
         )
 
-    # -----------------------
-    # Demais tipos (MVP ainda não cobre)
-    # -----------------------
     return ValidationResult(
         is_valid=False,
         reason=REASON_NOT_IMPLEMENTED,
@@ -234,6 +241,11 @@ def validar_ip_para_tipo(perfil: Any, base_ip: str, ip: str, tipo: str) -> Valid
 # -------------------------------------------------------------------
 # Helpers (privados)
 # -------------------------------------------------------------------
+
+
+def _normalize_tipo(tipo: str) -> str:
+    norm = (tipo or "").strip().upper()
+    return TIPO_ALIASES.get(norm, norm)
 
 
 def _validate_prefix(base_ip: str, ip: str) -> ValidationResult | None:
@@ -267,23 +279,15 @@ def _parse_ipv4(value: str) -> IPv4Address | None:
 
 
 def _prefix_24(ip: IPv4Address) -> tuple[int, int, int]:
-    # considera /24: compara 3 primeiros octetos
     s = str(ip).split(".")
     return int(s[0]), int(s[1]), int(s[2])
 
 
 def _last_octet(ip: str) -> int:
-    # prefixo já foi validado antes (formato ok), então aqui é seguro
     return int(str(ip).split(".")[-1])
 
 
 def _get_perfil_tipo(perfil: Any) -> str:
-    """
-    Aceita:
-    - objeto com atributo .tipo (ex: PerfilRede Django)
-    - dict {"tipo": "..."}
-    - string direta "LEGACY_FLAT"/"SEGMENTADO"
-    """
     if perfil is None:
         return ""
 
@@ -298,37 +302,15 @@ def _get_perfil_tipo(perfil: Any) -> str:
 
 
 def _tc_expects_11(perfil_tipo: str) -> bool:
-    # MVP: no legado, .11 é esperado; no segmentado, é explicitamente rejeitado
     return perfil_tipo == "LEGACY_FLAT"
 
 
 def _retaguarda_expected_offset(perfil_tipo: str, tipo_norm: str) -> int | None:
-    """
-    Contrato MVP — RETAGUARDA_LOJA
-
-    LEGACY_FLAT:
-      BANCO12=.12, GERENCIA=.30, FARMA=.60, RH=.70
-
-    SEGMENTADO:
-      RH=.129, GERENCIA=.130, FARMA=.131, BANCO12=.12
-    """
     if perfil_tipo == "LEGACY_FLAT":
-        table = {
-            "BANCO12": 12,
-            "GERENCIA": 30,
-            "FARMA": 60,
-            "RH": 70,
-        }
-        return table.get(tipo_norm)
+        return RETAGUARDA_OFFSETS_LEGACY.get(tipo_norm)
 
     if perfil_tipo == "SEGMENTADO":
-        table = {
-            "RH": 129,
-            "GERENCIA": 130,
-            "FARMA": 131,
-            "BANCO12": 12,
-        }
-        return table.get(tipo_norm)
+        return RETAGUARDA_OFFSETS_SEGMENTADO.get(tipo_norm)
 
     return None
 
