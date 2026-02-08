@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from cadastro.models import Kit, Loja, Projeto, Subprojeto
 from django import forms
+from django.core.exceptions import ValidationError
 from django.urls import reverse
 
 from .models import Chamado
@@ -13,6 +14,10 @@ class ChamadoCreateForm(forms.Form):
         queryset=Loja.objects.order_by("codigo"),
         required=True,
         label="Loja",
+        error_messages={
+            "required": "Informe um código de loja válido.",
+            "invalid_choice": "Loja não encontrada.",
+        },
     )
     projeto = forms.ModelChoiceField(
         queryset=Projeto.objects.order_by("codigo"),
@@ -59,7 +64,6 @@ class ChamadoCreateForm(forms.Form):
             "focus:outline-none focus:ring-2 focus:ring-slate-900"
         )
         for _name, field in self.fields.items():
-            # não sobrescreve classes já definidas (se houver)
             current = (field.widget.attrs.get("class") or "").strip()
             field.widget.attrs["class"] = f"{current} {base}".strip() if current else base
 
@@ -96,6 +100,9 @@ class ChamadoCreateForm(forms.Form):
     def clean(self):
         cleaned = super().clean()
 
+        # ------------------------------
+        # Ticket externo (trim + required)
+        # ------------------------------
         sistema = (cleaned.get("ticket_externo_sistema") or "").strip()
         ticket_id = (cleaned.get("ticket_externo_id") or "").strip()
 
@@ -106,5 +113,22 @@ class ChamadoCreateForm(forms.Form):
 
         cleaned["ticket_externo_sistema"] = sistema
         cleaned["ticket_externo_id"] = ticket_id
+
+        # ------------------------------
+        # Loja (backstop server-side)
+        # ------------------------------
+        # UI nova envia:
+        # - loja_codigo (texto digitado)
+        # - loja (hidden) com ID real do ModelChoiceField
+        loja = cleaned.get("loja")
+
+        if loja is None:
+            # Mantém mensagem coerente com o novo fluxo (por código)
+            self.add_error("loja", "Informe um código de loja válido.")
+            return cleaned
+
+        # Garantia extra contra injeção/edge-cases (intenção explícita)
+        if not Loja.objects.filter(id=loja.id).exists():
+            raise ValidationError("Loja não encontrada.")
 
         return cleaned
