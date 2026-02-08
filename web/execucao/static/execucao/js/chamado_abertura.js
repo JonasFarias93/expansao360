@@ -14,6 +14,9 @@
     const endpoint = inputCodigo.dataset.lookupUrl;
     if (!endpoint) return;
 
+    // Evita concorrência: só aplica o resultado da última validação solicitada
+    let requestSeq = 0;
+
     function setStatus(text, kind) {
       statusEl.textContent = text || "";
       statusEl.className =
@@ -23,6 +26,10 @@
           : kind === "err"
           ? "text-red-700"
           : "text-slate-600");
+    }
+
+    function isValidCodigo(codigo) {
+      return /^\d+$/.test(codigo);
     }
 
     async function validarLoja() {
@@ -35,16 +42,24 @@
         setStatus("Informe o código da loja.", "err");
         return;
       }
-      if (!/^\d+$/.test(codigo)) {
+      if (!isValidCodigo(codigo)) {
         setStatus("Código inválido. Use apenas números.", "err");
         return;
       }
 
+      const mySeq = ++requestSeq;
       setStatus("Validando...", "idle");
 
       try {
-        const url = endpoint + "?codigo=" + encodeURIComponent(codigo);
-        const resp = await fetch(url, { headers: { Accept: "application/json" } });
+        const url = `${endpoint}?codigo=${encodeURIComponent(codigo)}`;
+        const resp = await fetch(url, {
+          method: "GET",
+          headers: { Accept: "application/json" },
+          credentials: "same-origin",
+        });
+
+        // Se já houve outra validação depois desta, ignora o resultado
+        if (mySeq !== requestSeq) return;
 
         if (resp.status === 404) {
           setStatus("Loja não encontrada.", "err");
@@ -60,26 +75,33 @@
         }
 
         const data = await resp.json();
-        if (!data || data.id === undefined || data.codigo === undefined || data.nome === undefined) {
+        if (
+          !data ||
+          data.id === undefined ||
+          data.codigo === undefined ||
+          data.nome === undefined
+        ) {
           setStatus("Resposta inválida do servidor.", "err");
           return;
         }
 
         hiddenLojaId.value = String(data.id);
-        setStatus("Loja encontrada: " + data.codigo + " - " + data.nome, "ok");
-      } catch (e) {
+        setStatus(`Loja encontrada: ${data.codigo} - ${data.nome}`, "ok");
+      } catch (_e) {
+        // Se já houve outra validação depois desta, ignora erro antigo
+        if (mySeq !== requestSeq) return;
         setStatus("Falha de rede ao validar loja.", "err");
       }
     }
 
     btnValidar.addEventListener("click", function () {
-      validarLoja();
+      void validarLoja();
     });
 
     inputCodigo.addEventListener("keydown", function (ev) {
       if (ev.key === "Enter") {
         ev.preventDefault();
-        validarLoja();
+        void validarLoja();
       }
     });
 
@@ -89,6 +111,8 @@
     });
 
     form.addEventListener("submit", function (ev) {
+      // Este JS só deve interferir no form de ABERTURA.
+      // Não intercepta outros forms da aplicação (ex.: "Abrir" na fila).
       if (!hiddenLojaId.value) {
         ev.preventDefault();
         setStatus("Valide a loja antes de salvar.", "err");
