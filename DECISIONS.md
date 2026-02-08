@@ -1434,5 +1434,161 @@ que o contrato do grupo seja explícito, verificável e não sofra regressões f
 * Alterações nos offsets, máscara ou gateway exigem atualização deste backlog.
 * O backlog de testes faz parte do **contrato vivo** do grupo.
 
-=======
->>>>>>> c759cd0d91289faae4bd5b36dd5197864e43a577
+---
+
+# Passo 4 — Evoluir o Domínio: Hostname, Máscara e Gateway (por Grupo)
+
+Este documento registra a **decisão de modelagem** (sem código) e consolida o **contrato final** do grupo **RETAGUARDA_LOJA** para incluir validação de:
+
+* IP (já existente)
+* **máscara**
+* **gateway**
+* **hostname pattern**
+
+> **Nota de governança:** Como esta é uma mudança estrutural/regra de negócio (amplia o que é considerado “regra de rede”), ela deve gerar um **ADR**. Este documento já contém a decisão em formato de ADR curto.
+
+---
+
+## ADR — Grupos de rede validam IP + máscara + gateway + hostname (por item)
+
+### Data
+
+2026-02-07
+
+### Decisão
+
+Evoluir o domínio para que **as regras de rede por equipamento** carreguem também:
+
+* **máscara** (padrão único do domínio)
+* **gateway** (com política explícita)
+* **hostname_pattern** (pattern validável)
+
+A recomendação é armazenar esses campos **na própria `RegraRedeEquipamento` (por item)**.
+
+### Por quê (Contexto)
+
+Erros humanos na operação de rede não são apenas IP:
+
+* máscara incorreta
+* gateway divergente
+* hostname fora do padrão
+
+Além disso, há casos onde um item **diverge** do bloco padrão do grupo (ex.: **Banco12 no segmentado** pode precisar de máscara/gateway diferentes dos micros /27), o que favorece a modelagem **por item**.
+
+### Consequências
+
+* O domínio passa a ser a **fonte de verdade** da configuração mínima esperada (não só IP).
+* Validações futuras podem ser completas e testáveis (IP + máscara + gateway + hostname).
+* Evita criar uma entidade extra de “RegraGrupo” neste momento (MVP pequeno).
+* Mantém o service de validação como **core** (sem acoplar em cadastro/DB).
+
+---
+
+## 4.1 Decisão de modelagem
+
+### 4.1.1 Onde ficam os campos
+
+**Opção escolhida (recomendada):** na própria **RegraRedeEquipamento** (por item).
+
+**Motivo:** permite divergência por item sem criar outra camada de regra agora.
+
+**Não fazer agora:** criar uma entidade “RegraGrupo”.
+
+---
+
+### 4.1.2 Campos-alvo do domínio
+
+#### Máscara (escolha de padrão)
+
+**Padrão escolhido:** `cidr` (**int**) — exemplo: `24`, `27`.
+
+**Por quê:**
+
+* evita ambiguidades (`255.255.255.0` vs `/24`)
+* simplifica validação e serialização
+* pode ser exibido como dotted-mask apenas na UI/docs
+
+> **Documentação pode manter ambos** (CIDR e dotted) para leitura humana, mas o domínio guarda **um só padrão**.
+
+#### Gateway
+
+Modelar com política explícita para evitar “mágica”:
+
+* `gateway_policy`: `OFFSET_FIXO | DERIVADO_BASE | FIXO_ABSOLUTO`
+* `gateway_offset`: int (quando `OFFSET_FIXO` ou `DERIVADO_BASE`)
+* `gateway_ip`: str (quando `FIXO_ABSOLUTO`)
+
+> MVP do RETAGUARDA_LOJA usa **OFFSET_FIXO** (ex.: `.222`, `.158`).
+
+#### Hostname
+
+* `hostname_pattern`: string template (contrato validável)
+* (opcional) `hostname_examples`: lista curta para documentação/auxílio
+
+---
+
+## 4.2 Contrato final — RETAGUARDA_LOJA (por perfil)
+
+### Itens oficiais
+
+* Banco12
+* Micro Gerência
+* Micro Farma
+* Micro Portal do Saber (RH)
+
+---
+
+## PERFIL: LEGACY_FLAT (até 2023)
+
+### Parâmetros padrão do perfil (grupo)
+
+* **CIDR:** `24`
+* **Máscara (doc):** `255.255.255.0`
+* **Gateway:** offset `.222` (policy: `OFFSET_FIXO`)
+
+### Regras por item (IP + hostname)
+
+| Item                 | IP policy   | Offset | Hostname pattern / valor |
+| -------------------- | ----------- | -----: | ------------------------ |
+| Banco12              | OFFSET_FIXO |     12 | `f_12`                   |
+| Micro Gerência       | OFFSET_FIXO |     30 | `NT{cod}X30`             |
+| Micro Farma          | OFFSET_FIXO |     60 | `TCFARMA`                |
+| Portal do Saber (RH) | OFFSET_FIXO |     70 | `TCRH`                   |
+
+### Referência histórica (não-foco do grupo)
+
+Terminais/balcões (legado) — mantidos como referência:
+
+| Terminal   | Offset | Hostname     |
+| ---------- | -----: | ------------ |
+| Terminal 1 |     11 | `NT{cod}X11` |
+| Terminal 2 |     13 | `NT{cod}X13` |
+| Terminal 3 |     14 | `NT{cod}X14` |
+| Terminal 4 |     15 | `NT{cod}X15` |
+
+---
+
+## PERFIL: RD_SEGMENTADO (2024/2025)
+
+### Parâmetros padrão do perfil (micros de retaguarda)
+
+* **CIDR:** `27`
+* **Máscara (doc):** `255.255.255.224`
+* **Gateway:** offset `.158` (policy: `OFFSET_FIXO`)
+
+### Regras por item (IP + hostname)
+
+| Item                 | IP policy   | Offset | Hostname pattern / valor             | Observação                                                                                                                              |
+| -------------------- | ----------- | -----: | ------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------- |
+| Portal do Saber (RH) | OFFSET_FIXO |    129 | `TCRH`                               | —                                                                                                                                       |
+| Micro Gerência       | OFFSET_FIXO |    130 | `LOJA{cod}`                          | —                                                                                                                                       |
+| Micro Farma          | OFFSET_FIXO |    131 | `TCFARMA`                            | —                                                                                                                                       |
+| Banco12              | OFFSET_FIXO |     12 | `F_B12` *(a confirmar padrão final)* | Está no bloco VLAN2 (PDVs) fisicamente, mas é **retaguarda** semanticamente. Pode divergir de máscara/gateway dos micros se necessário. |
+
+---
+
+## Status
+
+* **Aceito** (decisão registrada)
+* **RETAGUARDA_LOJA**: contrato completo (com única lacuna permitida: hostname final do Banco12 no segmentado)
+
