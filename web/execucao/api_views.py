@@ -12,13 +12,13 @@ def loja_lookup_por_codigo(request: HttpRequest) -> JsonResponse:
     Lookup de Loja por código (Java).
 
     Entrada (querystring):
-      - codigo: str (obrigatório, numérico)
+      - codigo: obrigatório, numérico
 
     Saída (200):
       - {id, codigo, nome}
 
     Erros:
-      - 400: codigo ausente ou não numérico
+      - 400: codigo ausente ou inválido
       - 404: loja não encontrada
     """
     codigo = (request.GET.get("codigo") or "").strip()
