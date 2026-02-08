@@ -1,6 +1,9 @@
 # web/execucao/models.py
 
+
 from __future__ import annotations
+
+from datetime import timedelta
 
 # =========
 # imports
@@ -448,3 +451,78 @@ class EvidenciaChamado(models.Model):
 
     def __str__(self) -> str:
         return f"{self.get_tipo_display()} - {self.chamado.protocolo}"
+
+
+# =====================================
+# ExecutionSession
+# ====================================
+
+
+def _default_expires_at():
+    # dado: agora + 2h (sem job ainda; só dado)
+    return timezone.now() + timedelta(hours=2)
+
+
+class ExecutionSessionQuerySet(models.QuerySet):
+    def active(self) -> ExecutionSessionQuerySet:
+        return self.filter(ended_at__isnull=True, expires_at__gt=timezone.now())
+
+
+class ExecutionSession(models.Model):
+    class EndReason(models.TextChoices):
+        FINALIZADO = "FINALIZADO", "Finalizado"
+        CANCELADO = "CANCELADO", "Cancelado"
+        TIMEOUT = "TIMEOUT", "Timeout"
+        OUTRO = "OUTRO", "Outro"
+
+    chamado = models.ForeignKey(
+        "execucao.Chamado",
+        on_delete=models.CASCADE,
+        related_name="execution_sessions",
+    )
+    usuario = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name="execution_sessions",
+    )
+
+    started_at = models.DateTimeField(default=timezone.now)
+    expires_at = models.DateTimeField(default=_default_expires_at)
+
+    ended_at = models.DateTimeField(null=True, blank=True)
+    ended_reason = models.CharField(
+        max_length=20,
+        choices=EndReason.choices,
+        null=True,
+        blank=True,
+    )
+
+    objects = ExecutionSessionQuerySet.as_manager()
+
+    class Meta:
+        constraints = [
+            # “sessão ativa” == ended_at is null AND expires_at > now()
+            models.UniqueConstraint(
+                fields=["chamado"],
+                condition=Q(ended_at__isnull=True),
+                name="uniq_open_execution_session_per_chamado",
+            )
+        ]
+        indexes = [
+            models.Index(fields=["chamado", "ended_at"]),
+            models.Index(fields=["usuario", "ended_at"]),
+            models.Index(fields=["expires_at"]),
+        ]
+
+    def __str__(self) -> str:
+        return f"ExecutionSession(chamado_id={self.chamado_id}, usuario_id={self.usuario_id})"
+
+    @property
+    def is_active(self) -> bool:
+        return self.ended_at is None and self.expires_at > timezone.now()
+
+    def end(self, reason: str | None = None) -> None:
+        if self.ended_at is None:
+            self.ended_at = timezone.now()
+            if reason:
+                self.ended_reason = reason
