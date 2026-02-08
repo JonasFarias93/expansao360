@@ -1,4 +1,3 @@
-# web/execucao/tests/test_api_lojas_lookup.py
 from __future__ import annotations
 
 from cadastro.models import Loja
@@ -28,14 +27,11 @@ class LojaLookupPorCodigoApiTests(TestCase):
     def test_lookup_invalido_retorna_400(self) -> None:
         url = reverse("execucao:api_loja_lookup")
 
-        # vazio
         resp1 = self.client.get(url, {"codigo": ""})
         self.assertEqual(resp1.status_code, 400)
 
-        # não numérico
         resp2 = self.client.get(url, {"codigo": "35A0"})
         self.assertEqual(resp2.status_code, 400)
 
-        # ausente
         resp3 = self.client.get(url)
         self.assertEqual(resp3.status_code, 400)
