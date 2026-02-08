@@ -1308,3 +1308,27 @@ Evitar edição concorrente e permitir reentrada do mesmo técnico com auditoria
 - “Abrir” é POST.
 - Auditoria mínima: `ExecutionSession.usuario` e `started_at`.
 - Redirecionamento: `ABERTO -> setup`, demais -> detalhe.
+
+
+---
+
+## 2026-02-08 — IAM: capabilities padronizadas para Execução
+
+**Decisão**
+Definir e seedar no `iam` as capabilities do módulo Execução:
+- `execucao.chamado_ver`
+- `execucao.chamado_editar`
+- `execucao.chamado_finalizar`
+- `execucao.sessao_tomar`
+
+Papéis base (contrato):
+- tecnico: ver + editar
+- coordenador (opcional): ver + editar + finalizar
+- admin_operacional: ver + editar + finalizar + tomar sessão
+
+**Contexto**
+Antes de evoluir para “salvar/finalizar/tomar sessão”, precisamos de uma base única de autorização.
+
+**Consequências**
+- Evita regras soltas e strings espalhadas.
+- Garante que os códigos existam no banco via migração.
