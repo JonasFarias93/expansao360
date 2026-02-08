@@ -40,6 +40,7 @@ urlpatterns = [
         views.tipos_por_equipamento,
         name="ajax_tipos_por_equipamento",
     ),
+    path("api/kits/<int:pk>/itens/", views.KitItensApiView.as_view(), name="api_kit_itens"),
     # Equipamento
     path(
         "equipamentos/novo/",

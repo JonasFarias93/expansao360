@@ -1,7 +1,18 @@
 # web/execucao/views.py
+
+# ================
+# sessao:imports_python
+# ================
 from __future__ import annotations
 
+# ================
+# sessao:imports_apps_locais
+# ================
 from cadastro.models import Projeto, Subprojeto
+
+# ================
+# sessao:imports_django_core
+# ================
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
@@ -14,8 +25,12 @@ from django.utils.decorators import method_decorator
 from django.utils.html import escape
 from django.views import View
 from django.views.decorators.csrf import ensure_csrf_cookie
+from django.views.decorators.http import require_POST
 from django.views.generic import TemplateView
 from iam.mixins import CapabilityRequiredMixin
+
+from execucao.models import ExecutionSession
+from execucao.services.open_session import SessionBlockedError, open_session
 
 from .forms import ChamadoCreateForm
 from .models import (
@@ -27,6 +42,9 @@ from .models import (
 )
 
 
+# ================
+# sessao:utilitarios_internos
+# ================
 def _push_validation_error_messages(request: HttpRequest, exc: ValidationError) -> None:
     """
     Normaliza ValidationError para mensagens no Django messages framework.
@@ -43,9 +61,9 @@ def _push_validation_error_messages(request: HttpRequest, exc: ValidationError) 
         messages.error(request, msg)
 
 
-# ============================
-# AJAX: SUBPROJETOS POR PROJETO
-# ============================
+# ================
+# sessao:ajax_subprojetos
+# ================
 @login_required
 def subprojetos_por_projeto(request: HttpRequest) -> HttpResponse:
     """
@@ -74,9 +92,9 @@ def subprojetos_por_projeto(request: HttpRequest) -> HttpResponse:
     return HttpResponse("".join(options))
 
 
-# ==================
-# CHAMADO (ABERTURA)
-# ==================
+# ================
+# sessao:chamado_abertura
+# ================
 class ChamadoCreateView(CapabilityRequiredMixin, View):
     required_capability = "execucao.chamado.criar"
     template_name = "execucao/chamado_abertura.html"
@@ -127,9 +145,40 @@ class ChamadoCreateView(CapabilityRequiredMixin, View):
         return redirect("execucao:chamado_setup", chamado_id=chamado.id)
 
 
-# ==================
-# CHAMADO (SETUP)
-# ==================
+@login_required
+@require_POST
+def chamado_abrir(request, chamado_id: int):
+    chamado = get_object_or_404(Chamado, pk=chamado_id)
+
+    try:
+        open_session(chamado=chamado, user=request.user)
+    except SessionBlockedError:
+        from execucao.services.execution_session import get_active_session
+
+        active = get_active_session(chamado=chamado)
+        if active is not None:
+            messages.error(
+                request,
+                (
+                    f"Chamado em execução por {active.usuario} "
+                    f"desde {active.started_at:%d/%m/%Y %H:%M}."
+                ),
+            )
+        else:
+            messages.error(request, "Chamado em execução por outro usuário.")
+
+        return redirect("execucao:chamado_detalhe", chamado_id=chamado.id)
+
+    # Direciona para a tela “editável” correta
+    if chamado.status == Chamado.Status.ABERTO:
+        return redirect("execucao:chamado_setup", chamado_id=chamado.id)
+
+    return redirect("execucao:chamado_detalhe", chamado_id=chamado.id)
+
+
+# ================
+# sessao:chamado_setup
+# ================
 @method_decorator(ensure_csrf_cookie, name="dispatch")
 class ChamadoSetupView(CapabilityRequiredMixin, View):
     """
@@ -191,9 +240,9 @@ class ChamadoSetupView(CapabilityRequiredMixin, View):
         return render(request, self.template_name, context)
 
 
-# ==================
-# FILA (HOME)
-# ==================
+# ================
+# sessao:fila_operacional
+# ================
 class ChamadoFilaView(CapabilityRequiredMixin, TemplateView):
     template_name = "execucao/fila_operacional.html"
     required_capability = "execucao.chamado.visualizar"
@@ -370,12 +419,34 @@ class ChamadoFilaView(CapabilityRequiredMixin, TemplateView):
 
         ctx["chamados"] = rows
         ctx["rows"] = rows
+
+        # 6) sessões ativas (MVP lock na fila) — 1 query, sem N+1
+        chamado_ids = [r["chamado"].id for r in rows]
+
+        active_sessions_by_chamado: dict[int, ExecutionSession] = {}
+        if chamado_ids:
+            now = timezone.now()
+            qs_sessions = (
+                ExecutionSession.objects.filter(
+                    chamado_id__in=chamado_ids,
+                    ended_at__isnull=True,
+                    expires_at__gt=now,
+                )
+                .select_related("usuario")
+                .order_by("chamado_id", "-started_at")
+            )
+
+            for s in qs_sessions:
+                if s.chamado_id not in active_sessions_by_chamado:
+                    active_sessions_by_chamado[s.chamado_id] = s
+
+        ctx["execucao_active_sessions_by_chamado"] = active_sessions_by_chamado
         return ctx
 
 
-# ==================
-# HISTÓRICO
-# ==================
+# ================
+# sessao:historico
+# ================
 class HistoricoView(CapabilityRequiredMixin, TemplateView):
     template_name = "execucao/historico_chamados.html"
     required_capability = "execucao.chamado.visualizar"
@@ -414,9 +485,9 @@ class HistoricoView(CapabilityRequiredMixin, TemplateView):
         return ctx
 
 
-# ==================
-# CHAMADO (EXECUÇÃO)
-# ==================
+# ================
+# sessao:chamado_execucao
+# ================
 class ChamadoExecucaoView(CapabilityRequiredMixin, TemplateView):
     template_name = "execucao/chamado_execucao.html"
     required_capability = "execucao.chamado.visualizar"
@@ -487,9 +558,9 @@ class ChamadoExecucaoView(CapabilityRequiredMixin, TemplateView):
         return ctx
 
 
-# ==========================
-# CHAMADO: ADMIN / WORKFLOW
-# ==========================
+# ================
+# sessao:chamado_workflow_acoes
+# ================
 class ChamadoInformarContabilView(CapabilityRequiredMixin, View):
     required_capability = "execucao.chamado.editar_referencias"
 
@@ -607,9 +678,9 @@ class ChamadoConfirmarColetaView(CapabilityRequiredMixin, View):
         return redirect("execucao:chamado_detalhe", chamado_id=chamado.id)
 
 
-# ==================
-# ITENS (SETUP + EXECUÇÃO)
-# ==================
+# ================
+# sessao:chamado_itens_update
+# ================
 class ChamadoAtualizarItensView(CapabilityRequiredMixin, View):
     required_capability = "execucao.chamado.editar_itens"
 
@@ -700,6 +771,9 @@ class ChamadoAtualizarItensView(CapabilityRequiredMixin, View):
         return redirect("execucao:chamado_detalhe", chamado_id=chamado.id)
 
 
+# ================
+# sessao:chamado_finalizacao
+# ================
 class ChamadoFinalizarView(CapabilityRequiredMixin, View):
     required_capability = "execucao.chamado.finalizar"
 
@@ -718,9 +792,9 @@ class ChamadoFinalizarView(CapabilityRequiredMixin, View):
         return redirect("execucao:chamado_detalhe", chamado_id=chamado.id)
 
 
-# ==================
-# EVIDÊNCIAS
-# ==================
+# ================
+# sessao:evidencias
+# ================
 class ChamadoAdicionarEvidenciaView(CapabilityRequiredMixin, View):
     required_capability = "execucao.evidencia.upload"
 
@@ -775,9 +849,9 @@ class EvidenciaRemoverView(CapabilityRequiredMixin, View):
         return redirect("execucao:chamado_detalhe", chamado_id=chamado.id)
 
 
-# ==================
-# ITENS / CONFIGURAÇÃO
-# ==================
+# ================
+# sessao:item_configuracao_status
+# ================
 class ItemSetStatusConfiguracaoView(CapabilityRequiredMixin, View):
     required_capability = "execucao.item_configuracao.alterar_status"
 

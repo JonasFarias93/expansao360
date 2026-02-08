@@ -1,182 +1,76 @@
-console.log("tipos_formset carregou - vTEST");
-
-
+// web/cadastro/static/cadastro/js/tipos_formset.js
 (function () {
-  // ============================
-  // 1) FORMSET: adicionar "Tipo" (cadastro de equipamentos/categorias)
-  // ============================
-  function initTiposCrudFormset() {
-    const addBtn = document.getElementById("btn-add-tipo");
-    const container = document.getElementById("tipos-container");
-    const totalForms = document.getElementById("id_tipos-TOTAL_FORMS");
-    const rowTemplate = document.getElementById("tipo-empty-form-template");
+  function buildOptions(items, selectedValue) {
+    const opts = ['<option value="">---------</option>'];
 
-    if (!addBtn || !container || !totalForms || !rowTemplate) return;
-
-    function addRow() {
-      const index = parseInt(totalForms.value, 10);
-      const html = rowTemplate.innerHTML.replaceAll("__prefix__", String(index));
-
-      const wrapper = document.createElement("div");
-      wrapper.className = "border-t border-slate-100 pt-3 tipo-row";
-      wrapper.innerHTML = html;
-
-      container.appendChild(wrapper);
-      totalForms.value = String(index + 1);
+    for (const it of items) {
+      const id = String(it.id);
+      const nome = String(it.nome ?? "");
+      const selected = selectedValue && String(selectedValue) === id ? " selected" : "";
+      opts.push(`<option value="${id}"${selected}>${nome}</option>`);
     }
-
-    addBtn.addEventListener("click", addRow);
+    return opts.join("");
   }
 
-  // ============================
-  // 2) KIT: "Tipo" dependente do "Equipamento" (AJAX)
-  //    ✅ Delegação de eventos (resolve linhas novas)
-  // ============================
-  function getKitContainer() {
-    return document.getElementById("itens-container");
+  async function fetchTipos(tiposUrl, equipamentoId) {
+    const url = `${tiposUrl}?equipamento_id=${encodeURIComponent(equipamentoId)}`;
+    const resp = await fetch(url, { headers: { "X-Requested-With": "XMLHttpRequest" } });
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    return await resp.json(); // endpoint atual retorna JSON
   }
 
-  function getTiposUrl() {
-    const container = getKitContainer();
-    return container?.dataset?.tiposUrl || "";
+  function getTipoSelectFromEquipSelect(equipSelect) {
+    // mesmo prefix do formset: troca "-equipamento" por "-tipo"
+    const tipoName = equipSelect.name.replace("-equipamento", "-tipo");
+    return document.querySelector(`select[name="${CSS.escape(tipoName)}"]`);
   }
 
-  function resetTipoSelect(selectEl) {
-    selectEl.innerHTML = "";
-    const opt = document.createElement("option");
-    opt.value = "";
-    opt.textContent = "---------";
-    selectEl.appendChild(opt);
-  }
-
-  async function fetchTiposPorEquipamento(equipamentoId) {
-    const baseUrl = getTiposUrl();
-    if (!baseUrl) {
-      console.error(
-        "data-tipos-url não encontrado em #itens-container. " +
-          "Confirme o atributo no kits_update.html."
-      );
-      return [];
-    }
-
-    const url = `${baseUrl}?equipamento_id=${encodeURIComponent(equipamentoId)}`;
-
-    let resp;
-    try {
-      resp = await fetch(url, {
-        headers: { "X-Requested-With": "XMLHttpRequest" },
-      });
-    } catch (err) {
-      console.error("Erro de rede ao buscar tipos:", err);
-      return [];
-    }
-
-    if (!resp.ok) {
-      console.error("Falha ao buscar tipos:", resp.status, url);
-      return [];
-    }
-
-    try {
-      return await resp.json();
-    } catch (err) {
-      console.error("JSON inválido em tipos-por-equipamento:", err);
-      return [];
-    }
-  }
-
-  async function loadTiposForRow(rowEl, equipamentoSelect) {
-    const tipoSelect = rowEl.querySelector('select[name$="-tipo"]');
+  async function hydrateTipoForRow(equipSelect, tiposUrl) {
+    const equipamentoId = equipSelect.value;
+    const tipoSelect = getTipoSelectFromEquipSelect(equipSelect);
     if (!tipoSelect) return;
 
-    resetTipoSelect(tipoSelect);
+    // guarda seleção atual (Django já seta value mesmo sem options)
+    const currentTipoValue = tipoSelect.value;
 
-    const equipamentoId = (equipamentoSelect.value || "").trim();
-    if (!equipamentoId) return;
+    if (!equipamentoId) {
+      tipoSelect.innerHTML = '<option value="">---------</option>';
+      tipoSelect.value = "";
+      return;
+    }
 
-    const tipos = await fetchTiposPorEquipamento(equipamentoId);
+    try {
+      const tipos = await fetchTipos(tiposUrl, equipamentoId);
+      tipoSelect.innerHTML = buildOptions(tipos, currentTipoValue);
 
-    for (const t of tipos) {
-      const opt = document.createElement("option");
-      opt.value = t.id;
-      opt.textContent = t.nome;
-      tipoSelect.appendChild(opt);
+      // garante re-seleção (caso o option selected não bastou)
+      if (currentTipoValue) tipoSelect.value = String(currentTipoValue);
+    } catch (e) {
+      // fallback seguro
+      tipoSelect.innerHTML = '<option value="">---------</option>';
     }
   }
 
-  function initKitTiposDelegation() {
-    const container = getKitContainer();
+  document.addEventListener("DOMContentLoaded", () => {
+    const container = document.getElementById("itens-container");
     if (!container) return;
 
-    // ✅ evita bind duplicado (importante pra testes e para páginas com re-init)
-    if (container.dataset.tiposDelegationBound === "1") return;
-    container.dataset.tiposDelegationBound = "1";
+    const tiposUrl = container.getAttribute("data-tipos-url");
+    if (!tiposUrl) return;
 
-    // ✅ Delegação: pega change de qualquer linha, inclusive as adicionadas via JS
+    // 1) no load: hidrata todas as linhas que já possuem equipamento
+    const equips = container.querySelectorAll('select[name$="-equipamento"]');
+    equips.forEach((equipSelect) => {
+      if (equipSelect.value) hydrateTipoForRow(equipSelect, tiposUrl);
+    });
+
+    // 2) on change: hidrata a linha atual
     container.addEventListener("change", (ev) => {
       const target = ev.target;
       if (!(target instanceof HTMLSelectElement)) return;
+      if (!target.name.endsWith("-equipamento")) return;
 
-      // só interessa o select do equipamento
-      if (!target.matches('select[name$="-equipamento"]')) return;
-
-      const row = target.closest("div.border");
-      if (!row) return;
-
-      loadTiposForRow(row, target);
+      hydrateTipoForRow(target, tiposUrl);
     });
-
-    // ✅ opcional: se houver linhas já preenchidas (equipamento selecionado),
-    // carrega tipos no load (sem depender de change)
-    container.querySelectorAll('select[name$="-equipamento"]').forEach((sel) => {
-      const row = sel.closest("div.border");
-      if (!row) return;
-      if ((sel.value || "").trim()) {
-        loadTiposForRow(row, sel);
-      } else {
-        const tipoSelect = row.querySelector('select[name$="-tipo"]');
-        if (tipoSelect) resetTipoSelect(tipoSelect);
-      }
-    });
-  }
-
-  // Mantém API pública (não atrapalha e é útil)
-  window.TiposFormset = window.TiposFormset || {};
-  window.TiposFormset.initRow = function (rowEl) {
-    const equipamentoSelect = rowEl.querySelector('select[name$="-equipamento"]');
-    if (!equipamentoSelect) return;
-
-    // garante placeholder no tipo
-    const tipoSelect = rowEl.querySelector('select[name$="-tipo"]');
-    if (tipoSelect) resetTipoSelect(tipoSelect);
-
-    // se já veio com valor, carrega
-    if ((equipamentoSelect.value || "").trim()) {
-      loadTiposForRow(rowEl, equipamentoSelect);
-    }
-  };
-
-  window.TiposFormset.initAll = function () {
-    initKitTiposDelegation();
-  };
-
-  function initAll() {
-    initTiposCrudFormset();
-    initKitTiposDelegation();
-  }
-
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", initAll);
-  } else {
-    initAll();
-  }
-
-  // API interna só para testes / debug
-window.__cadastro__ = window.__cadastro__ || {};
-window.__cadastro__.initTiposFormset = function () {
-  initAll();
-};
-
+  });
 })();
-
-
-

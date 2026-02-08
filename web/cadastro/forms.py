@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from django import forms
+from django.db.models import Q
 from django.forms import inlineformset_factory
 from django.urls import reverse_lazy
 
@@ -152,7 +153,6 @@ class SubprojetoForm(forms.ModelForm):
 
         # UX: ordenar projetos no select
         self.fields["projeto"].queryset = Projeto.objects.order_by("codigo", "nome")
-
         apply_tailwind_styles(self)
 
 
@@ -176,7 +176,6 @@ class EquipamentoForm(forms.ModelForm):
 
         # UX: ordenar categorias no select
         self.fields["categoria"].queryset = Categoria.objects.order_by("nome")
-
         apply_tailwind_styles(self)
 
 
@@ -218,26 +217,56 @@ class ItemKitForm(forms.ModelForm):
         # default: vazio (evita escolher tipo errado antes de selecionar equipamento)
         self.fields["tipo"].queryset = TipoEquipamento.objects.none()
 
-        def _set_tipos_por_equipamento(equip: Equipamento | None) -> None:
+        def _set_tipos_por_categoria_id(categoria_id: int | None) -> None:
             """
-            TipoEquipamento pertence a Categoria, então filtramos por:
-              equipamento.categoria -> tipos ativos
+            Popula o select de tipos a partir da categoria.
+            BLINDAGEM: inclui o tipo atual da instância mesmo se indisponível
+            (evita "---------" ao editar itens antigos).
             """
-            if not equip or not getattr(equip, "categoria_id", None):
+            if not categoria_id:
                 self.fields["tipo"].queryset = TipoEquipamento.objects.none()
                 return
 
-            self.fields["tipo"].queryset = TipoEquipamento.objects.filter(
-                categoria_id=equip.categoria_id,
-                disponivel=True,
-            ).order_by("nome")
+            tipo_atual_id = getattr(self.instance, "tipo_id", None)
 
-        # Caso 1: edição (instance já tem equipamento)
-        equipamento = getattr(self.instance, "equipamento", None)
-        if equipamento is not None and getattr(equipamento, "id", None):
-            _set_tipos_por_equipamento(equipamento)
+            qs = TipoEquipamento.objects.filter(categoria_id=categoria_id)
+            if tipo_atual_id:
+                qs = qs.filter(Q(disponivel=True) | Q(id=tipo_atual_id))
+            else:
+                qs = qs.filter(disponivel=True)
 
-        # Caso 2: POST (usuário selecionou equipamento no form)
+            self.fields["tipo"].queryset = qs.order_by("nome")
+
+        def _set_tipos_por_equipamento(equip: Equipamento | None) -> None:
+            """
+            TipoEquipamento pertence a Categoria -> filtra por equipamento.categoria.
+            """
+            if not equip or not getattr(equip, "categoria_id", None):
+                _set_tipos_por_categoria_id(None)
+                return
+            _set_tipos_por_categoria_id(equip.categoria_id)
+
+        # ----------------------------
+        # Caso 1: edição (GET) - instance existente
+        # Garante queryset do tipo populado e valor selecionado aparecer no select.
+        # ----------------------------
+        if getattr(self.instance, "pk", None) and getattr(self.instance, "equipamento_id", None):
+            equipamento = getattr(self.instance, "equipamento", None)
+
+            if equipamento is not None and getattr(equipamento, "categoria_id", None):
+                _set_tipos_por_equipamento(equipamento)
+            else:
+                # fallback barato: pega apenas categoria_id do equipamento
+                categoria_id = (
+                    Equipamento.objects.filter(id=self.instance.equipamento_id)
+                    .values_list("categoria_id", flat=True)
+                    .first()
+                )
+                _set_tipos_por_categoria_id(int(categoria_id) if categoria_id else None)
+
+        # ----------------------------
+        # Caso 2: POST (form bound) - usuário selecionou equipamento no form
+        # ----------------------------
         if self.data:
             equipamento_key = f"{self.prefix}-equipamento" if self.prefix else "equipamento"
             equip_id = self.data.get(equipamento_key)
@@ -247,7 +276,7 @@ class ItemKitForm(forms.ModelForm):
                     equip = Equipamento.objects.select_related("categoria").get(id=int(equip_id))
                     _set_tipos_por_equipamento(equip)
                 except (ValueError, Equipamento.DoesNotExist):
-                    self.fields["tipo"].queryset = TipoEquipamento.objects.none()
+                    _set_tipos_por_categoria_id(None)
 
         apply_tailwind_styles(self)
 
