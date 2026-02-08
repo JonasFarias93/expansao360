@@ -64,4 +64,4 @@ class KitItensEndpointTests(TestCase):
         UserCapability.objects.all().delete()
         url = reverse("registry:api_kit_itens", args=[self.kit.id])
         resp = self.client.get(url)
-        self.assertEqual(resp.status_code, 302)
+        self.assertEqual(resp.status_code, 403)
