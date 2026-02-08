@@ -4,6 +4,8 @@ import re
 from django.core.exceptions import ValidationError
 from django.db import models
 
+from cadastro.services.codes import generate_code
+
 
 class CodeSequence(models.Model):
     """
@@ -23,14 +25,23 @@ class CodeSequence(models.Model):
 
 
 class Categoria(models.Model):
+    codigo = models.CharField(max_length=50, unique=True, blank=True)
     nome = models.CharField(max_length=80, unique=True)
+    disponivel = models.BooleanField(default=True)
 
-    class Meta:
-        verbose_name = "Categoria"
-        verbose_name_plural = "Categorias"
+    def clean(self):
+        super().clean()
+        self.nome = (self.nome or "").strip()
+        if self.pk:
+            old = self.__class__.objects.filter(pk=self.pk).values_list("codigo", flat=True).first()
+            if old is not None and (self.codigo or "") != old:
+                raise ValidationError({"codigo": "Código é imutável após criação."})
 
-    def __str__(self) -> str:
-        return self.nome
+    def save(self, *args, **kwargs):  # type: ignore[override]
+        self.nome = (self.nome or "").strip()
+        if not (self.codigo or "").strip():
+            self.codigo = generate_code("CAT")
+        return super().save(*args, **kwargs)
 
 
 def _normalize_code(value: str) -> str:
