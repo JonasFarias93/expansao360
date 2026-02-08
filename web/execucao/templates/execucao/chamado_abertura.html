@@ -40,7 +40,8 @@
       {% endif %}
 
       {# ========================================================= #}
-      {# LOJA (JAVA) — input + hidden id (name="loja") + fallback   #}
+      {# LOJA (JAVA) — input + select (hidden via details)          #}
+      {# IMPORTANTE: só deve existir 1 campo name="loja" (o select) #}
       {# ========================================================= #}
       <div class="space-y-1">
         <label for="id_loja_codigo" class="block text-sm font-medium text-slate-700 mb-1">
@@ -55,29 +56,21 @@
             inputmode="numeric"
             autocomplete="off"
             placeholder="Ex: 3500"
-            class="w-full rounded-md border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-slate-400 focus:outline-none focus:ring-0"
+            class="flex-1 rounded-md border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-slate-400 focus:outline-none focus:ring-0"
             value="{{ request.POST.loja_codigo|default_if_none:'' }}"
             data-lookup-url="{% url 'execucao:api_loja_lookup' %}"
           />
 
-          {# Campo real usado no POST pelo Django Form (ModelChoiceField: name="loja") #}
-          <input
-            type="hidden"
-            id="id_loja"
-            name="loja"
-            value="{{ request.POST.loja|default_if_none:'' }}"
-          />
-        </div>
-
-        <div class="flex items-center gap-2 mt-2">
           <button
             type="button"
             id="btn-loja-validar"
-            class="inline-flex items-center rounded-md bg-slate-900 px-3 py-2 text-sm font-medium text-white hover:bg-slate-800"
+            class="h-10 shrink-0 rounded-md bg-slate-900 px-4 text-sm font-medium text-white hover:bg-slate-800"
           >
             Validar
           </button>
+        </div>
 
+        <div class="mt-2">
           <span id="loja-status" class="text-sm text-slate-600"></span>
         </div>
 
@@ -86,7 +79,7 @@
           <div class="text-sm text-red-600 mt-1">{{ form.loja.errors }}</div>
         {% endif %}
 
-        {# Fallback técnico (manual) — fora do fluxo principal #}
+        {# Fallback técnico: o SELECT real (name="loja") fica aqui #}
         <details class="mt-2 rounded-md border border-slate-200 bg-slate-50 p-3">
           <summary class="cursor-pointer text-sm text-slate-700">
             Lista Loja
