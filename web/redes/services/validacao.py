@@ -28,15 +28,11 @@ class ClassificationResult:
     suggestion: str | None = None
 
 
-# -------------------------------------------------------------------
 # Reasons padronizados (curtos e testáveis)
-# -------------------------------------------------------------------
-
 REASON_INVALID_IP_FORMAT = "INVALID_IP_FORMAT"
 REASON_PREFIX_MISMATCH = "PREFIX_MISMATCH"  # "não pertence à loja"
 REASON_NOT_IMPLEMENTED = "NOT_IMPLEMENTED"
 
-# TC
 REASON_TC_LEGACY_OK = "TC_LEGACY_OK"
 REASON_TC_LEGACY_REJECT_134 = "TC_LEGACY_REJECT_134"
 REASON_TC_LEGACY_REJECT = "TC_LEGACY_REJECT"
@@ -45,62 +41,18 @@ REASON_TC_SEGMENTADO_OK = "TC_SEGMENTADO_OK"
 REASON_TC_SEGMENTADO_REJECT_11 = "TC_SEGMENTADO_REJECT_11"
 REASON_TC_SEGMENTADO_REJECT = "TC_SEGMENTADO_REJECT"
 
-# Typo warning
 REASON_TYPO_WARNING = "TYPO_WARNING"
-
-# RETAGUARDA_LOJA (MVP: offsets fixos por item e por perfil)
-REASON_RETAGUARDA_LEGACY_OK = "RETAGUARDA_LEGACY_OK"
-REASON_RETAGUARDA_LEGACY_REJECT = "RETAGUARDA_LEGACY_REJECT"
-REASON_RETAGUARDA_SEGMENTADO_OK = "RETAGUARDA_SEGMENTADO_OK"
-REASON_RETAGUARDA_SEGMENTADO_REJECT = "RETAGUARDA_SEGMENTADO_REJECT"
-
-# IMPRESSORAS_ETH (RD_SEGMENTADO_2024/2025)
-REASON_IMPRESSORAS_ETH_SEGMENTADO_OK = "IMPRESSORAS_ETH_SEGMENTADO_OK"
-REASON_IMPRESSORAS_ETH_SEGMENTADO_REJECT = "IMPRESSORAS_ETH_SEGMENTADO_REJECT"
-
-# CONSULTA_PRECO (RD_SEGMENTADO_2024/2025) — novo
-REASON_CONSULTA_PRECO_SEGMENTADO_OK = "CONSULTA_PRECO_SEGMENTADO_OK"
-REASON_CONSULTA_PRECO_SEGMENTADO_REJECT = "CONSULTA_PRECO_SEGMENTADO_REJECT"
-
-
-# -------------------------------------------------------------------
-# Catálogo MVP (sem DB): offsets por perfil e tipo
-# -------------------------------------------------------------------
-
-RETAGUARDA_OFFSETS_LEGACY: dict[str, int] = {
-    "BANCO12": 12,
-    "GERENCIA": 30,
-    "FARMA": 60,
-    "RH": 70,
-}
-
-RETAGUARDA_OFFSETS_SEGMENTADO: dict[str, int] = {
-    "RH": 129,
-    "GERENCIA": 130,
-    "FARMA": 131,
-    "BANCO12": 12,
-}
-
-IMPRESSORAS_ETH_OFFSETS_SEGMENTADO: set[int] = {161, 162, 163}
-
-# Consulta preço: MVP só .193/.194 (.195 a confirmar)
-CONSULTA_PRECO_OFFSETS_SEGMENTADO: set[int] = {193, 194}
-
-# Aliases aceitos (mantém compatível com nomes mais “humanos”/docs)
-TIPO_ALIASES: dict[str, str] = {
-    "MICRO_GERENCIA": "GERENCIA",
-    "MICRO_FARMA": "FARMA",
-    "PORTAL_DO_SABER": "RH",
-    "PORTAL_DO_SABER_RH": "RH",
-}
 
 
 def classificar_ip(perfil: Any, base_ip: str, ip: str) -> ClassificationResult:
     """
+    classificar_ip(perfil, base_ip, ip) -> retorna tipo provável + severidade (ok/warn/erro)
     MVP: só classifica "TC" (demais tipos ficam como desconhecido por enquanto).
     """
+    # 1) valida formato e prefixo (regra global)
     prefix_check = _validate_prefix(base_ip, ip)
     if prefix_check is not None:
+        # erro de formato/prefixo: não tem como classificar corretamente
         return ClassificationResult(
             probable_tipo=None,
             severity=prefix_check.severity,
@@ -108,8 +60,10 @@ def classificar_ip(perfil: Any, base_ip: str, ip: str) -> ClassificationResult:
             suggestion=prefix_check.suggestion,
         )
 
+    # 2) tenta classificar como TC (única regra MVP)
     tc = validar_ip_para_tipo(perfil, base_ip, ip, "TC")
     if tc.severity == Severity.WARN and tc.reason == REASON_TYPO_WARNING:
+        # warning de typo, mas ainda “provável TC”
         return ClassificationResult(
             probable_tipo="TC",
             severity=Severity.WARN,
@@ -125,6 +79,7 @@ def classificar_ip(perfil: Any, base_ip: str, ip: str) -> ClassificationResult:
             suggestion=tc.suggestion,
         )
 
+    # 3) sem match
     return ClassificationResult(
         probable_tipo=None,
         severity=Severity.WARN,
@@ -135,187 +90,95 @@ def classificar_ip(perfil: Any, base_ip: str, ip: str) -> ClassificationResult:
 
 def validar_ip_para_tipo(perfil: Any, base_ip: str, ip: str, tipo: str) -> ValidationResult:
     """
-    MVP:
-    - TC
-    - RETAGUARDA_LOJA: BANCO12, GERENCIA, FARMA, RH (com aliases)
-    - IMPRESSORAS_ETH: offsets fixos no perfil SEGMENTADO (.161/.162/.163)
-    - CONSULTA_PRECO: offsets fixos no perfil SEGMENTADO (.193/.194)
+    validar_ip_para_tipo(perfil, base_ip, ip, tipo) -> ok/erro + motivo
+    MVP: tipo é o codigo da regra (ex: "TC")
     """
+    # 1) valida formato e prefixo (regra global)
     prefix_check = _validate_prefix(base_ip, ip)
     if prefix_check is not None:
         return prefix_check
 
-    tipo_norm = _normalize_tipo(tipo)
-    perfil_tipo = _get_perfil_tipo(perfil)
-    last_octet = _last_octet(ip)
-
-    # -----------------------
-    # TC
-    # -----------------------
-    if tipo_norm == "TC":
-        if last_octet == 111 and _tc_expects_11(perfil_tipo):
-            return ValidationResult(
-                is_valid=True,
-                reason=REASON_TYPO_WARNING,
-                severity=Severity.WARN,
-                suggestion=_suggest_fix_last_octet(ip, 11),
-            )
-
-        if perfil_tipo == "LEGACY_FLAT":
-            if last_octet == 134:
-                return ValidationResult(
-                    is_valid=False,
-                    reason=REASON_TC_LEGACY_REJECT_134,
-                    severity=Severity.ERROR,
-                    suggestion="No legado, TC não pode usar .134.",
-                )
-            if last_octet in {11, 13, 14, 15}:
-                return ValidationResult(
-                    is_valid=True,
-                    reason=REASON_TC_LEGACY_OK,
-                    severity=Severity.INFO,
-                )
-            return ValidationResult(
-                is_valid=False,
-                reason=REASON_TC_LEGACY_REJECT,
-                severity=Severity.ERROR,
-                suggestion="No legado, TC aceita apenas finais .11/.13/.14/.15.",
-            )
-
-        if perfil_tipo == "SEGMENTADO":
-            if last_octet == 11:
-                return ValidationResult(
-                    is_valid=False,
-                    reason=REASON_TC_SEGMENTADO_REJECT_11,
-                    severity=Severity.ERROR,
-                    suggestion="No segmentado, TC não pode usar .11 (use .134+).",
-                )
-            if last_octet >= 134:
-                return ValidationResult(
-                    is_valid=True,
-                    reason=REASON_TC_SEGMENTADO_OK,
-                    severity=Severity.INFO,
-                )
-            return ValidationResult(
-                is_valid=False,
-                reason=REASON_TC_SEGMENTADO_REJECT,
-                severity=Severity.ERROR,
-                suggestion="No segmentado, TC deve ser .134 ou maior.",
-            )
-
+    # 2) MVP: apenas TC
+    tipo_norm = (tipo or "").strip().upper()
+    if tipo_norm != "TC":
         return ValidationResult(
             is_valid=False,
             reason=REASON_NOT_IMPLEMENTED,
-            severity=Severity.ERROR,
-            suggestion="Tipo de perfil desconhecido (esperado LEGACY_FLAT ou SEGMENTADO).",
+            severity=Severity.WARN,
+            suggestion="MVP valida apenas tipo 'TC'.",
         )
 
-    # -----------------------
-    # RETAGUARDA_LOJA
-    # -----------------------
-    if tipo_norm in {"BANCO12", "GERENCIA", "FARMA", "RH"}:
-        expected = _retaguarda_expected_offset(perfil_tipo, tipo_norm)
-        if expected is None:
+    # 3) aplica regra por perfil (LEGACY vs SEGMENTADO)
+    perfil_tipo = _get_perfil_tipo(perfil)
+
+    last_octet = _last_octet(ip)
+
+    # Typo warning (exigência): .111 quando esperado .11 -> WARN (não bloqueia)
+    # MVP: só dispara esse warning quando o perfil/tipo teria como caso comum o .11
+    if last_octet == 111 and _tc_expects_11(perfil_tipo):
+        return ValidationResult(
+            is_valid=True,
+            reason=REASON_TYPO_WARNING,
+            severity=Severity.WARN,
+            suggestion=_suggest_fix_last_octet(ip, 11),
+        )
+
+    if perfil_tipo == "LEGACY_FLAT":
+        # Legado: TC aceita .11/.13/.14/.15 e rejeita .134
+        if last_octet == 134:
             return ValidationResult(
                 is_valid=False,
-                reason=REASON_NOT_IMPLEMENTED,
+                reason=REASON_TC_LEGACY_REJECT_134,
                 severity=Severity.ERROR,
-                suggestion="Tipo de perfil desconhecido (esperado LEGACY_FLAT ou SEGMENTADO).",
+                suggestion="No legado, TC não pode usar .134.",
             )
-
-        if last_octet == expected:
+        if last_octet in {11, 13, 14, 15}:
             return ValidationResult(
                 is_valid=True,
-                reason=(
-                    REASON_RETAGUARDA_LEGACY_OK
-                    if perfil_tipo == "LEGACY_FLAT"
-                    else REASON_RETAGUARDA_SEGMENTADO_OK
-                ),
+                reason=REASON_TC_LEGACY_OK,
                 severity=Severity.INFO,
             )
-
         return ValidationResult(
             is_valid=False,
-            reason=(
-                REASON_RETAGUARDA_LEGACY_REJECT
-                if perfil_tipo == "LEGACY_FLAT"
-                else REASON_RETAGUARDA_SEGMENTADO_REJECT
-            ),
+            reason=REASON_TC_LEGACY_REJECT,
             severity=Severity.ERROR,
-            suggestion=_suggest_fix_last_octet(ip, expected),
+            suggestion="No legado, TC aceita apenas finais .11/.13/.14/.15.",
         )
 
-    # -----------------------
-    # IMPRESSORAS_ETH (SEGMENTADO)
-    # -----------------------
-    if tipo_norm == "IMPRESSORAS_ETH":
-        if perfil_tipo != "SEGMENTADO":
+    if perfil_tipo == "SEGMENTADO":
+        # Segmentado: TC aceita .134+ e rejeita .11
+        if last_octet == 11:
             return ValidationResult(
                 is_valid=False,
-                reason=REASON_NOT_IMPLEMENTED,
+                reason=REASON_TC_SEGMENTADO_REJECT_11,
                 severity=Severity.ERROR,
-                suggestion="IMPRESSORAS_ETH é aplicável apenas ao perfil SEGMENTADO.",
+                suggestion="No segmentado, TC não pode usar .11 (use .134+).",
             )
-
-        if last_octet in IMPRESSORAS_ETH_OFFSETS_SEGMENTADO:
+        if last_octet >= 134:
             return ValidationResult(
                 is_valid=True,
-                reason=REASON_IMPRESSORAS_ETH_SEGMENTADO_OK,
+                reason=REASON_TC_SEGMENTADO_OK,
                 severity=Severity.INFO,
             )
-
-        expected_hint = min(IMPRESSORAS_ETH_OFFSETS_SEGMENTADO)
         return ValidationResult(
             is_valid=False,
-            reason=REASON_IMPRESSORAS_ETH_SEGMENTADO_REJECT,
+            reason=REASON_TC_SEGMENTADO_REJECT,
             severity=Severity.ERROR,
-            suggestion=_suggest_fix_last_octet(ip, expected_hint),
+            suggestion="No segmentado, TC deve ser .134 ou maior.",
         )
 
-    # -----------------------
-    # CONSULTA_PRECO (SEGMENTADO)
-    # -----------------------
-    if tipo_norm == "CONSULTA_PRECO":
-        if perfil_tipo != "SEGMENTADO":
-            return ValidationResult(
-                is_valid=False,
-                reason=REASON_NOT_IMPLEMENTED,
-                severity=Severity.ERROR,
-                suggestion="CONSULTA_PRECO é aplicável apenas ao perfil SEGMENTADO.",
-            )
-
-        if last_octet in CONSULTA_PRECO_OFFSETS_SEGMENTADO:
-            return ValidationResult(
-                is_valid=True,
-                reason=REASON_CONSULTA_PRECO_SEGMENTADO_OK,
-                severity=Severity.INFO,
-            )
-
-        expected_hint = min(CONSULTA_PRECO_OFFSETS_SEGMENTADO)
-        return ValidationResult(
-            is_valid=False,
-            reason=REASON_CONSULTA_PRECO_SEGMENTADO_REJECT,
-            severity=Severity.ERROR,
-            suggestion=_suggest_fix_last_octet(ip, expected_hint),
-        )
-
+    # Perfil desconhecido => falha explícita e testável
     return ValidationResult(
         is_valid=False,
         reason=REASON_NOT_IMPLEMENTED,
-        severity=Severity.WARN,
-        suggestion="MVP valida apenas tipo 'TC', "
-        "itens de retaguarda, IMPRESSORAS_ETH e CONSULTA_PRECO.",
+        severity=Severity.ERROR,
+        suggestion="Tipo de perfil desconhecido (esperado LEGACY_FLAT ou SEGMENTADO).",
     )
 
 
-# -------------------------------------------------------------------
+# -----------------------
 # Helpers (privados)
-# -------------------------------------------------------------------
-
-
-def _normalize_tipo(tipo: str) -> str:
-    norm = (tipo or "").strip().upper()
-    return TIPO_ALIASES.get(norm, norm)
+# -----------------------
 
 
 def _validate_prefix(base_ip: str, ip: str) -> ValidationResult | None:
@@ -349,6 +212,7 @@ def _parse_ipv4(value: str) -> IPv4Address | None:
 
 
 def _prefix_24(ip: IPv4Address) -> tuple[int, int, int]:
+    # considera /24: compara 3 primeiros octetos
     s = str(ip).split(".")
     return int(s[0]), int(s[1]), int(s[2])
 
@@ -358,6 +222,12 @@ def _last_octet(ip: str) -> int:
 
 
 def _get_perfil_tipo(perfil: Any) -> str:
+    """
+    Aceita:
+    - objeto com atributo .tipo (ex: PerfilRede Django)
+    - dict {"tipo": "..."}
+    - string direta "LEGACY_FLAT"/"SEGMENTADO"
+    """
     if perfil is None:
         return ""
 
@@ -372,17 +242,8 @@ def _get_perfil_tipo(perfil: Any) -> str:
 
 
 def _tc_expects_11(perfil_tipo: str) -> bool:
+    # MVP: no legado, .11 é esperado; no segmentado, é explicitamente rejeitado
     return perfil_tipo == "LEGACY_FLAT"
-
-
-def _retaguarda_expected_offset(perfil_tipo: str, tipo_norm: str) -> int | None:
-    if perfil_tipo == "LEGACY_FLAT":
-        return RETAGUARDA_OFFSETS_LEGACY.get(tipo_norm)
-
-    if perfil_tipo == "SEGMENTADO":
-        return RETAGUARDA_OFFSETS_SEGMENTADO.get(tipo_norm)
-
-    return None
 
 
 def _suggest_fix_last_octet(ip: str, expected_last: int) -> str:
