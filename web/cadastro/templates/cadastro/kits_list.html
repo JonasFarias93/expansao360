@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block title %}Kits — Cadastro{% endblock %}
 
@@ -8,15 +9,11 @@
     <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
       <div>
         <h1 class="text-2xl font-semibold text-slate-900">Kits</h1>
-        <p class="text-sm text-slate-600 mt-1">
-          Kits e itens previstos para execução.
-        </p>
+        <p class="text-sm text-slate-600 mt-1">Kits e itens previstos para execução.</p>
       </div>
 
       <div class="flex items-center gap-2">
-        <a href="{% url 'registry:kit_create' %}" class="btn btn-primary">
-          Novo kit
-        </a>
+        <a href="{% url 'registry:kit_create' %}" class="btn btn-primary">Novo kit</a>
       </div>
     </div>
 
@@ -34,29 +31,80 @@
 
           <tbody class="divide-y divide-slate-100">
             {% for k in kits %}
+              {# Linha principal #}
               <tr class="hover:bg-slate-50">
-                <td class="py-3 px-5 font-medium text-slate-900">
-                  {{ k.nome }}
-                </td>
+                <td class="py-3 px-5 font-medium text-slate-900">{{ k.nome }}</td>
 
-                <td class="py-3 pr-4 text-slate-700">
-                  {{ k.itens.count }}
-                </td>
+                <td class="py-3 pr-4 text-slate-700">{{ k.itens.count }}</td>
 
                 <td class="py-3 px-5 text-right">
-                  <a
-                    href="{% url 'registry:kit_update' k.id %}"
-                    class="btn btn-ghost px-3 py-1.5 text-xs"
+                  <div class="inline-flex items-center gap-2">
+                    <button
+                      type="button"
+                      class="btn btn-secondary px-3 py-1.5 text-xs"
+                      aria-expanded="false"
+                      aria-controls="kit-itens-{{ k.id }}"
+                      data-kit-id="{{ k.id }}"
+                      data-kit-itens-url="{% url 'registry:api_kit_itens' k.id %}"
+                    >
+                      Detalhes
+                    </button>
+
+                    {# Editar como botão de verdade (outline) #}
+                    <button
+                      type="button"
+                      class="btn btn-secondary px-3 py-1.5 text-xs"
+                      onclick="window.location.href='{% url 'registry:kit_update' k.id %}'"
+                    >
+                      Editar
+                    </button>
+                  </div>
+                </td>
+              </tr>
+
+              {# Accordion row #}
+              <tr id="kit-itens-row-{{ k.id }}" class="hidden">
+                <td colspan="3" class="bg-slate-50">
+                  <div
+                    id="kit-itens-{{ k.id }}"
+                    role="region"
+                    aria-label="Itens do kit {{ k.nome }}"
+                    class="p-4"
+                    tabindex="-1"
                   >
-                    Editar
-                  </a>
+                    <div class="text-sm text-slate-600" data-kit-itens-state>
+                      Carregando itens…
+                    </div>
+
+                    <div class="mt-3 hidden" data-kit-itens-error>
+                      <div class="text-sm text-red-700">Não foi possível carregar itens.</div>
+                    </div>
+
+                    <div class="mt-3 hidden" data-kit-itens-empty>
+                      <div class="text-sm text-slate-600">Este kit não possui itens.</div>
+                    </div>
+
+                    <div class="mt-3 hidden" data-kit-itens-list>
+                      <div class="overflow-x-auto">
+                        <table class="min-w-full text-sm">
+                          <thead>
+                            <tr class="text-left text-slate-600">
+                              <th class="py-2 pr-4 font-medium">Item</th>
+                              <th class="py-2 pr-4 font-medium">Tipo</th>
+                              <th class="py-2 pr-4 font-medium">Qtd</th>
+                              <th class="py-2 pr-4 font-medium">Configuração</th>
+                            </tr>
+                          </thead>
+                          <tbody data-kit-itens-tbody></tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </div>
                 </td>
               </tr>
             {% empty %}
               <tr>
-                <td colspan="3" class="py-10 text-slate-500 text-center">
-                  Nenhum kit cadastrado.
-                </td>
+                <td colspan="3" class="py-10 text-slate-500 text-center">Nenhum kit cadastrado.</td>
               </tr>
             {% endfor %}
           </tbody>
@@ -64,4 +112,7 @@
       </div>
     </div>
   </div>
+{% endblock %}
+{% block extra_js %}
+  <script src="{% static 'cadastro/js/kits_list.js' %}"></script>
 {% endblock %}
