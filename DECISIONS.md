@@ -951,3 +951,184 @@ Esta seção lista decisões **já registradas** que ainda não foram totalmente
 
 **Status:** Em avaliação
 **Nota:** Caso aceito, registrar ADR específica.
+
+
+---
+
+# 2026-02-08 — Intenção explícita de “código” por entidade (CodeIntent)
+
+**Status:** Aceito
+
+## Decisão
+O campo `codigo` passa a ter uma **intenção explícita por entidade**, evitando forçar um único modelo (ex: sequência) onde existe legado ou semântica de catálogo.
+
+Definimos 3 intenções possíveis:
+
+### 1) `business_key` (legado)
+Identificador de negócio existente, com regras atuais e dependências externas.
+- Exemplo: `Loja.codigo` (UI: “Java”)
+- Regra: manter valor atual e fluxo de importação/integração.
+- Governança: imutável após criação (exceto admin com ação explícita e auditável).
+
+### 2) `semantic_code` (catálogo)
+Código semântico de catálogo (legível, expressa tipo/objeto), não necessariamente sequencial.
+- Exemplo: `Equipamento.codigo` (`MICRO`, `MONITOR`, `HUB_USB`)
+- Regra: continua semântico, mas **não deve depender de digitação manual na maioria dos fluxos**.
+- Governança: normalização (ex: `upper/strip`) + política de colisão + imutabilidade.
+
+### 3) `generated_code` (protocolo/controle)
+Código gerado automaticamente no backend usando padrão `XXX-{seq}`.
+- Exemplo: `Chamado.protocolo` (equivalente ao “código do chamado”): `CHA-000981`
+- Regra: geração atômica no backend + unicidade no banco + imutável.
+
+## Contexto
+O sistema já utiliza “código” em contextos diferentes:
+- legado/importação (Loja)
+- catálogo/semântica (Equipamento)
+- rastreabilidade operacional (Chamado)
+
+Forçar “sequência para tudo” quebra legado e degrada catálogos.
+
+## Consequências
+- Cada entidade deve declarar sua intenção (`business_key`, `semantic_code`, `generated_code`) e regras de governança.
+- Mudanças de intenção (ex: migrar `semantic_code` para `generated_code`) exigem ADR próprio e plano de migração.
+- A UI deve refletir a intenção (ex: ocultar input quando o código é auto-gerado).
+
+
+
+---
+
+# 2026-02-08 — Equipamento.codigo: semantic_code auto-gerado e imutável
+
+**Status:** Proposto
+
+## Decisão
+`Equipamento.codigo` é classificado como `semantic_code` (catálogo) e passará a ser **auto-gerado no backend** quando não informado, com **normalização** e **política de colisão**.
+
+A UI não deve permitir digitação manual de `codigo` no fluxo padrão.
+
+## Regras
+### Geração (backend)
+- Se `codigo` vier vazio:
+  - gerar a partir do `nome` (normalizado)
+  - se colidir, aplicar sufixo incremental (ex: `MICRO`, `MICRO-2`, `MICRO-3`)
+
+### Entrada manual (quando vier preenchido)
+Escolha (MVP recomendada):
+- **ignorar o valor digitado** e substituir por auto-gerado (evita divergência)
+Alternativa (mais rígida):
+- recusar com erro de validação (bloqueia tentativa de “forçar” código)
+
+### Normalização
+- `strip()`
+- `upper()`
+- substituir espaços por `_` (se aplicável)
+- remover caracteres inválidos (definir conjunto permitido)
+
+### Imutabilidade
+- após criação, `codigo` não pode ser alterado via fluxo normal
+- exceção: somente admin com ação explícita (se necessário)
+
+## Contexto
+Hoje `Equipamento.codigo` é único e semântico, mas a digitação manual gera variações e divergências (`Micro`, `micro`, `MICRO-1` etc).
+
+## Consequências
+- Formulário remove input do campo `codigo`
+- Tela exibe “Gerado automaticamente”
+- Registros antigos mantêm seu `codigo` atual (sem migração destrutiva)
+- Testes garantem contrato de geração/colisão/imutabilidade
+
+
+---
+
+# 2026-02-08 — Padronizar códigos gerados (PREFIXO-SEQ) para entidades não-legado
+
+**Status:** Aceito
+
+## Decisão
+Manter `Loja.codigo` como **business_key legado** (“Java”) e **não alterar** esse campo.
+
+Para as demais entidades que hoje possuem `codigo` manual/semântico e são usadas em dashboard/relatórios,
+adotar **código gerado automaticamente no backend** no formato:
+
+- `EQP-000123` (Equipamento)
+- `CAT-000045` (Categoria)
+- `PRO-000010` (Projeto) *(se aplicável)*
+- `SUB-000001` (Subprojeto) *(se aplicável)*
+- `KIT-000007` (Kit) *(se aplicável)*
+- `CHA-000981` (Chamado) *(usando `protocolo` como código gerado)*
+
+> Padding fixo para ordenação e legibilidade.
+
+## Contexto
+- `Loja.codigo` já é chave do negócio (Java), usada em importações, histórico e filtros.
+- Os demais `codigo` hoje sofrem com divergência por digitação/variação e não têm governança consistente.
+- Precisamos de códigos estáveis, únicos, legíveis e padronizados para dashboard e relatórios.
+
+## Regras
+1) **Geração sempre no backend** (nunca no frontend).
+2) **Unicidade no banco** (`unique=True` + index).
+3) **Imutabilidade**:
+   - Após criação, o código gerado não pode ser alterado no fluxo normal.
+   - Exceção: ação administrativa explícita (se existir necessidade real).
+4) **Separação de papéis**:
+   - `Loja.codigo` permanece legado (Java).
+   - Entidades não-legado usam código gerado PREFIXO-SEQ.
+
+## Consequências
+- Exige migração de dados (backfill) para entidades que hoje têm `codigo` semântico/manual.
+- UI deve remover inputs manuais de `codigo` nas entidades migradas.
+- Testes e fixtures que dependem de `MICRO`, `P1`, etc, precisarão ser atualizados.
+
+## Plano de execução (microtarefas)
+### Fase 1 — Infra de geração (core)
+- Criar mecanismo de sequência por entidade (ex: tabela `CodeSequence` por prefixo).
+- Função única: `generate_code(prefix) -> "PREFIXO-000123"` com atomicidade.
+
+### Fase 2 — Chamado (alto valor, baixo risco)
+- `Chamado.protocolo` passa a seguir `CHA-000001`.
+- Garantir `unique=True`, `editable=False` (já existe).
+- Ajustar telas/relatórios para exibir protocolo como código do chamado.
+
+### Fase 3 — Cadastros (médio risco)
+- Migrar `Equipamento.codigo` para `EQP-xxxxxx`.
+- Migrar `Categoria.codigo` para `CAT-xxxxxx`.
+- Migrar `Projeto/Kit/Subprojeto` se forem chaves reais do dashboard.
+
+### Fase 4 — UI/UX + governança
+- Remover inputs de código onde for gerado.
+- Exibir “Gerado automaticamente”.
+- Bloquear edição no update.
+- Ajustar filtros/ordenações para códigos novos.
+
+## Nota
+Esta decisão intencionalmente NÃO altera `Loja.codigo` para evitar quebra de legado e importações.
+
+
+---
+
+# 2026-02-08 — Infra de geração de códigos (CodeSequence) + padrão PREFIXO-SEQ
+
+**Status:** Aceito
+
+## Decisão
+Criar uma infraestrutura única e reutilizável para gerar códigos no formato `PREFIXO-000001`,
+com atomicidade no backend e unicidade no banco.
+
+A geração será feita por **prefixo** (ex: `CHA`, `EQP`, `CAT`, `KIT`, `PRO`),
+mantendo um contador por prefixo.
+
+## Contexto
+Precisamos remover digitação manual e padronizar códigos estáveis e legíveis para dashboard,
+sem risco de duplicidade em concorrência.
+
+## Regras
+- Geração **somente no backend**
+- Operação atômica (lock por prefixo)
+- Código é imutável após criação (salvo exceções administrativas)
+- Padding fixo (ex: 6 dígitos): `CHA-000001`
+
+## Consequências
+- Introduz a tabela `CodeSequence` (contador por prefixo)
+- Fornece função `generate_code(prefix)` reutilizável
+- Facilita migrar entidades futuras para `PREFIXO-SEQ` sem duplicar lógica
