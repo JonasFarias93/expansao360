@@ -54,6 +54,14 @@ REASON_RETAGUARDA_LEGACY_REJECT = "RETAGUARDA_LEGACY_REJECT"
 REASON_RETAGUARDA_SEGMENTADO_OK = "RETAGUARDA_SEGMENTADO_OK"
 REASON_RETAGUARDA_SEGMENTADO_REJECT = "RETAGUARDA_SEGMENTADO_REJECT"
 
+# IMPRESSORAS_ETH (RD_SEGMENTADO_2024/2025)
+REASON_IMPRESSORAS_ETH_SEGMENTADO_OK = "IMPRESSORAS_ETH_SEGMENTADO_OK"
+REASON_IMPRESSORAS_ETH_SEGMENTADO_REJECT = "IMPRESSORAS_ETH_SEGMENTADO_REJECT"
+
+# CONSULTA_PRECO (RD_SEGMENTADO_2024/2025) — novo
+REASON_CONSULTA_PRECO_SEGMENTADO_OK = "CONSULTA_PRECO_SEGMENTADO_OK"
+REASON_CONSULTA_PRECO_SEGMENTADO_REJECT = "CONSULTA_PRECO_SEGMENTADO_REJECT"
+
 
 # -------------------------------------------------------------------
 # Catálogo MVP (sem DB): offsets por perfil e tipo
@@ -72,6 +80,11 @@ RETAGUARDA_OFFSETS_SEGMENTADO: dict[str, int] = {
     "FARMA": 131,
     "BANCO12": 12,
 }
+
+IMPRESSORAS_ETH_OFFSETS_SEGMENTADO: set[int] = {161, 162, 163}
+
+# Consulta preço: MVP só .193/.194 (.195 a confirmar)
+CONSULTA_PRECO_OFFSETS_SEGMENTADO: set[int] = {193, 194}
 
 # Aliases aceitos (mantém compatível com nomes mais “humanos”/docs)
 TIPO_ALIASES: dict[str, str] = {
@@ -125,6 +138,8 @@ def validar_ip_para_tipo(perfil: Any, base_ip: str, ip: str, tipo: str) -> Valid
     MVP:
     - TC
     - RETAGUARDA_LOJA: BANCO12, GERENCIA, FARMA, RH (com aliases)
+    - IMPRESSORAS_ETH: offsets fixos no perfil SEGMENTADO (.161/.162/.163)
+    - CONSULTA_PRECO: offsets fixos no perfil SEGMENTADO (.193/.194)
     """
     prefix_check = _validate_prefix(base_ip, ip)
     if prefix_check is not None:
@@ -230,11 +245,66 @@ def validar_ip_para_tipo(perfil: Any, base_ip: str, ip: str, tipo: str) -> Valid
             suggestion=_suggest_fix_last_octet(ip, expected),
         )
 
+    # -----------------------
+    # IMPRESSORAS_ETH (SEGMENTADO)
+    # -----------------------
+    if tipo_norm == "IMPRESSORAS_ETH":
+        if perfil_tipo != "SEGMENTADO":
+            return ValidationResult(
+                is_valid=False,
+                reason=REASON_NOT_IMPLEMENTED,
+                severity=Severity.ERROR,
+                suggestion="IMPRESSORAS_ETH é aplicável apenas ao perfil SEGMENTADO.",
+            )
+
+        if last_octet in IMPRESSORAS_ETH_OFFSETS_SEGMENTADO:
+            return ValidationResult(
+                is_valid=True,
+                reason=REASON_IMPRESSORAS_ETH_SEGMENTADO_OK,
+                severity=Severity.INFO,
+            )
+
+        expected_hint = min(IMPRESSORAS_ETH_OFFSETS_SEGMENTADO)
+        return ValidationResult(
+            is_valid=False,
+            reason=REASON_IMPRESSORAS_ETH_SEGMENTADO_REJECT,
+            severity=Severity.ERROR,
+            suggestion=_suggest_fix_last_octet(ip, expected_hint),
+        )
+
+    # -----------------------
+    # CONSULTA_PRECO (SEGMENTADO)
+    # -----------------------
+    if tipo_norm == "CONSULTA_PRECO":
+        if perfil_tipo != "SEGMENTADO":
+            return ValidationResult(
+                is_valid=False,
+                reason=REASON_NOT_IMPLEMENTED,
+                severity=Severity.ERROR,
+                suggestion="CONSULTA_PRECO é aplicável apenas ao perfil SEGMENTADO.",
+            )
+
+        if last_octet in CONSULTA_PRECO_OFFSETS_SEGMENTADO:
+            return ValidationResult(
+                is_valid=True,
+                reason=REASON_CONSULTA_PRECO_SEGMENTADO_OK,
+                severity=Severity.INFO,
+            )
+
+        expected_hint = min(CONSULTA_PRECO_OFFSETS_SEGMENTADO)
+        return ValidationResult(
+            is_valid=False,
+            reason=REASON_CONSULTA_PRECO_SEGMENTADO_REJECT,
+            severity=Severity.ERROR,
+            suggestion=_suggest_fix_last_octet(ip, expected_hint),
+        )
+
     return ValidationResult(
         is_valid=False,
         reason=REASON_NOT_IMPLEMENTED,
         severity=Severity.WARN,
-        suggestion="MVP valida apenas tipo 'TC' e itens de retaguarda (BANCO12/GERENCIA/FARMA/RH).",
+        suggestion="MVP valida apenas tipo 'TC', "
+        "itens de retaguarda, IMPRESSORAS_ETH e CONSULTA_PRECO.",
     )
 
 
