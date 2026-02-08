@@ -281,3 +281,66 @@ Adotar Jest + jsdom para testar JS puro.
 📘 **Fim do documento**
 
 > Este arquivo está **limpo, consolidado e pronto para Canva**.
+
+
+
+---
+
+
+## 2026-02-08 — Ação "Detalhes" na listagem de Kits (read-only)
+
+**Decisão**
+Adicionar uma ação **"Detalhes"** na tela de **listagem de Kits**, que expande uma linha/accordion exibindo os **itens do kit em modo somente leitura**, mantendo a ação **"Editar"** separada e visível como ação potencialmente destrutiva.
+
+**Contexto**
+A listagem de Kits hoje permite apenas edição direta, o que aumenta o risco de alterações indevidas quando o objetivo do usuário é apenas consultar a composição do kit. Era necessário oferecer uma forma rápida, segura e escalável de visualização dos itens, sem sobrecarregar a listagem inicial nem misturar ações de leitura e escrita.
+
+**Consequências**
+
+* A listagem de Kits passa a ter duas ações distintas:
+
+  * **Detalhes**: ação segura (read-only), focada em consulta.
+  * **Editar**: ação separada, explicitamente mantida como alteração de dados.
+* O conteúdo de "Detalhes" é carregado sob demanda (lazy-load), evitando impacto de performance na listagem.
+* O accordion deve tratar explicitamente os estados:
+
+  * *Loading*: "Carregando itens…"
+  * *Empty*: "Este kit não possui itens"
+  * *Error*: "Não foi possível carregar itens"
+* Recomendado manter **apenas um accordion aberto por vez**, para preservar legibilidade e foco.
+
+**Status**
+Aceito
+
+---
+
+## 2026-02-08 — Campos exibidos no detalhe do Kit
+
+**Decisão**
+Definir um conjunto mínimo e estável de campos exibidos no detalhe do Kit, priorizando informações operacionais essenciais e evitando acoplamento desnecessário a regras de negócio futuras.
+
+**Contexto**
+O detalhe do Kit precisa ser claro, previsível e consistente entre diferentes contextos (consulta, auditoria, troubleshooting). Exibir campos em excesso ou dependentes de lógica futura aumentaria o custo de manutenção e testes.
+
+**Consequências**
+
+### Campos obrigatórios (MVP)
+
+* **Item / Equipamento**: nome ou descrição principal do item associado ao kit
+* **Quantidade**: quantidade definida no kit
+* **Categoria**: categoria do item (direta ou derivada do equipamento)
+
+### Campos opcionais (exibidos apenas se existirem sem regra adicional)
+
+* Modelo ou Tipo
+
+* Observação
+
+* SKU ou Código
+
+* O detalhe permanece **estritamente read-only**.
+
+* Nenhuma ação de escrita é permitida dentro do accordion.
+
+**Status**
+Aceito
