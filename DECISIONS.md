@@ -1132,3 +1132,51 @@ sem risco de duplicidade em concorrência.
 - Introduz a tabela `CodeSequence` (contador por prefixo)
 - Fornece função `generate_code(prefix)` reutilizável
 - Facilita migrar entidades futuras para `PREFIXO-SEQ` sem duplicar lógica
+
+
+---
+
+# Mapeamento — Campo Loja no fluxo “Abrir Chamado”
+
+Data: 2026-02-08
+
+## Localização no código
+
+### URL
+- Arquivo: `web/execucao/urls.py`
+- View: `views.ChamadoCreateView.as_view()`
+- name: `chamado_create`
+
+### View
+- Arquivo: `web/execucao/views.py`
+- Classe: `ChamadoCreateView(CapabilityRequiredMixin, View)`
+- GET: instancia `ChamadoCreateForm()` e renderiza template
+- POST: valida `ChamadoCreateForm(request.POST)` e cria `Chamado`
+
+### Template
+- Arquivo: `web/execucao/templates/execucao/chamado_abertura.html`
+- Renderiza o campo de loja via `{{ form.loja }}` (select padrão)
+
+## Campo de loja (fonte da verdade do POST)
+
+### Campo postado
+- Nome do campo no HTML/POST: `loja`
+- Tipo: `forms.ModelChoiceField`
+- Valor final no backend: `form.cleaned_data["loja"]` (instância `Loja`)
+
+### Evidência na criação do Chamado
+- `loja=form.cleaned_data["loja"]` em `Chamado.objects.create(...)`
+
+## Lista de lojas hoje (query/widget)
+- Definição do campo em `web/execucao/forms.py`:
+  - `loja = forms.ModelChoiceField(queryset=Loja.objects.order_by("codigo"))`
+- Widget: select HTML padrão (Django)
+
+## Estratégia de busca (MVP pro ciclo 1)
+- UI: input “Loja (Java)” (ex: 3500)
+- Resolução: buscar Loja por código Java e preencher o campo real `loja` (id)
+- Fallback técnico: manter o select `form.loja` escondido no template para POST compatível
+
+## Pendência do levantamento
+- Verificar se existe endpoint de lookup/autocomplete reutilizável para Loja.
+  - Se não existir, criar endpoint simples no ciclo 1.
