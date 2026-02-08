@@ -60,7 +60,7 @@ def _normalize_code(value: str) -> str:
 
 
 class Equipamento(models.Model):
-    codigo = models.CharField(max_length=50, unique=True)  # MICRO, MONITOR
+    codigo = models.CharField(max_length=50, unique=True, blank=True)  # EQP-000001
     nome = models.CharField(max_length=120)  # Micro, Monitor
     categoria = models.ForeignKey(
         Categoria,
@@ -73,6 +73,27 @@ class Equipamento(models.Model):
     class Meta:
         verbose_name = "Equipamento"
         verbose_name_plural = "Equipamentos"
+
+    def clean(self):
+        super().clean()
+        self.nome = (self.nome or "").strip()
+
+        # imutabilidade do codigo após criação
+        if self.pk:
+            old = Equipamento.objects.filter(pk=self.pk).values_list("codigo", flat=True).first()
+            if old is not None and (self.codigo or "") != old:
+                raise ValidationError({"codigo": "Código é imutável após criação."})
+
+    def save(self, *args, **kwargs):  # type: ignore[override]
+        self.nome = (self.nome or "").strip()
+
+        if not (self.codigo or "").strip():
+            # ✅ import local para evitar circular import durante app loading
+            from cadastro.services.codes import generate_code
+
+            self.codigo = generate_code("EQP")
+
+        return super().save(*args, **kwargs)
 
     def __str__(self) -> str:
         return f"{self.nome} ({self.codigo})"
@@ -179,7 +200,7 @@ class Loja(models.Model):
 
 
 class Projeto(models.Model):
-    codigo = models.CharField(max_length=50, unique=True)
+    codigo = models.CharField(max_length=50, unique=True, blank=True)
     nome = models.CharField(max_length=120)
 
     class Cor(models.TextChoices):
@@ -202,19 +223,59 @@ class Projeto(models.Model):
         verbose_name = "Projeto"
         verbose_name_plural = "Projetos"
 
+    def clean(self):
+        super().clean()
+        self.nome = (self.nome or "").strip()
+
+        # ✅ imutabilidade do codigo após criação
+        if self.pk:
+            old = Projeto.objects.filter(pk=self.pk).values_list("codigo", flat=True).first()
+            if old is not None and (self.codigo or "") != old:
+                raise ValidationError({"codigo": "Código é imutável após criação."})
+
+    def save(self, *args, **kwargs):  # type: ignore[override]
+        self.nome = (self.nome or "").strip()
+
+        if not (self.codigo or "").strip():
+            from cadastro.services.codes import generate_code  # ✅ import local anti-ciclo
+
+            self.codigo = generate_code("PRO")
+
+        return super().save(*args, **kwargs)
+
     def __str__(self) -> str:
         return f"{self.codigo} - {self.nome}"
 
 
 class Subprojeto(models.Model):
     projeto = models.ForeignKey(Projeto, on_delete=models.CASCADE, related_name="subprojetos")
-    codigo = models.CharField(max_length=50)
+    codigo = models.CharField(max_length=50, unique=True, blank=True)
     nome = models.CharField(max_length=120)
 
     class Meta:
         verbose_name = "Subprojeto"
         verbose_name_plural = "Subprojetos"
-        unique_together = ("projeto", "codigo")
+        # ✅ remove unique_together
+
+    def clean(self):
+        super().clean()
+        self.nome = (self.nome or "").strip()
+
+        # ✅ imutabilidade: não permitir trocar codigo após criação
+        if self.pk:
+            old = Subprojeto.objects.filter(pk=self.pk).values_list("codigo", flat=True).first()
+            if old is not None and (self.codigo or "") != old:
+                raise ValidationError({"codigo": "Código é imutável após criação."})
+
+    def save(self, *args, **kwargs):  # type: ignore[override]
+        self.nome = (self.nome or "").strip()
+
+        if not (self.codigo or "").strip():
+            from cadastro.services.codes import generate_code  # ✅ import local anti-ciclo
+
+            self.codigo = generate_code("SUB")
+
+        return super().save(*args, **kwargs)
 
     def __str__(self) -> str:
         return f"{self.projeto.codigo}/{self.codigo} - {self.nome}"
