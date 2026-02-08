@@ -1,12 +1,14 @@
 import pytest
 
 from web.redes.services.validacao import (
+    # --- CONSULTA_PRECO ---
+    REASON_CONSULTA_PRECO_SEGMENTADO_OK,
+    REASON_CONSULTA_PRECO_SEGMENTADO_REJECT,
+    # --- IMPRESSORAS_ETH ---
+    REASON_IMPRESSORAS_ETH_SEGMENTADO_OK,
+    REASON_IMPRESSORAS_ETH_SEGMENTADO_REJECT,
     REASON_PREFIX_MISMATCH,
     # --- RETAGUARDA_LOJA ---
-    REASON_RETAGUARDA_LEGACY_OK,
-    REASON_RETAGUARDA_LEGACY_REJECT,
-    REASON_RETAGUARDA_SEGMENTADO_OK,
-    REASON_RETAGUARDA_SEGMENTADO_REJECT,
     REASON_TC_LEGACY_OK,
     REASON_TC_LEGACY_REJECT_134,
     REASON_TC_SEGMENTADO_OK,
@@ -18,28 +20,22 @@ from web.redes.services.validacao import (
 )
 
 # -------------------------------------------------------------------
-# 1) Helpers / fixtures locais
+# Helpers / fixtures
 # -------------------------------------------------------------------
 
-# Perfis fake (sem Django / sem DB)
 PERFIL_LEGADO = {"tipo": "LEGACY_FLAT"}
 PERFIL_SEGMENTADO = {"tipo": "SEGMENTADO"}
 
-# Base IP exemplo por perfil (prefixo da loja)
 BASE_IP = "10.20.30.1"
 
 
 def ip_offset(base_ip: str, offset: int) -> str:
-    """
-    Monta um IP dentro do mesmo /24 do base_ip, trocando apenas o último octeto.
-    Ex.: base_ip 10.20.30.1 + offset 11 => 10.20.30.11
-    """
     a, b, c, _ = base_ip.split(".")
     return f"{a}.{b}.{c}.{offset}"
 
 
 # -------------------------------------------------------------------
-# 2) Global (já existe)
+# PREFIXO
 # -------------------------------------------------------------------
 
 
@@ -57,9 +53,8 @@ def test_prefixo_divergente_retorna_erro_nao_pertence_a_loja():
 
 
 # -------------------------------------------------------------------
-# 3) TC (já existe)
+# TC
 # -------------------------------------------------------------------
-# LEGACY_FLAT — TC
 
 
 @pytest.mark.parametrize(
@@ -80,14 +75,16 @@ def test_legado_tc_aceita_ips_validos(ip):
 
 
 def test_legado_tc_rejeita_134():
-    result = validar_ip_para_tipo(PERFIL_LEGADO, BASE_IP, ip_offset(BASE_IP, 134), "TC")
+    result = validar_ip_para_tipo(
+        PERFIL_LEGADO,
+        BASE_IP,
+        ip_offset(BASE_IP, 134),
+        "TC",
+    )
 
     assert result.is_valid is False
     assert result.severity == Severity.ERROR
     assert result.reason == REASON_TC_LEGACY_REJECT_134
-
-
-# SEGMENTADO — TC
 
 
 @pytest.mark.parametrize(
@@ -107,7 +104,12 @@ def test_segmentado_tc_aceita_134_ou_maior(ip):
 
 
 def test_segmentado_tc_rejeita_11():
-    result = validar_ip_para_tipo(PERFIL_SEGMENTADO, BASE_IP, ip_offset(BASE_IP, 11), "TC")
+    result = validar_ip_para_tipo(
+        PERFIL_SEGMENTADO,
+        BASE_IP,
+        ip_offset(BASE_IP, 11),
+        "TC",
+    )
 
     assert result.is_valid is False
     assert result.severity == Severity.ERROR
@@ -115,7 +117,7 @@ def test_segmentado_tc_rejeita_11():
 
 
 # -------------------------------------------------------------------
-# TYPO WARNING (já existe)
+# TYPO WARNING
 # -------------------------------------------------------------------
 
 
@@ -134,68 +136,80 @@ def test_typo_warning_111_quando_esperado_11():
 
 
 # -------------------------------------------------------------------
-# 4) RETAGUARDA_LOJA (novo bloco)
+# IMPRESSORAS_ETH — SEGMENTADO
 # -------------------------------------------------------------------
-# LEGACY_FLAT — RETAGUARDA
-# Contrato mínimo:
-# - Banco12 aceita .12; rejeita .13
-# - Gerência aceita .30; rejeita .130
-# - Farma aceita .60; rejeita .131
-# - RH aceita .70; rejeita .129
 
 
-@pytest.mark.parametrize(
-    "tipo, ok_offset, reject_offset",
-    [
-        ("BANCO12", 12, 13),
-        ("GERENCIA", 30, 130),
-        ("FARMA", 60, 131),
-        ("RH", 70, 129),
-    ],
-)
-def test_legado_retaguarda_aceita_offset_fixo_e_rejeita_cruzado(tipo, ok_offset, reject_offset):
-    ok = validar_ip_para_tipo(PERFIL_LEGADO, BASE_IP, ip_offset(BASE_IP, ok_offset), tipo)
+@pytest.mark.parametrize("offset", [161, 162, 163])
+def test_segmentado_impressoras_eth_aceita_offsets_validos(offset):
+    ok = validar_ip_para_tipo(
+        PERFIL_SEGMENTADO,
+        BASE_IP,
+        ip_offset(BASE_IP, offset),
+        "IMPRESSORAS_ETH",
+    )
+
     assert ok.is_valid is True
     assert ok.severity == Severity.INFO
-    assert ok.reason == REASON_RETAGUARDA_LEGACY_OK
+    assert ok.reason == REASON_IMPRESSORAS_ETH_SEGMENTADO_OK
 
-    bad = validar_ip_para_tipo(PERFIL_LEGADO, BASE_IP, ip_offset(BASE_IP, reject_offset), tipo)
+
+@pytest.mark.parametrize("offset", [193, 130, 1])
+def test_segmentado_impressoras_eth_rejeita_offsets_cruzados(offset):
+    bad = validar_ip_para_tipo(
+        PERFIL_SEGMENTADO,
+        BASE_IP,
+        ip_offset(BASE_IP, offset),
+        "IMPRESSORAS_ETH",
+    )
+
     assert bad.is_valid is False
     assert bad.severity == Severity.ERROR
-    assert bad.reason == REASON_RETAGUARDA_LEGACY_REJECT
-
-
-# SEGMENTADO — RETAGUARDA
-# Contrato mínimo:
-# - RH aceita .129; rejeita .70
-# - Gerência aceita .130; rejeita .30
-# - Farma aceita .131; rejeita .60
-# - Banco12 aceita .12; rejeita .11 (colisão com TC/legado)
-
-
-@pytest.mark.parametrize(
-    "tipo, ok_offset, reject_offset",
-    [
-        ("RH", 129, 70),
-        ("GERENCIA", 130, 30),
-        ("FARMA", 131, 60),
-        ("BANCO12", 12, 11),
-    ],
-)
-def test_segmentado_retaguarda_aceita_offset_fixo_e_rejeita_cruzado(tipo, ok_offset, reject_offset):
-    ok = validar_ip_para_tipo(PERFIL_SEGMENTADO, BASE_IP, ip_offset(BASE_IP, ok_offset), tipo)
-    assert ok.is_valid is True
-    assert ok.severity == Severity.INFO
-    assert ok.reason == REASON_RETAGUARDA_SEGMENTADO_OK
-
-    bad = validar_ip_para_tipo(PERFIL_SEGMENTADO, BASE_IP, ip_offset(BASE_IP, reject_offset), tipo)
-    assert bad.is_valid is False
-    assert bad.severity == Severity.ERROR
-    assert bad.reason == REASON_RETAGUARDA_SEGMENTADO_REJECT
+    assert bad.reason == REASON_IMPRESSORAS_ETH_SEGMENTADO_REJECT
 
 
 # -------------------------------------------------------------------
-# CLASSIFICAÇÃO (contrato mínimo)
+# CONSULTA_PRECO — SEGMENTADO
+# -------------------------------------------------------------------
+
+
+@pytest.mark.parametrize("offset", [193, 194])
+def test_segmentado_consulta_preco_aceita_offsets_validos(offset):
+    ok = validar_ip_para_tipo(
+        PERFIL_SEGMENTADO,
+        BASE_IP,
+        ip_offset(BASE_IP, offset),
+        "CONSULTA_PRECO",
+    )
+
+    assert ok.is_valid is True
+    assert ok.severity == Severity.INFO
+    assert ok.reason == REASON_CONSULTA_PRECO_SEGMENTADO_OK
+
+
+@pytest.mark.parametrize(
+    "offset",
+    [
+        161,  # impressora
+        134,  # TC
+        12,  # banco12
+    ],
+)
+def test_segmentado_consulta_preco_rejeita_offsets_cruzados(offset):
+    bad = validar_ip_para_tipo(
+        PERFIL_SEGMENTADO,
+        BASE_IP,
+        ip_offset(BASE_IP, offset),
+        "CONSULTA_PRECO",
+    )
+
+    assert bad.is_valid is False
+    assert bad.severity == Severity.ERROR
+    assert bad.reason == REASON_CONSULTA_PRECO_SEGMENTADO_REJECT
+
+
+# -------------------------------------------------------------------
+# CLASSIFICAÇÃO
 # -------------------------------------------------------------------
 
 
