@@ -27,6 +27,8 @@ from django.views import View
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_POST
 from django.views.generic import TemplateView
+from iam.decorators import user_has_capability
+from iam.execucao_capabilities import CAP_EXECUCAO_CHAMADO_EDITAR
 from iam.mixins import CapabilityRequiredMixin
 
 from execucao.models import ExecutionSession
@@ -148,6 +150,15 @@ class ChamadoCreateView(CapabilityRequiredMixin, View):
 @login_required
 @require_POST
 def chamado_abrir(request, chamado_id: int):
+    # ✅ permissão primeiro (antes de qualquer efeito colateral)
+    if not user_has_capability(request.user, CAP_EXECUCAO_CHAMADO_EDITAR):
+        return render(
+            request,
+            "iam/acesso_negado.html",
+            {"acao": "abrir chamado para execução"},
+            status=403,
+        )
+
     chamado = get_object_or_404(Chamado, pk=chamado_id)
 
     try:
