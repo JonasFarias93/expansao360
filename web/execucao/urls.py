@@ -34,6 +34,11 @@ urlpatterns = [
         name="chamado_detalhe",  # mantido por compatibilidade
     ),
     path("api/lojas/lookup/", loja_lookup_por_codigo, name="api_loja_lookup"),
+    path(
+        "chamados/<int:chamado_id>/take-session/",
+        views.chamado_take_session,
+        name="chamado_take_session",
+    ),
     # ======================
     # ITENS DO CHAMADO
     # ======================

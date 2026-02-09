@@ -28,7 +28,7 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_POST
 from django.views.generic import TemplateView
 from iam.decorators import user_has_capability
-from iam.execucao_capabilities import CAP_EXECUCAO_CHAMADO_EDITAR
+from iam.execucao_capabilities import CAP_EXECUCAO_CHAMADO_EDITAR, CAP_EXECUCAO_SESSAO_TOMAR
 from iam.mixins import CapabilityRequiredMixin
 
 from execucao.models import ExecutionSession
