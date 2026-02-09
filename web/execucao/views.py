@@ -15,7 +15,7 @@ from cadastro.models import Projeto, Subprojeto
 # ================
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.core.exceptions import ValidationError
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
 from django.db.models import Case, Count, IntegerField, Q, Value, When
 from django.http import HttpRequest, HttpResponse, QueryDict
@@ -152,12 +152,7 @@ class ChamadoCreateView(CapabilityRequiredMixin, View):
 def chamado_abrir(request, chamado_id: int):
     # ✅ permissão primeiro (antes de qualquer efeito colateral)
     if not user_has_capability(request.user, CAP_EXECUCAO_CHAMADO_EDITAR):
-        return render(
-            request,
-            "iam/acesso_negado.html",
-            {"acao": "abrir chamado para execução"},
-            status=403,
-        )
+        raise PermissionDenied
 
     chamado = get_object_or_404(Chamado, pk=chamado_id)
 
