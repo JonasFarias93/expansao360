@@ -18,7 +18,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
 from django.db.models import Case, Count, IntegerField, Q, Value, When
-from django.http import HttpRequest, HttpResponse, QueryDict
+from django.http import HttpRequest, HttpResponse, HttpResponseBadRequest, QueryDict
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.utils.decorators import method_decorator
@@ -196,8 +196,7 @@ def chamado_take_session(request, chamado_id: int):
     try:
         take_session(chamado=chamado, actor=request.user)
     except NoActiveSessionToTakeError:
-        messages.warning(request, "Não há sessão ativa para tomar.")
-        return redirect("execucao:chamado_detalhe", chamado_id=chamado.id)
+        return HttpResponseBadRequest("Não há sessão ativa para tomar.")
 
     messages.success(
         request,
