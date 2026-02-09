@@ -474,6 +474,7 @@ class ExecutionSession(models.Model):
         CANCELADO = "CANCELADO", "Cancelado"
         TIMEOUT = "TIMEOUT", "Timeout"
         OUTRO = "OUTRO", "Outro"
+        ADMIN_TAKE = "ADMIN_TAKE", "Admin tomou a sessão"
 
     chamado = models.ForeignKey(
         "execucao.Chamado",
@@ -526,3 +527,34 @@ class ExecutionSession(models.Model):
             self.ended_at = timezone.now()
             if reason:
                 self.ended_reason = reason
+
+
+class ExecutionSessionLog(models.Model):
+    class Reason(models.TextChoices):
+        ADMIN_TAKE = "ADMIN_TAKE", "Admin tomou a sessão"
+
+    chamado = models.ForeignKey(
+        Chamado,
+        on_delete=models.CASCADE,
+        related_name="session_logs",
+    )
+    previous_usuario = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="+",
+    )
+    new_usuario = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name="+",
+    )
+    reason = models.CharField(
+        max_length=32,
+        choices=Reason.choices,
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]

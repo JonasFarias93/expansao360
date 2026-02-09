@@ -3,6 +3,8 @@ from __future__ import annotations
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 from django.utils import timezone
+from iam.execucao_capabilities import CAP_EXECUCAO_CHAMADO_EDITAR
+from iam.models import Capability, UserCapability
 
 from execucao.models import Chamado, ExecutionSession
 from execucao.tests._base import WebAuthBaseTestCase
@@ -16,6 +18,9 @@ class ExecutionSessionContractsTests(WebAuthBaseTestCase):
     - técnico A abre de novo -> reentra (não cria outra)
     - técnico B tenta abrir -> bloqueia (não cria outra)
     - sessão encerrada manualmente -> técnico B consegue abrir
+
+    Premissa: ambos os técnicos possuem CAP_EXECUCAO_CHAMADO_EDITAR,
+    pois o endpoint /chamado_abrir é protegido por IAM (403 sem a cap).
     """
 
     def setUp(self) -> None:
@@ -35,6 +40,11 @@ class ExecutionSessionContractsTests(WebAuthBaseTestCase):
 
         User = get_user_model()
         self.user_b = User.objects.create_user(username="u2", password="x")
+
+        # Ambos precisam da cap de editar para exercitar os contratos de sessão
+        cap, _ = Capability.objects.get_or_create(code=CAP_EXECUCAO_CHAMADO_EDITAR)
+        UserCapability.objects.get_or_create(user=self.user, capability=cap)
+        UserCapability.objects.get_or_create(user=self.user_b, capability=cap)
 
         # client B autenticado
         self.client_b = self.client.__class__()

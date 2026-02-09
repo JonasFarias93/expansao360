@@ -1,10 +1,14 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import timedelta
 
+from django.core.exceptions import PermissionDenied
 from django.db import IntegrityError, transaction
 from django.utils import timezone
-from execucao.models import Chamado, ExecutionSession
+from execucao.models import Chamado, ExecutionSession, ExecutionSessionLog
+from iam.decorators import user_has_capability
+from iam.execucao_capabilities import CAP_EXECUCAO_SESSAO_TOMAR
 
 
 class ActiveSessionConflictError(Exception):
@@ -51,3 +55,47 @@ def create_active_session(*, chamado: Chamado, user) -> ExecutionSession:
         # Fallback: se duas transações tentarem criar ao mesmo tempo,
         # o constraint de "sessão aberta única" pode disparar.
         raise ActiveSessionConflictError() from None
+
+
+class NoActiveSessionToTakeError(Exception):
+    """Não há sessão ativa para tomar."""
+
+
+@transaction.atomic
+def take_session(*, chamado: Chamado, actor) -> ExecutionSession:
+    # enforcement IAM (autoridade)
+    if not user_has_capability(actor, CAP_EXECUCAO_SESSAO_TOMAR):
+        raise PermissionDenied
+
+    now = timezone.now()
+
+    # lock da sessão ativa (evita corrida)
+    active = (
+        ExecutionSession.objects.select_for_update()
+        .filter(chamado=chamado, ended_at__isnull=True, expires_at__gt=now)
+        .order_by("-started_at")
+        .first()
+    )
+
+    if active is None:
+        raise NoActiveSessionToTakeError("Não há sessão ativa para tomar.")
+
+    # encerra a atual com motivo ADMIN_TAKE
+    active.end(reason=ExecutionSession.EndReason.ADMIN_TAKE)
+    active.save(update_fields=["ended_at", "ended_reason"])
+    old_user = active.usuario
+
+    # cria nova sessão pro admin com 2h
+    new_sess = ExecutionSession.objects.create(
+        chamado=chamado,
+        usuario=actor,
+        started_at=now,
+        expires_at=now + timedelta(hours=2),
+    )
+    ExecutionSessionLog.objects.create(
+        chamado=chamado,
+        previous_usuario=old_user,
+        new_usuario=actor,
+        reason=ExecutionSessionLog.Reason.ADMIN_TAKE,
+    )
+    return new_sess

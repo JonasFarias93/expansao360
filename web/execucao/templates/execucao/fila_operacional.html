@@ -1,5 +1,5 @@
-{# web/execucao/templates/execucao/fila_operacional.html #}
 {% extends "base.html" %}
+{% load static %}
 
 {% block content %}
 <div class="max-w-6xl mx-auto space-y-5">
@@ -17,7 +17,9 @@
       </a>
     </div>
   </div>
+
   {% include "execucao/components/_fila_header.html" %}
+
   {% if chamados %}
     <div class="space-y-3">
       {% for row in chamados %}
@@ -25,7 +27,6 @@
       {% endfor %}
     </div>
   {% else %}
-    {% include "components/_card.html" with title="Sem chamados na fila" subtitle="Nada em andamento no momento." content="" %}
     <div class="rounded-2xl border border-slate-200 bg-white p-10 text-center">
       <div class="text-slate-700 font-medium">Nenhum chamado em andamento.</div>
       <div class="text-sm text-slate-500 mt-1">Quando houver chamados em execução, eles aparecerão aqui.</div>
@@ -33,7 +34,7 @@
   {% endif %}
 </div>
 {% endblock %}
-{% load static %}
+
 {% block extra_js %}
   <script src="{% static 'execucao/js/fila_operacional.js' %}" defer></script>
 {% endblock %}

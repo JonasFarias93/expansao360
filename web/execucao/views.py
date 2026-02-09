@@ -18,7 +18,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
 from django.db.models import Case, Count, IntegerField, Q, Value, When
-from django.http import HttpRequest, HttpResponse, QueryDict
+from django.http import HttpRequest, HttpResponse, HttpResponseBadRequest, QueryDict
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.utils.decorators import method_decorator
@@ -32,6 +32,10 @@ from iam.execucao_capabilities import CAP_EXECUCAO_CHAMADO_EDITAR
 from iam.mixins import CapabilityRequiredMixin
 
 from execucao.models import ExecutionSession
+from execucao.services.execution_session import (
+    NoActiveSessionToTakeError,
+    take_session,
+)
 from execucao.services.open_session import SessionBlockedError, open_session
 
 from .forms import ChamadoCreateForm
@@ -150,6 +154,9 @@ class ChamadoCreateView(CapabilityRequiredMixin, View):
 @login_required
 @require_POST
 def chamado_abrir(request, chamado_id: int):
+    if not user_has_capability(request.user, CAP_EXECUCAO_CHAMADO_EDITAR):
+        raise PermissionDenied
+
     chamado = get_object_or_404(Chamado, pk=chamado_id)
 
     try:
@@ -172,6 +179,31 @@ def chamado_abrir(request, chamado_id: int):
         return redirect("execucao:chamado_detalhe", chamado_id=chamado.id)
 
     # Direciona para a tela “editável” correta
+    if chamado.status == Chamado.Status.ABERTO:
+        return redirect("execucao:chamado_setup", chamado_id=chamado.id)
+
+    return redirect("execucao:chamado_detalhe", chamado_id=chamado.id)
+
+
+@login_required
+@require_POST
+def chamado_take_session(request, chamado_id: int):
+    chamado = get_object_or_404(Chamado, pk=chamado_id)
+
+    # Permissão é enforced no serviço (IAM como autoridade).
+    # Se preferir “perm primeiro” como no abrir, dá pra checar aqui também,
+    # mas manter no serviço evita duplicação.
+    try:
+        take_session(chamado=chamado, actor=request.user)
+    except NoActiveSessionToTakeError:
+        return HttpResponseBadRequest("Não há sessão ativa para tomar.")
+
+    messages.success(
+        request,
+        "Sessão tomada com sucesso. Você está editando este chamado.",
+    )
+
+    # Direciona para a tela “editável” correta (mesmo fluxo do abrir)
     if chamado.status == Chamado.Status.ABERTO:
         return redirect("execucao:chamado_setup", chamado_id=chamado.id)
 
@@ -443,6 +475,10 @@ class ChamadoFilaView(CapabilityRequiredMixin, TemplateView):
                     active_sessions_by_chamado[s.chamado_id] = s
 
         ctx["execucao_active_sessions_by_chamado"] = active_sessions_by_chamado
+        ctx["can_take_session"] = user_has_capability(
+            self.request.user,
+            CAP_EXECUCAO_SESSAO_TOMAR,
+        )
         return ctx
 
 
