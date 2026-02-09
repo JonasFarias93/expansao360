@@ -48,11 +48,6 @@ urlpatterns = [
         name="item_set_status_configuracao",
     ),
     path("chamados/<int:chamado_id>/abrir/", views.chamado_abrir, name="chamado_abrir"),
-    path(
-        "chamados/<int:chamado_id>/take-session/",
-        views.chamado_take_session,
-        name="chamado_take_session",
-    ),
     # ======================
     # AÇÕES OPERACIONAIS
     # ======================

@@ -23,8 +23,7 @@
   {% if chamados %}
     <div class="space-y-3">
       {% for row in chamados %}
-        {# Passamos o row completo para o componente acessar row.active_session #}
-        {% include "execucao/components/_card_operacional_chamado.html" with chamado=row.chamado active_session=row.active_session can_take_session=request.user.is_staff %}
+        {% include "execucao/components/_card_operacional_chamado.html" with chamado=row.chamado %}
       {% endfor %}
     </div>
   {% else %}
