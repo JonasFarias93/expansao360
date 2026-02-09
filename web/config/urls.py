@@ -1,6 +1,5 @@
 # web/config/urls.py
 
-
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
@@ -19,7 +18,7 @@ urlpatterns = [
     path("execucao/", include(("execucao.urls", "execucao"), namespace="execucao")),
     # Registry (cadastro)
     path("cadastro/", include(("cadastro.urls", "cadastro"), namespace="cadastro")),
-    # IAM (se você expõe alguma tela/admin extra; senão pode remover)
+    # IAM
     path("iam/", include(("iam.urls", "iam"), namespace="iam")),
     path("redes/", include(("redes.urls", "redes"), namespace="redes")),
 ]

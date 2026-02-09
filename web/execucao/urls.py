@@ -47,6 +47,7 @@ urlpatterns = [
         views.ItemSetStatusConfiguracaoView.as_view(),
         name="item_set_status_configuracao",
     ),
+    path("chamados/<int:chamado_id>/abrir/", views.chamado_abrir, name="chamado_abrir"),
     # ======================
     # AÇÕES OPERACIONAIS
     # ======================

@@ -15,7 +15,7 @@ from cadastro.models import Projeto, Subprojeto
 # ================
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.core.exceptions import ValidationError
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
 from django.db.models import Case, Count, IntegerField, Q, Value, When
 from django.http import HttpRequest, HttpResponse, QueryDict
@@ -27,6 +27,8 @@ from django.views import View
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_POST
 from django.views.generic import TemplateView
+from iam.decorators import user_has_capability
+from iam.execucao_capabilities import CAP_EXECUCAO_CHAMADO_EDITAR
 from iam.mixins import CapabilityRequiredMixin
 
 from execucao.models import ExecutionSession

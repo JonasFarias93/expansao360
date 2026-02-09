@@ -21,7 +21,7 @@
   {% if chamados %}
     <div class="space-y-3">
       {% for row in chamados %}
-        {% include "execucao/components/_card_operacional_chamado.html" with chamado=row.chamado only %}
+        {% include "execucao/components/_card_operacional_chamado.html" with chamado=row.chamado %}
       {% endfor %}
     </div>
   {% else %}
