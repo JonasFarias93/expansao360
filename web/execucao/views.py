@@ -154,6 +154,9 @@ class ChamadoCreateView(CapabilityRequiredMixin, View):
 @login_required
 @require_POST
 def chamado_abrir(request, chamado_id: int):
+    if not user_has_capability(request.user, CAP_EXECUCAO_CHAMADO_EDITAR):
+        raise PermissionDenied
+
     chamado = get_object_or_404(Chamado, pk=chamado_id)
 
     try:
