@@ -474,6 +474,7 @@ class ExecutionSession(models.Model):
         CANCELADO = "CANCELADO", "Cancelado"
         TIMEOUT = "TIMEOUT", "Timeout"
         OUTRO = "OUTRO", "Outro"
+        ADMIN_TAKE = "ADMIN_TAKE", "Admin tomou a sessão"
 
     chamado = models.ForeignKey(
         "execucao.Chamado",
