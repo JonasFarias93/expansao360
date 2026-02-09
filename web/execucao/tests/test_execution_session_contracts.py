@@ -5,7 +5,7 @@ from django.urls import reverse
 from django.utils import timezone
 
 from execucao.models import Chamado, ExecutionSession
-from execucao.tests._base import WebAuthBaseTestCase, grant_cap
+from execucao.tests._base import WebAuthBaseTestCase
 
 
 class ExecutionSessionContractsTests(WebAuthBaseTestCase):
@@ -28,19 +28,17 @@ class ExecutionSessionContractsTests(WebAuthBaseTestCase):
             kit=self.kit,
             status=Chamado.Status.ABERTO,
         )
-        self.url_abrir = reverse("execucao:chamado_abrir", kwargs={"chamado_id": self.chamado.id})
+        self.url_abrir = reverse(
+            "execucao:chamado_abrir",
+            kwargs={"chamado_id": self.chamado.id},
+        )
 
-        # ✅ user A já existe e já está autenticado: self.user (criado no WebAuthBaseTestCase)
-
-        # Cria user B com username único por método de teste (evita colisões)
         User = get_user_model()
-        self.user_b = User.objects.create_user(username=f"u2_{self._testMethodName}", password="x")
+        self.user_b = User.objects.create_user(username="u2", password="x")
 
+        # client B autenticado
         self.client_b = self.client.__class__()
         self.client_b.force_login(self.user_b)
-
-        # ✅ user B precisa permissão para abrir (para que o bloqueio por lock seja exercitado)
-        grant_cap(self.user_b, "execucao.chamado_editar")
 
     def test_tecnico_a_abre_cria_sessao(self) -> None:
         resp = self.client.post(self.url_abrir)
