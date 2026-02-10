@@ -123,9 +123,6 @@ class Chamado(models.Model):
             if self.nf_saida_numero and not self.nf_saida_numero.isdigit():
                 raise ValidationError({"nf_saida_numero": NF_SAIDA_ONLY_DIGITS_ERROR})
 
-        # Subprojeto pode ser opcional na UI dependendo do cadastro.
-        # Se o model estiver como PROTECT (obrigatório), manter.
-        # Caso vocês decidam tornar Subprojeto opcional no futuro, este método já é compatível.
         if self.tipo == self.Tipo.RETORNO:
             if not self.chamado_origem_id:
                 raise ValidationError(
@@ -493,6 +490,7 @@ class ExecutionSession(models.Model):
         TIMEOUT = "TIMEOUT", "Timeout"
         OUTRO = "OUTRO", "Outro"
         ADMIN_TAKE = "ADMIN_TAKE", "Admin tomou a sessão"
+        SAVE = "SAVE", "Salvar execução"
 
     chamado = models.ForeignKey(
         "execucao.Chamado",

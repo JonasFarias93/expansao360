@@ -38,8 +38,10 @@ from iam.execucao_capabilities import CAP_EXECUCAO_CHAMADO_EDITAR, CAP_EXECUCAO_
 from iam.mixins import CapabilityRequiredMixin
 
 from execucao.models import ExecutionSession
+from execucao.services.chamado_status import recalcular_status
 from execucao.services.execution_session import (
     NoActiveSessionToTakeError,
+    end_session_save,
     take_session,
     usuario_tem_sessao_ativa_no_chamado,
 )
@@ -315,7 +317,6 @@ class ChamadoFilaView(CapabilityRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
 
-        # 1) queryset base da fila (sem filtro)
         base_qs = (
             Chamado.objects.filter(
                 status__in=[
@@ -329,7 +330,6 @@ class ChamadoFilaView(CapabilityRequiredMixin, TemplateView):
             .prefetch_related("itens")
         )
 
-        # 2) counts (sempre do conjunto "fila", independente do filtro)
         counts = base_qs.aggregate(
             total=Count("id"),
             critico=Count("id", filter=Q(prioridade=Chamado.Prioridade.CRITICA)),
@@ -338,7 +338,6 @@ class ChamadoFilaView(CapabilityRequiredMixin, TemplateView):
             baixo=Count("id", filter=Q(prioridade=Chamado.Prioridade.BAIXA)),
         )
 
-        # 3) filtros stateless via querystring (prio + projeto)
         prio_key = (self.request.GET.get("prio") or "").strip().upper()
         prio_value = self.PRIO_MAP.get(prio_key)  # Enum ou None
 
@@ -357,7 +356,6 @@ class ChamadoFilaView(CapabilityRequiredMixin, TemplateView):
         if projeto_id is not None:
             qs = qs.filter(projeto_id=projeto_id)
 
-        # 3.1) contexto pros chips/cards
         ctx["counts"] = counts
         ctx["prio_selected"] = prio_key if prio_value is not None else None
 
@@ -374,10 +372,6 @@ class ChamadoFilaView(CapabilityRequiredMixin, TemplateView):
         ctx["url_clear_prio"] = self._url_with_query(prio=None)
         ctx["url_clear_projeto"] = self._url_with_query(projeto=None)
 
-        # 3.2) lista de projetos (cards)
-        # Seu template usa:
-        # - projects_reset_url
-        # - projects -> itens com nome, count, url, active (e agora projeto para cor)
         ctx["projects_reset_url"] = self._url_with_query(projeto=None)
 
         proj_rows = base_qs.values("projeto_id").annotate(count=Count("id")).order_by("-count")
@@ -408,7 +402,6 @@ class ChamadoFilaView(CapabilityRequiredMixin, TemplateView):
 
         ctx["projects"] = projects
 
-        # 4) ordenação/annotate (aplicar depois do filtro)
         chamados = qs.annotate(
             status_rank=Case(
                 When(status=Chamado.Status.EM_EXECUCAO, then=Value(0)),
@@ -461,7 +454,6 @@ class ChamadoFilaView(CapabilityRequiredMixin, TemplateView):
         ctx["chamados"] = rows
         ctx["rows"] = rows
 
-        # 6) sessões ativas (MVP lock na fila) — 1 query, sem N+1
         chamado_ids = [r["chamado"].id for r in rows]
 
         active_sessions_by_chamado: dict[int, ExecutionSession] = {}
@@ -991,3 +983,38 @@ class ChamadoSalvarDadosFiscaisView(View):
         obj.save(update_fields=["contabilidade_numero", "nf_saida_numero"])
         messages.success(request, "Dados salvos com sucesso.")
         return redirect("execucao:chamado_setup", chamado_id=chamado.id)
+
+
+class ChamadoSalvarExecucaoView(CapabilityRequiredMixin, View):
+    required_capability = "execucao.chamado_editar"
+
+    @transaction.atomic
+    def post(self, request, chamado_id: int, *args, **kwargs):
+        chamado = get_object_or_404(Chamado, pk=chamado_id)
+
+        # exige sessão ativa do usuário
+        if not usuario_tem_sessao_ativa_no_chamado(user=request.user, chamado=chamado):
+            raise PermissionDenied
+
+        # Persistir fiscais (PR3) com o mesmo form (django way)
+        form = ChamadoDadosFiscaisForm(request.POST, instance=chamado)
+        if form.is_valid():
+            form.save()
+        else:
+            messages.error(request, "Dados fiscais inválidos. Verifique os campos.")
+            return redirect("execucao:chamado_detalhe", chamado_id=chamado.id)
+
+        # Recalcular status
+        novo_status = recalcular_status(chamado)
+        if novo_status != chamado.status:
+            chamado.status = novo_status
+            chamado.save(update_fields=["status"])
+
+        # Encerra sessão (SAVE)
+        end_session_save(chamado=chamado, actor=request.user)
+
+        # Log visível (mínimo)
+        hora = timezone.localtime().strftime("%H:%M")
+        messages.success(request, f"Salvo por {request.user} às {hora}")
+
+        return redirect("execucao:chamado_detalhe", chamado_id=chamado.id)
