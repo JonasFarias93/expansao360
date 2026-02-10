@@ -50,9 +50,6 @@
             </div>
           </div>
 
-          <!--{# ===========================================================
-             ✅ PRESERVAÇÃO NO POST (evita "apagar" deve_configurar/ip)
-             =========================================================== #} -->
           {% if item.equipamento.configuravel %}
             <input
               type="hidden"
@@ -130,11 +127,7 @@
                     {% endif %}
                   </div>
 
-                 <!-- {# ✅ Modo leitura (padrão) #} -->
-                  <div
-                    class="mt-2"
-                    data-ip-read="{{ item.id }}"
-                  >
+                  <div class="mt-2" data-ip-read="{{ item.id }}">
                     {% if item.ip %}
                       <div class="text-sm">
                         <span class="text-gray-600">IP definido no setup:</span>
@@ -147,11 +140,8 @@
                     {% endif %}
                   </div>
 
-                  <!-- {# ✅ Campo editável (escondido por padrão) #} -->
-                  <div
-                    class="mt-2 hidden"
-                    data-ip-edit="{{ item.id }}"
-                  >
+
+                  <div class="mt-2 hidden" data-ip-edit="{{ item.id }}">
                     <input
                       name="ip_{{ item.id }}"
                       value="{{ item.ip|default_if_none:'' }}"
@@ -173,13 +163,41 @@
                     </div>
                   </div>
 
-                <!-- //* {# ✅ Preserva IP no POST quando não está editando (evita backend limpar) #} -->
                   <input
                     type="hidden"
                     name="ip_{{ item.id }}"
                     value="{{ item.ip|default_if_none:'' }}"
                     data-ip-hidden="{{ item.id }}"
                   />
+
+                  <div class="mt-3 flex flex-wrap items-center gap-2">
+                    <button
+                      type="button"
+                      class="btn btn-secondary text-xs px-3 py-1.5 js-configurar-item"
+                      data-url="{% url 'execucao:item_configurar' item.id %}"
+                      data-item-id="{{ item.id }}"
+                      {% if chamado.finalizado_em or item.configurado %}disabled aria-disabled="true"{% endif %}
+                    >
+                      {% if item.configurado %}
+                        Configurado ✅
+                      {% else %}
+                        Marcar configurado
+                      {% endif %}
+                    </button>
+
+                    <span class="text-xs text-gray-600 js-configurado-meta" data-item-id="{{ item.id }}">
+                      {% if item.configurado %}
+                        {% if item.configurado_por %}
+                          por {{ item.configurado_por.username }}
+                        {% endif %}
+                        {% if item.configurado_em %}
+                          às {{ item.configurado_em|date:"H:i" }}
+                        {% endif %}
+                      {% endif %}
+                    </span>
+
+                    <span class="text-xs text-red-600 js-configurar-erro hidden" data-item-id="{{ item.id }}"></span>
+                  </div>
                 </div>
 
                 <div>
