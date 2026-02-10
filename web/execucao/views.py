@@ -551,11 +551,17 @@ class ChamadoExecucaoView(CapabilityRequiredMixin, TemplateView):
         ctx = super().get_context_data(**kwargs)
 
         chamado_id = kwargs["chamado_id"]
-
         chamado = get_object_or_404(
             Chamado.objects.select_related("loja", "projeto", "subprojeto", "kit"),
             pk=chamado_id,
         )
+
+        # Permite edição dos dados fiscais somente com:
+        # - permissão IAM
+        # - sessão ativa do próprio usuário no chamado
+        can_edit_dados_fiscais = user_has_capability(
+            self.request.user, CAP_EXECUCAO_CHAMADO_EDITAR
+        ) and usuario_tem_sessao_ativa_no_chamado(user=self.request.user, chamado=chamado)
 
         chamado.gerar_itens_de_instalacao()
 
@@ -573,7 +579,10 @@ class ChamadoExecucaoView(CapabilityRequiredMixin, TemplateView):
         )
         config_pct = int((config_done * 100) / config_total) if config_total else 0
 
-        evidencias = EvidenciaChamado.objects.filter(chamado=chamado).order_by("-criado_em", "-id")
+        evidencias = EvidenciaChamado.objects.filter(chamado=chamado).order_by(
+            "-criado_em",
+            "-id",
+        )
         evidencia_tipos = list(EvidenciaChamado.Tipo.choices)
 
         is_envio = chamado.tipo == Chamado.Tipo.ENVIO
@@ -598,6 +607,8 @@ class ChamadoExecucaoView(CapabilityRequiredMixin, TemplateView):
                 "gate_nf_ok": gate_nf_ok,
                 "gate_coleta_ok": gate_coleta_ok,
                 "is_setup": False,
+                "can_edit_dados_fiscais": can_edit_dados_fiscais,
+                "dados_fiscais_form": ChamadoDadosFiscaisForm(instance=chamado),
             }
         )
         return ctx
