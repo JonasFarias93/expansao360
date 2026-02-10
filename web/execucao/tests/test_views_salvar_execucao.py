@@ -1,19 +1,10 @@
 from __future__ import annotations
 
-from cadastro.models import (
-    Categoria,
-    Equipamento,
-    ItemKit,
-    Kit,
-    TipoEquipamento,
-)
+from cadastro.models import Categoria, Equipamento, ItemKit, Kit, TipoEquipamento
 from django.urls import reverse
 
 from execucao.models import Chamado, ExecutionSession
-from execucao.services.execution_session import (
-    create_active_session,
-    get_active_session,
-)
+from execucao.services.execution_session import create_active_session, get_active_session
 from execucao.tests._base import WebAuthBaseTestCase
 
 
@@ -25,7 +16,6 @@ class ChamadoSalvarExecucaoViewTests(WebAuthBaseTestCase):
             "execucao:chamado_salvar_execucao", kwargs={"chamado_id": cid}
         )
 
-        # chamado base (vai ser sobrescrito em alguns testes)
         self.chamado = Chamado.objects.create(
             loja=self.loja,
             projeto=self.projeto,
@@ -177,4 +167,40 @@ class ChamadoSalvarExecucaoViewTests(WebAuthBaseTestCase):
         self.assertEqual(str(chamado.status), "AGUARDANDO_COLETA")
 
         # sessão ativa encerrada
+        self.assertIsNone(get_active_session(chamado=chamado))
+
+    def test_salvar_execucao_promove_para_em_configuracao_quando_item_configurado(self) -> None:
+        kit = self._setup_kit_com_itens_gate_nf()
+
+        chamado = Chamado.objects.create(
+            loja=self.loja,
+            projeto=self.projeto,
+            subprojeto=self.sub,
+            kit=kit,
+            status="EM_EXECUCAO",
+            tipo=Chamado.Tipo.ENVIO,
+        )
+        chamado.gerar_itens_de_instalacao()
+        item = chamado.itens.first()
+        assert item is not None
+
+        create_active_session(chamado=chamado, user=self.user)
+
+        # marca configurado via endpoint (idempotente)
+        url_cfg = reverse("execucao:item_configurar", args=[item.id])
+        resp = self.client.post(url_cfg)
+        self.assertEqual(resp.status_code, 200)
+
+        # salvar execução deve recalcular e promover para EM_CONFIGURACAO (sem regressão)
+        resp2 = self.client.post(
+            self.url(chamado.id),
+            data={"contabilidade_numero": "", "nf_saida_numero": ""},
+            HTTP_X_REQUESTED_WITH="XMLHttpRequest",
+        )
+        self.assertEqual(resp2.status_code, 200)
+
+        chamado.refresh_from_db()
+        self.assertEqual(str(chamado.status), "EM_CONFIGURACAO")
+
+        # sessão ativa encerrada no salvar
         self.assertIsNone(get_active_session(chamado=chamado))
