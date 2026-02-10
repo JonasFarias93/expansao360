@@ -114,3 +114,30 @@ def usuario_tem_sessao_ativa_no_chamado(*, user, chamado: Chamado) -> bool:
         ended_at__isnull=True,
         expires_at__gt=now,
     ).exists()
+
+
+@transaction.atomic
+def end_session_save(*, chamado: Chamado, actor) -> ExecutionSession:
+    """
+    Encerra a sessão ativa do chamado com motivo SAVE.
+    Exige que o actor seja o dono da sessão ativa.
+    """
+    if not usuario_tem_sessao_ativa_no_chamado(user=actor, chamado=chamado):
+        raise PermissionDenied
+
+    active = (
+        ExecutionSession.objects.select_for_update()
+        .filter(
+            chamado=chamado,
+            ended_at__isnull=True,
+            expires_at__gt=timezone.now(),
+        )
+        .order_by("-started_at")
+        .first()
+    )
+    if active is None:
+        raise PermissionDenied
+
+    active.end(reason=ExecutionSession.EndReason.SAVE)
+    active.save(update_fields=["ended_at", "ended_reason"])
+    return active

@@ -4,6 +4,7 @@
 {% with active_session=execucao_active_sessions_by_chamado|get_item:chamado.id %}
 <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden hover:shadow transition">
   <div class="h-1.5 {% projeto_color_bar chamado.projeto %}"></div>
+
   <div class="p-5">
     <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
       <div class="min-w-0">
@@ -70,25 +71,15 @@
       <div class="flex flex-col items-end gap-1 sm:shrink-0">
         {% if active_session %}
           <div class="text-xs text-slate-500 flex items-center gap-1">
-            <span>🔒</span>
+            <span aria-hidden="true">🔒</span>
             <span>
               Em execução por
               <strong>{{ active_session.usuario }}</strong>
               desde {{ active_session.started_at|date:"H:i" }}
             </span>
           </div>
-
-          <button
-            type="button"
-            class="btn btn-primary opacity-50 cursor-not-allowed"
-            disabled
-            aria-disabled="true"
-            title="Chamado em execução por outro técnico"
-          >
-            Abrir
-          </button>
         {% else %}
-          {# "Abrir" precisa ser POST pois inicia sessão (efeito colateral) #}
+          {# "Assumir" precisa ser POST pois inicia sessão (efeito colateral) #}
           <form
             method="post"
             action="{% url 'execucao:chamado_abrir' chamado_id=chamado.id %}"
@@ -96,7 +87,7 @@
           >
             {% csrf_token %}
             <button type="submit" class="btn btn-primary">
-              Abrir
+              Assumir
             </button>
           </form>
         {% endif %}

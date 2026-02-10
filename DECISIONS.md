@@ -1373,3 +1373,18 @@ Esses campos são usados em processos fiscais/contábeis e precisam de padroniza
 **Consequências**
 - Valores como “NF-123” passam a ser inválidos.
 - Testes existentes foram ajustados para usar apenas dígitos.
+
+---
+
+## 2026-02-09 — Recalcular status automaticamente no Salvar (Execução)
+
+**Decisão**  
+Implementar o service `execucao.services.chamado_status.recalcular_status(chamado)` como regra central de promoção automática de status no gatilho **Salvar** (fora Finalizar).
+
+**Contexto**  
+O progresso salvo (itens/contábil/NF) deve promover status sem intervenção manual, permitindo continuidade por outro técnico e padronizando o fluxo operacional.
+
+**Consequências**  
+- Promoções automáticas: `ABERTO → EM_EXECUCAO` (primeiro salvar), `contábil + pode_liberar_nf() → AGUARDANDO_NF`, `nf_saida_numero → AGUARDANDO_COLETA`.
+- Sem regressão de status neste PR.
+- Função idempotente e coberta por testes unitários.
