@@ -6,6 +6,7 @@ from execucao.models import Chamado
 _STATUS_ORDER = (
     "ABERTO",
     "EM_EXECUCAO",
+    "EM_CONFIGURACAO",
     "AGUARDANDO_NF",
     "AGUARDANDO_COLETA",
     "FINALIZADO",
@@ -37,25 +38,26 @@ def recalcular_status(chamado: Chamado) -> Chamado.Status:
     """
     atual = str(chamado.status)
 
-    # Contrato: EM_ABERTURA não muda nesse PR
     if atual == "EM_ABERTURA":
         return chamado.status
 
-    # 1) primeiro save após abertura => EM_EXECUCAO
-    # (não existe campo de "primeiro save" encontrado; usamos status ABERTO como marcador)
+    novo = atual
+
+    # primeiro save após abertura => EM_EXECUCAO
     if atual == "ABERTO":
-        novo = _promote(atual, "EM_EXECUCAO")
-        return Chamado.Status(novo)
+        novo = _promote(novo, "EM_EXECUCAO")
 
-    # 2) NF Saída preenchida => AGUARDANDO_COLETA (maior precedência)
+    #  existe item configurado => EM_CONFIGURACAO (sem regressão)
+    if chamado.itens.filter(configurado_em__isnull=False).exists():
+        novo = _promote(novo, "EM_CONFIGURACAO")
+
+    #  NF Saída preenchida => AGUARDANDO_COLETA (maior precedência)
     if bool((chamado.nf_saida_numero or "").strip()):
-        novo = _promote(atual, "AGUARDANDO_COLETA")
-        return Chamado.Status(novo)
+        novo = _promote(novo, "AGUARDANDO_COLETA")
 
-    # 3) Itens bipados + contábil preenchido => AGUARDANDO_NF
+    #  Itens bipados + contábil preenchido => AGUARDANDO_NF
     contabil_ok = bool((chamado.contabilidade_numero or "").strip())
     if contabil_ok and chamado.pode_liberar_nf():
-        novo = _promote(atual, "AGUARDANDO_NF")
-        return Chamado.Status(novo)
+        novo = _promote(novo, "AGUARDANDO_NF")
 
-    return chamado.status
+    return Chamado.Status(novo)

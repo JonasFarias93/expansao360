@@ -1,12 +1,7 @@
 from __future__ import annotations
 
-from cadastro.models import (
-    Categoria,
-    Equipamento,
-    ItemKit,
-    Kit,
-    TipoEquipamento,
-)
+from cadastro.models import Categoria, Equipamento, ItemKit, Kit, TipoEquipamento
+from django.utils import timezone
 
 from execucao.models import Chamado
 from execucao.services.chamado_status import recalcular_status
@@ -77,6 +72,14 @@ class RecalcularStatusServiceTests(ChamadoBaseTestCase):
                 item.confirmado = True
                 item.save(update_fields=["confirmado"])
 
+    def _marcar_um_item_configurado(self) -> None:
+        """Marca pelo menos um item como configurado (sinal para EM_CONFIGURACAO)."""
+        self.chamado.gerar_itens_de_instalacao()
+        item = self.chamado.itens.first()
+        assert item is not None
+        item.configurado_em = timezone.now()
+        item.save(update_fields=["configurado_em"])
+
     def test_nao_mexe_em_em_abertura(self) -> None:
         self.chamado.status = "EM_ABERTURA"
         self.chamado.save(update_fields=["status"])
@@ -86,6 +89,38 @@ class RecalcularStatusServiceTests(ChamadoBaseTestCase):
         self.chamado.status = "ABERTO"
         self.chamado.save(update_fields=["status"])
         self.assertEqual(str(recalcular_status(self.chamado)), "EM_EXECUCAO")
+
+    def test_item_configurado_promove_para_em_configuracao_quando_em_execucao(self) -> None:
+        self.chamado.status = "EM_EXECUCAO"
+        self.chamado.save(update_fields=["status"])
+
+        self._marcar_um_item_configurado()
+
+        self.assertEqual(str(recalcular_status(self.chamado)), "EM_CONFIGURACAO")
+
+    def test_item_configurado_promove_para_em_configuracao_quando_aberto(self) -> None:
+        self.chamado.status = "ABERTO"
+        self.chamado.save(update_fields=["status"])
+
+        self._marcar_um_item_configurado()
+
+        self.assertEqual(str(recalcular_status(self.chamado)), "EM_CONFIGURACAO")
+
+    def test_item_configurado_nao_regride_quando_aguardando_nf(self) -> None:
+        self.chamado.status = "AGUARDANDO_NF"
+        self.chamado.save(update_fields=["status"])
+
+        self._marcar_um_item_configurado()
+
+        self.assertEqual(str(recalcular_status(self.chamado)), "AGUARDANDO_NF")
+
+    def test_item_configurado_nao_regride_quando_aguardando_coleta(self) -> None:
+        self.chamado.status = "AGUARDANDO_COLETA"
+        self.chamado.save(update_fields=["status"])
+
+        self._marcar_um_item_configurado()
+
+        self.assertEqual(str(recalcular_status(self.chamado)), "AGUARDANDO_COLETA")
 
     def test_nf_saida_preenchida_promove_para_aguardando_coleta(self) -> None:
         self.chamado.status = "EM_EXECUCAO"
@@ -104,15 +139,7 @@ class RecalcularStatusServiceTests(ChamadoBaseTestCase):
         self.assertTrue(self.chamado.pode_liberar_nf())
         self.assertEqual(str(recalcular_status(self.chamado)), "AGUARDANDO_NF")
 
-        for item in self.chamado.itens.all():
-            if item.tem_ativo:
-                item.ativo = "ATV-123"
-                item.numero_serie = "SN-123"
-                item.save(update_fields=["ativo", "numero_serie"])
-            else:
-                item.confirmado = True
-                item.save(update_fields=["confirmado"])
-
+        # idempotência: rodar de novo mantendo as condições não muda
         self.assertTrue(self.chamado.pode_liberar_nf())
         self.assertEqual(str(recalcular_status(self.chamado)), "AGUARDANDO_NF")
 
