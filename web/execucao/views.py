@@ -23,6 +23,7 @@ from django.http import (
     HttpResponse,
     HttpResponseBadRequest,
     HttpResponseForbidden,
+    JsonResponse,
     QueryDict,
 )
 from django.shortcuts import get_object_or_404, redirect, render
@@ -1015,6 +1016,17 @@ class ChamadoSalvarExecucaoView(CapabilityRequiredMixin, View):
 
         # Log visível (mínimo)
         hora = timezone.localtime().strftime("%H:%M")
-        messages.success(request, f"Salvo por {request.user} às {hora}")
+        msg = f"Salvo por {request.user} às {hora}"
+        messages.success(request, msg)
+
+        # ✅ Se for AJAX, devolve JSON pra UI atualizar sem redirect
+        if request.headers.get("x-requested-with") == "XMLHttpRequest":
+            return JsonResponse(
+                {
+                    "ok": True,
+                    "saved_at": hora,
+                    "message": msg,
+                }
+            )
 
         return redirect("execucao:chamado_detalhe", chamado_id=chamado.id)
