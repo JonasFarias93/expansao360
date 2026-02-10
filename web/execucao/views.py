@@ -35,7 +35,11 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_POST
 from django.views.generic import TemplateView
 from iam.decorators import user_has_capability
-from iam.execucao_capabilities import CAP_EXECUCAO_CHAMADO_EDITAR, CAP_EXECUCAO_SESSAO_TOMAR
+from iam.execucao_capabilities import (
+    CAP_EXECUCAO_CHAMADO_EDITAR,
+    CAP_EXECUCAO_CHAMADO_FINALIZAR,
+    CAP_EXECUCAO_SESSAO_TOMAR,
+)
 from iam.mixins import CapabilityRequiredMixin
 
 from execucao.services.chamado_status import recalcular_status
@@ -549,15 +553,56 @@ class ChamadoExecucaoView(CapabilityRequiredMixin, TemplateView):
             pk=chamado_id,
         )
 
+        sessao_ativa = usuario_tem_sessao_ativa_no_chamado(
+            user=self.request.user,
+            chamado=chamado,
+        )
+
         # Permite edição dos dados fiscais somente com:
         # - permissão IAM
         # - sessão ativa do próprio usuário no chamado
-        can_edit_dados_fiscais = user_has_capability(
-            self.request.user, CAP_EXECUCAO_CHAMADO_EDITAR
-        ) and usuario_tem_sessao_ativa_no_chamado(user=self.request.user, chamado=chamado)
+        can_edit_dados_fiscais = (
+            user_has_capability(self.request.user, CAP_EXECUCAO_CHAMADO_EDITAR) and sessao_ativa
+        )
 
+        # -----------------------------------------
+        # Gates operacionais (definir ANTES das flags)
+        # -----------------------------------------
+        is_envio = chamado.tipo == Chamado.Tipo.ENVIO
+        is_retorno = chamado.tipo == Chamado.Tipo.RETORNO
+
+        gate_contabil_ok = bool((chamado.contabilidade_numero or "").strip())
+        gate_nf_ok = bool((chamado.nf_saida_numero or "").strip())
+        gate_coleta_ok = chamado.coleta_confirmada_em is not None
+
+        # -----------------------------------------
+        # Ações finais (sessão + IAM)
+        # -----------------------------------------
+        can_confirmar_coleta = (
+            user_has_capability(self.request.user, CAP_EXECUCAO_CHAMADO_EDITAR) and sessao_ativa
+        )
+
+        can_finalizar = (
+            user_has_capability(self.request.user, CAP_EXECUCAO_CHAMADO_FINALIZAR) and sessao_ativa
+        )
+
+        # Mostra a seção “Ações finais” se tiver pelo menos uma permissão de ação
+        can_execute_actions = bool(can_confirmar_coleta or can_finalizar)
+
+        pode_confirmar_coleta = (
+            can_confirmar_coleta
+            and is_envio
+            and chamado.status != Chamado.Status.FINALIZADO
+            and not gate_coleta_ok
+            and gate_nf_ok
+        )
+
+        pode_finalizar = False
+
+        # -----------------------------------------
+        # Itens / progresso
+        # -----------------------------------------
         chamado.gerar_itens_de_instalacao()
-
         itens_qs = chamado.itens.select_related("equipamento").all().order_by("id")
 
         config_total = itens_qs.filter(deve_configurar=True).count()
@@ -572,17 +617,14 @@ class ChamadoExecucaoView(CapabilityRequiredMixin, TemplateView):
         )
         config_pct = int((config_done * 100) / config_total) if config_total else 0
 
+        # -----------------------------------------
+        # Evidências
+        # -----------------------------------------
         evidencias = EvidenciaChamado.objects.filter(chamado=chamado).order_by(
             "-criado_em",
             "-id",
         )
         evidencia_tipos = list(EvidenciaChamado.Tipo.choices)
-
-        is_envio = chamado.tipo == Chamado.Tipo.ENVIO
-        is_retorno = chamado.tipo == Chamado.Tipo.RETORNO
-        gate_contabil_ok = bool((chamado.contabilidade_numero or "").strip())
-        gate_nf_ok = bool((chamado.nf_saida_numero or "").strip())
-        gate_coleta_ok = chamado.coleta_confirmada_em is not None
 
         ctx.update(
             {
@@ -594,14 +636,20 @@ class ChamadoExecucaoView(CapabilityRequiredMixin, TemplateView):
                 "config_done": config_done,
                 "config_pct": config_pct,
                 "pode_liberar_nf": chamado.pode_liberar_nf(),
+                # flags / gates
                 "is_envio": is_envio,
                 "is_retorno": is_retorno,
                 "gate_contabil_ok": gate_contabil_ok,
                 "gate_nf_ok": gate_nf_ok,
                 "gate_coleta_ok": gate_coleta_ok,
                 "is_setup": False,
+                # permissões / forms
                 "can_edit_dados_fiscais": can_edit_dados_fiscais,
                 "dados_fiscais_form": ChamadoDadosFiscaisForm(instance=chamado),
+                # ações finais (PR6)
+                "can_execute_actions": can_execute_actions,
+                "pode_confirmar_coleta": pode_confirmar_coleta,
+                "pode_finalizar": pode_finalizar,
             }
         )
         return ctx
@@ -696,7 +744,11 @@ class ChamadoConfirmarColetaView(CapabilityRequiredMixin, View):
 
     @transaction.atomic
     def post(self, request: HttpRequest, chamado_id: int, *args, **kwargs) -> HttpResponse:
-        chamado = get_object_or_404(Chamado, pk=chamado_id)
+        chamado = (
+            Chamado.objects.select_for_update()
+            .select_related("loja", "projeto", "subprojeto", "kit")
+            .get(pk=chamado_id)
+        )
 
         if chamado.status == Chamado.Status.FINALIZADO:
             messages.error(request, "Chamado finalizado. Não é possível alterar.")
@@ -714,7 +766,9 @@ class ChamadoConfirmarColetaView(CapabilityRequiredMixin, View):
             messages.info(request, "Coleta já confirmada.")
             return redirect("execucao:chamado_detalhe", chamado_id=chamado.id)
 
+        chamado.coleta_confirmada = True
         chamado.coleta_confirmada_em = timezone.now()
+        chamado.coleta_confirmada_por = request.user if request.user.is_authenticated else None
 
         try:
             chamado.full_clean()
@@ -722,7 +776,9 @@ class ChamadoConfirmarColetaView(CapabilityRequiredMixin, View):
             _push_validation_error_messages(request, exc)
             return redirect("execucao:chamado_detalhe", chamado_id=chamado.id)
 
-        chamado.save(update_fields=["coleta_confirmada_em"])
+        chamado.save(
+            update_fields=["coleta_confirmada", "coleta_confirmada_em", "coleta_confirmada_por"]
+        )
         messages.success(request, "Coleta confirmada.")
         return redirect("execucao:chamado_detalhe", chamado_id=chamado.id)
 
@@ -1061,7 +1117,6 @@ class ChamadoSalvarExecucaoView(CapabilityRequiredMixin, View):
         msg = f"Salvo por {request.user} às {hora}"
         messages.success(request, msg)
 
-        # ✅ Se for AJAX, devolve JSON pra UI atualizar sem redirect
         if request.headers.get("x-requested-with") == "XMLHttpRequest":
             return JsonResponse(
                 {

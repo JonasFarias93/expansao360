@@ -24,7 +24,7 @@
         {% include "execucao/components/_salvar_execucao_bar.html" with chamado=chamado sessao_do_usuario=can_edit_dados_fiscais %}
 
         {# Dados fiscais + evidências #}
-        {% include "execucao/components/_card_operacional_chamado_full.html" with chamado=chamado evidencias=evidencias evidencia_tipos=evidencia_tipos can_edit_dados_fiscais=can_edit_dados_fiscais dados_fiscais_form=dados_fiscais_form %}
+        {% include "execucao/components/_card_operacional_chamado_full.html" with chamado=chamado evidencias=evidencias evidencia_tipos=evidencia_tipos can_edit_dados_fiscais=can_edit_dados_fiscais can_execute_actions=can_execute_actions pode_confirmar_coleta=pode_confirmar_coleta pode_finalizar=pode_finalizar %}
       </div>
 
       {# Coluna lateral (resumo / ações rápidas / lembretes) #}

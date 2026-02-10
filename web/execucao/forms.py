@@ -5,6 +5,7 @@ from cadastro.models import Kit, Loja, Projeto, Subprojeto
 from django import forms
 from django.core.exceptions import ValidationError
 from django.urls import reverse
+from django.utils import timezone
 
 from execucao.models import NF_SAIDA_ONLY_DIGITS_ERROR, Chamado
 
@@ -35,7 +36,6 @@ class ChamadoCreateForm(forms.Form):
         label="Kit",
     )
 
-    # ✅ Ticket Externo (obrigatório)
     ticket_externo_sistema = forms.CharField(
         required=True,
         max_length=50,
@@ -48,7 +48,6 @@ class ChamadoCreateForm(forms.Form):
         label="Número do ticket externo",
     )
 
-    # ✅ Prioridade (opcional, default MAIS_ANTIGO no model)
     prioridade = forms.ChoiceField(
         required=False,
         choices=Chamado.Prioridade.choices,
@@ -153,3 +152,42 @@ class ChamadoDadosFiscaisForm(forms.ModelForm):
         if v and not v.isdigit():
             raise forms.ValidationError(NF_SAIDA_ONLY_DIGITS_ERROR)
         return v
+
+
+class ChamadoColetaConfirmacaoForm(forms.ModelForm):
+    class Meta:
+        model = Chamado
+        fields = ["coleta_confirmada"]
+
+    def __init__(self, *args, request=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.request = request
+
+        base = (
+            "w-full rounded-lg border border-slate-300 px-3 py-2 "
+            "focus:outline-none focus:ring-2 focus:ring-slate-900"
+        )
+        current = (self.fields["coleta_confirmada"].widget.attrs.get("class") or "").strip()
+        self.fields["coleta_confirmada"].widget.attrs["class"] = (
+            f"{current} {base}".strip() if current else base
+        )
+
+        self.fields["coleta_confirmada"].label = "Coleta confirmada"
+
+    def save(self, commit=True):
+        chamado = super().save(commit=False)
+
+        if "coleta_confirmada" in self.changed_data:
+            if chamado.coleta_confirmada:
+                chamado.coleta_confirmada_em = timezone.now()
+                user = getattr(self.request, "user", None)
+                if user and user.is_authenticated:
+                    chamado.coleta_confirmada_por = user
+            else:
+                chamado.coleta_confirmada_em = None
+                chamado.coleta_confirmada_por = None
+
+        if commit:
+            chamado.save()
+            self.save_m2m()
+        return chamado
