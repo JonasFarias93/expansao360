@@ -99,3 +99,18 @@ def take_session(*, chamado: Chamado, actor) -> ExecutionSession:
         reason=ExecutionSessionLog.Reason.ADMIN_TAKE,
     )
     return new_sess
+
+
+def usuario_tem_sessao_ativa_no_chamado(*, user, chamado: Chamado) -> bool:
+    """
+    True se o usuário informado é o dono da sessão ativa do chamado.
+
+    Sessão ativa = ended_at IS NULL e expires_at > now().
+    """
+    now = timezone.now()
+    return ExecutionSession.objects.filter(
+        chamado=chamado,
+        usuario=user,
+        ended_at__isnull=True,
+        expires_at__gt=now,
+    ).exists()

@@ -76,6 +76,11 @@ urlpatterns = [
         views.ChamadoFinalizarView.as_view(),
         name="chamado_finalizar",
     ),
+    path(
+        "chamado/<int:chamado_id>/salvar-dados-fiscais/",
+        views.ChamadoSalvarDadosFiscaisView.as_view(),
+        name="chamado_salvar_dados_fiscais",
+    ),
     # ======================
     # EVIDÊNCIAS
     # ======================

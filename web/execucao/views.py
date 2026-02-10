@@ -18,7 +18,13 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
 from django.db.models import Case, Count, IntegerField, Q, Value, When
-from django.http import HttpRequest, HttpResponse, HttpResponseBadRequest, QueryDict
+from django.http import (
+    HttpRequest,
+    HttpResponse,
+    HttpResponseBadRequest,
+    HttpResponseForbidden,
+    QueryDict,
+)
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.utils.decorators import method_decorator
@@ -35,10 +41,11 @@ from execucao.models import ExecutionSession
 from execucao.services.execution_session import (
     NoActiveSessionToTakeError,
     take_session,
+    usuario_tem_sessao_ativa_no_chamado,
 )
 from execucao.services.open_session import SessionBlockedError, open_session
 
-from .forms import ChamadoCreateForm
+from .forms import ChamadoCreateForm, ChamadoDadosFiscaisForm
 from .models import (
     Chamado,
     EvidenciaChamado,
@@ -945,3 +952,31 @@ class ItemSetStatusConfiguracaoView(CapabilityRequiredMixin, View):
 
         messages.success(request, "Status de configuração atualizado.")
         return redirect("execucao:chamado_detalhe", chamado_id=chamado.id)
+
+
+class ChamadoSalvarDadosFiscaisView(View):
+    required_capability = "execucao.chamado_editar"
+
+    @transaction.atomic
+    def post(self, request: HttpRequest, chamado_id: int, *args, **kwargs) -> HttpResponse:
+        chamado = get_object_or_404(Chamado, pk=chamado_id)
+
+        # 1) IAM -> 403
+        if not user_has_capability(request.user, CAP_EXECUCAO_CHAMADO_EDITAR):
+            return HttpResponseForbidden("Permissão insuficiente.")
+
+        # 2) Sessão ativa do próprio usuário -> 403
+        if not usuario_tem_sessao_ativa_no_chamado(user=request.user, chamado=chamado):
+            return HttpResponseForbidden("Sessão ativa é obrigatória para editar este chamado.")
+
+        form = ChamadoDadosFiscaisForm(request.POST, instance=chamado)
+        if not form.is_valid():
+            for errs in form.errors.values():
+                for e in errs:
+                    messages.error(request, e)
+            return redirect("execucao:chamado_setup", chamado_id=chamado.id)
+
+        obj = form.save(commit=False)
+        obj.save(update_fields=["contabilidade_numero", "nf_saida_numero"])
+        messages.success(request, "Dados salvos com sucesso.")
+        return redirect("execucao:chamado_setup", chamado_id=chamado.id)
