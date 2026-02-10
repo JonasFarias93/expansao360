@@ -39,6 +39,7 @@ class Chamado(models.Model):
     class Status(models.TextChoices):
         EM_ABERTURA = "EM_ABERTURA", "Em abertura"
         ABERTO = "ABERTO", "Aberto"
+        EM_CONFIGURACAO = "EM_CONFIGURACAO", "Em configuração"
         EM_EXECUCAO = "EM_EXECUCAO", "Em execução"
         AGUARDANDO_NF = "AGUARDANDO_NF", "Aguardando NF"
         AGUARDANDO_COLETA = "AGUARDANDO_COLETA", "Aguardando coleta"

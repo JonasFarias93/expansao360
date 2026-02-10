@@ -1388,3 +1388,19 @@ O progresso salvo (itens/contábil/NF) deve promover status sem intervenção ma
 - Promoções automáticas: `ABERTO → EM_EXECUCAO` (primeiro salvar), `contábil + pode_liberar_nf() → AGUARDANDO_NF`, `nf_saida_numero → AGUARDANDO_COLETA`.
 - Sem regressão de status neste PR.
 - Função idempotente e coberta por testes unitários.
+
+
+---
+
+## 2026-02-10 — Novo status EM_CONFIGURACAO no Chamado (PR5)
+
+**Decisão**  
+Adicionar o status `EM_CONFIGURACAO` ao workflow do `Chamado.Status`.
+
+**Contexto**  
+O PR5 introduz o conceito de item configurado (`InstalacaoItem.configurado_em/por`) e o chamado deve refletir essa etapa sem regressão.
+
+**Consequências**  
+- `Chamado.Status` passa a suportar `EM_CONFIGURACAO`.
+- `recalcular_status()` pode promover `ABERTO/EM_EXECUCAO -> EM_CONFIGURACAO` quando houver itens configurados.
+- Regras de maior precedência (AGUARDANDO_NF/AGUARDANDO_COLETA) continuam vencendo.
