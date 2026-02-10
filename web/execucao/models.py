@@ -26,6 +26,12 @@ class StatusConfiguracao(models.TextChoices):
     CONFIGURADO = "CONFIGURADO", "Configurado"
 
 
+# =========================
+# NF Saida
+# =========================
+NF_SAIDA_ONLY_DIGITS_ERROR = "NF Saída deve conter apenas números."
+
+
 # =======
 # chamado
 # =======
@@ -104,6 +110,18 @@ class Chamado(models.Model):
 
     def clean(self) -> None:
         super().clean()
+        # =========================
+        # Contabilidade + NF Saída (MVP)
+        # =========================
+        if self.contabilidade_numero is not None:
+            self.contabilidade_numero = self.contabilidade_numero.strip()
+
+        if self.nf_saida_numero is not None:
+            # remove espaços (ex: " 123 45 " -> "12345")
+            self.nf_saida_numero = "".join(self.nf_saida_numero.split())
+
+            if self.nf_saida_numero and not self.nf_saida_numero.isdigit():
+                raise ValidationError({"nf_saida_numero": NF_SAIDA_ONLY_DIGITS_ERROR})
 
         # Subprojeto pode ser opcional na UI dependendo do cadastro.
         # Se o model estiver como PROTECT (obrigatório), manter.

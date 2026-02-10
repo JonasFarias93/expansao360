@@ -1354,3 +1354,22 @@ Evitar edição concorrente e permitir reentrada do mesmo técnico com auditoria
 - “Abrir” é POST.
 - Auditoria mínima: `ExecutionSession.usuario` e `started_at`.
 - Redirecionamento: `ABERTO -> setup`, demais -> detalhe.
+
+
+---
+
+## 2026-02-09 — Validação e normalização de Contabilidade e NF Saída no Chamado
+
+**Status:** Aceito
+
+**Decisão**
+- `contabilidade_numero`: normalizar com `strip()` (trim) antes de validar/salvar.
+- `nf_saida_numero`: remover espaços e validar que contém apenas dígitos.
+- Mensagem padrão: “NF Saída deve conter apenas números.”
+
+**Contexto**
+Esses campos são usados em processos fiscais/contábeis e precisam de padronização mínima no domínio para evitar formatos inconsistentes.
+
+**Consequências**
+- Valores como “NF-123” passam a ser inválidos.
+- Testes existentes foram ajustados para usar apenas dígitos.

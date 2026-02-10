@@ -23,7 +23,7 @@
         {# Evidências / bloco operacional FULL (se/quando habilitado) #}
         {# TODO(UI): reativar quando o componente full estiver pronto e estabilizado #}
 
-        {% include "execucao/components/_card_operacional_chamado_full.html" with chamado=chamado evidencias=evidencias evidencia_tipos=evidencia_tipos %}
+        {% include "execucao/components/_card_operacional_chamado_full.html" with chamado=chamado evidencias=evidencias evidencia_tipos=evidencia_tipos can_edit_dados_fiscais=can_edit_dados_fiscais dados_fiscais_form=dados_fiscais_form %}
       </div>
 
       {# Coluna lateral (resumo / ações rápidas / lembretes) #}

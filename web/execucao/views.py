@@ -18,7 +18,13 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
 from django.db.models import Case, Count, IntegerField, Q, Value, When
-from django.http import HttpRequest, HttpResponse, HttpResponseBadRequest, QueryDict
+from django.http import (
+    HttpRequest,
+    HttpResponse,
+    HttpResponseBadRequest,
+    HttpResponseForbidden,
+    QueryDict,
+)
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.utils.decorators import method_decorator
@@ -28,17 +34,18 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_POST
 from django.views.generic import TemplateView
 from iam.decorators import user_has_capability
-from iam.execucao_capabilities import CAP_EXECUCAO_CHAMADO_EDITAR
+from iam.execucao_capabilities import CAP_EXECUCAO_CHAMADO_EDITAR, CAP_EXECUCAO_SESSAO_TOMAR
 from iam.mixins import CapabilityRequiredMixin
 
 from execucao.models import ExecutionSession
 from execucao.services.execution_session import (
     NoActiveSessionToTakeError,
     take_session,
+    usuario_tem_sessao_ativa_no_chamado,
 )
 from execucao.services.open_session import SessionBlockedError, open_session
 
-from .forms import ChamadoCreateForm
+from .forms import ChamadoCreateForm, ChamadoDadosFiscaisForm
 from .models import (
     Chamado,
     EvidenciaChamado,
@@ -544,11 +551,17 @@ class ChamadoExecucaoView(CapabilityRequiredMixin, TemplateView):
         ctx = super().get_context_data(**kwargs)
 
         chamado_id = kwargs["chamado_id"]
-
         chamado = get_object_or_404(
             Chamado.objects.select_related("loja", "projeto", "subprojeto", "kit"),
             pk=chamado_id,
         )
+
+        # Permite edição dos dados fiscais somente com:
+        # - permissão IAM
+        # - sessão ativa do próprio usuário no chamado
+        can_edit_dados_fiscais = user_has_capability(
+            self.request.user, CAP_EXECUCAO_CHAMADO_EDITAR
+        ) and usuario_tem_sessao_ativa_no_chamado(user=self.request.user, chamado=chamado)
 
         chamado.gerar_itens_de_instalacao()
 
@@ -566,7 +579,10 @@ class ChamadoExecucaoView(CapabilityRequiredMixin, TemplateView):
         )
         config_pct = int((config_done * 100) / config_total) if config_total else 0
 
-        evidencias = EvidenciaChamado.objects.filter(chamado=chamado).order_by("-criado_em", "-id")
+        evidencias = EvidenciaChamado.objects.filter(chamado=chamado).order_by(
+            "-criado_em",
+            "-id",
+        )
         evidencia_tipos = list(EvidenciaChamado.Tipo.choices)
 
         is_envio = chamado.tipo == Chamado.Tipo.ENVIO
@@ -591,6 +607,8 @@ class ChamadoExecucaoView(CapabilityRequiredMixin, TemplateView):
                 "gate_nf_ok": gate_nf_ok,
                 "gate_coleta_ok": gate_coleta_ok,
                 "is_setup": False,
+                "can_edit_dados_fiscais": can_edit_dados_fiscais,
+                "dados_fiscais_form": ChamadoDadosFiscaisForm(instance=chamado),
             }
         )
         return ctx
@@ -945,3 +963,31 @@ class ItemSetStatusConfiguracaoView(CapabilityRequiredMixin, View):
 
         messages.success(request, "Status de configuração atualizado.")
         return redirect("execucao:chamado_detalhe", chamado_id=chamado.id)
+
+
+class ChamadoSalvarDadosFiscaisView(View):
+    required_capability = "execucao.chamado_editar"
+
+    @transaction.atomic
+    def post(self, request: HttpRequest, chamado_id: int, *args, **kwargs) -> HttpResponse:
+        chamado = get_object_or_404(Chamado, pk=chamado_id)
+
+        # 1) IAM -> 403
+        if not user_has_capability(request.user, CAP_EXECUCAO_CHAMADO_EDITAR):
+            return HttpResponseForbidden("Permissão insuficiente.")
+
+        # 2) Sessão ativa do próprio usuário -> 403
+        if not usuario_tem_sessao_ativa_no_chamado(user=request.user, chamado=chamado):
+            return HttpResponseForbidden("Sessão ativa é obrigatória para editar este chamado.")
+
+        form = ChamadoDadosFiscaisForm(request.POST, instance=chamado)
+        if not form.is_valid():
+            for errs in form.errors.values():
+                for e in errs:
+                    messages.error(request, e)
+            return redirect("execucao:chamado_setup", chamado_id=chamado.id)
+
+        obj = form.save(commit=False)
+        obj.save(update_fields=["contabilidade_numero", "nf_saida_numero"])
+        messages.success(request, "Dados salvos com sucesso.")
+        return redirect("execucao:chamado_setup", chamado_id=chamado.id)

@@ -34,6 +34,11 @@ urlpatterns = [
         name="chamado_detalhe",  # mantido por compatibilidade
     ),
     path("api/lojas/lookup/", loja_lookup_por_codigo, name="api_loja_lookup"),
+    path(
+        "chamados/<int:chamado_id>/take-session/",
+        views.chamado_take_session,
+        name="chamado_take_session",
+    ),
     # ======================
     # ITENS DO CHAMADO
     # ======================
@@ -70,6 +75,11 @@ urlpatterns = [
         "chamados/<int:chamado_id>/finalizar/",
         views.ChamadoFinalizarView.as_view(),
         name="chamado_finalizar",
+    ),
+    path(
+        "chamado/<int:chamado_id>/salvar-dados-fiscais/",
+        views.ChamadoSalvarDadosFiscaisView.as_view(),
+        name="chamado_salvar_dados_fiscais",
     ),
     # ======================
     # EVIDÊNCIAS

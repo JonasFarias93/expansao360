@@ -6,7 +6,7 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.urls import reverse
 
-from .models import Chamado
+from execucao.models import NF_SAIDA_ONLY_DIGITS_ERROR, Chamado
 
 
 class ChamadoCreateForm(forms.Form):
@@ -132,3 +132,24 @@ class ChamadoCreateForm(forms.Form):
             raise ValidationError("Loja não encontrada.")
 
         return cleaned
+
+
+class ChamadoDadosFiscaisForm(forms.ModelForm):
+    class Meta:
+        model = Chamado
+        fields = ["contabilidade_numero", "nf_saida_numero"]
+
+    def clean_contabilidade_numero(self) -> str | None:
+        v = self.cleaned_data.get("contabilidade_numero")
+        if v is None:
+            return v
+        return v.strip()
+
+    def clean_nf_saida_numero(self) -> str | None:
+        v = self.cleaned_data.get("nf_saida_numero")
+        if v is None:
+            return v
+        v = "".join(v.split())
+        if v and not v.isdigit():
+            raise forms.ValidationError(NF_SAIDA_ONLY_DIGITS_ERROR)
+        return v

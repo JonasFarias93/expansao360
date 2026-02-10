@@ -1,10 +1,7 @@
 {# web/execucao/templates/execucao/components/_evidencias_chamado.html #}
 
 <div class="space-y-3">
-  <div class="flex items-center justify-between mb-3">
-    <h2 class="font-semibold">Evidências</h2>
-    <div class="text-sm text-gray-500">{{ evidencias|length }} arquivo(s)</div>
-  </div>
+  {# Header removido daqui para evitar duplicação. O título/contador ficam no componente pai (_card_operacional_chamado_full.html). #}
 
   {% if chamado.finalizado_em %}
     <div class="mb-3 text-sm text-gray-600 bg-gray-50 border rounded p-3">
@@ -41,7 +38,12 @@
 
         <div class="md:col-span-3">
           <label class="block text-sm text-gray-600 mb-1 font-medium">Arquivo</label>
-          <input type="file" name="arquivo" class="w-full border rounded px-3 py-2 bg-white text-sm" required />
+          <input
+            type="file"
+            name="arquivo"
+            class="w-full border rounded px-3 py-2 bg-white text-sm"
+            required
+          />
         </div>
       </div>
 
