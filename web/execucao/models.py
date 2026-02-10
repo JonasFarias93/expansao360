@@ -92,8 +92,6 @@ class Chamado(models.Model):
     # =========================
     # Ticket externo (novo)
     # =========================
-    # NOTA: deixar blank/default na migration inicial para não quebrar dados existentes.
-    # A obrigatoriedade real fica na UI (form) + migração de endurecimento depois.
     ticket_externo_sistema = models.CharField(max_length=50, blank=True, default="")
     ticket_externo_id = models.CharField(max_length=50, blank=True, default="")
 
@@ -101,6 +99,16 @@ class Chamado(models.Model):
     # Coleta (novo gate ENVIO)
     # =========================
     coleta_confirmada_em = models.DateTimeField(null=True, blank=True)
+    coleta_confirmada = models.BooleanField(default=False)
+
+    coleta_confirmada_em = models.DateTimeField(null=True, blank=True)
+    coleta_confirmada_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="chamados_coleta_confirmada",
+    )
 
     # Administrativo/financeiro (já existia)
     contabilidade_numero = models.CharField(max_length=40, unique=True, null=True, blank=True)

@@ -40,5 +40,8 @@ class WebAuthBaseTestCase(ChamadoBaseTestCase):
         grant_cap(self.user, "execucao.evidencia.upload")
         grant_cap(self.user, "execucao.evidencia.remover")
         grant_cap(self.user, "execucao.item_configuracao.alterar_status")
+
         grant_cap(self.user, "execucao.chamado.finalizar")
+        grant_cap(self.user, "execucao.chamado_finalizar")
+
         grant_cap(self.user, "execucao.chamado_editar")
