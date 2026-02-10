@@ -59,3 +59,15 @@ class SalvarDadosFiscaisPermissoesTests(WebAuthBaseTestCase):
         from django.urls import reverse
 
         return reverse("execucao:chamado_salvar_dados_fiscais", args=[self.chamado.id])
+
+    def test_nf_com_letras_retorna_erro_e_nao_salva(self) -> None:
+        create_active_session(chamado=self.chamado, user=self.user)
+
+        resp = self.client.post(
+            self._url(),
+            data={"contabilidade_numero": "PED-001", "nf_saida_numero": "12A3"},
+        )
+        self.assertEqual(resp.status_code, 302)
+
+        self.chamado.refresh_from_db()
+        self.assertFalse((self.chamado.nf_saida_numero or "").strip())
