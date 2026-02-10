@@ -389,6 +389,20 @@ class InstalacaoItem(models.Model):
         default=StatusConfiguracao.AGUARDANDO,
         help_text="Estado atual do processo de configuração do item.",
     )
+    # auditoria: item marcado como "configurado"
+    configurado_em = models.DateTimeField(null=True, blank=True)
+
+    configurado_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="execucao_itens_configurados",
+    )
+
+    @property
+    def configurado(self) -> bool:
+        return self.configurado_em is not None
 
     ativo = models.CharField(max_length=80, blank=True, default="")
     numero_serie = models.CharField(max_length=120, blank=True, default="")
