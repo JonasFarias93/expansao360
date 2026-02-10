@@ -88,7 +88,6 @@ class Equipamento(models.Model):
         self.nome = (self.nome or "").strip()
 
         if not (self.codigo or "").strip():
-            # ✅ import local para evitar circular import durante app loading
             from cadastro.services.codes import generate_code
 
             self.codigo = generate_code("EQP")
@@ -227,7 +226,6 @@ class Projeto(models.Model):
         super().clean()
         self.nome = (self.nome or "").strip()
 
-        # ✅ imutabilidade do codigo após criação
         if self.pk:
             old = Projeto.objects.filter(pk=self.pk).values_list("codigo", flat=True).first()
             if old is not None and (self.codigo or "") != old:
