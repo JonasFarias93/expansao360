@@ -38,7 +38,6 @@ from iam.decorators import user_has_capability
 from iam.execucao_capabilities import CAP_EXECUCAO_CHAMADO_EDITAR, CAP_EXECUCAO_SESSAO_TOMAR
 from iam.mixins import CapabilityRequiredMixin
 
-from execucao.models import ExecutionSession
 from execucao.services.chamado_status import recalcular_status
 from execucao.services.execution_session import (
     NoActiveSessionToTakeError,
@@ -52,6 +51,7 @@ from .forms import ChamadoCreateForm, ChamadoDadosFiscaisForm
 from .models import (
     Chamado,
     EvidenciaChamado,
+    ExecutionSession,
     InstalacaoItem,
     ItemConfiguracaoLog,
     StatusConfiguracao,
@@ -956,6 +956,48 @@ class ItemSetStatusConfiguracaoView(CapabilityRequiredMixin, View):
 
         messages.success(request, "Status de configuração atualizado.")
         return redirect("execucao:chamado_detalhe", chamado_id=chamado.id)
+
+
+class ItemMarcarConfiguradoView(CapabilityRequiredMixin, View):
+    required_capability = "execucao.chamado_editar"
+
+    @transaction.atomic
+    def post(self, request: HttpRequest, item_id: int, *args, **kwargs) -> HttpResponse:
+        item = get_object_or_404(
+            InstalacaoItem.objects.select_related("chamado", "configurado_por"),
+            pk=item_id,
+        )
+        chamado = item.chamado
+
+        if not usuario_tem_sessao_ativa_no_chamado(user=request.user, chamado=chamado):
+            return JsonResponse({"ok": False, "error": "SESSAO_INATIVA"}, status=403)
+
+        if item.configurado_em is not None:
+            return JsonResponse(
+                {
+                    "ok": True,
+                    "already_configured": True,
+                    "item_id": item.id,
+                    "configurado_em": item.configurado_em.isoformat(),
+                    "configurado_por": getattr(item.configurado_por, "username", None),
+                },
+                status=200,
+            )
+
+        item.configurado_em = timezone.now()
+        item.configurado_por = request.user
+        item.save(update_fields=["configurado_em", "configurado_por"])
+
+        return JsonResponse(
+            {
+                "ok": True,
+                "already_configured": False,
+                "item_id": item.id,
+                "configurado_em": item.configurado_em.isoformat(),
+                "configurado_por": getattr(item.configurado_por, "username", None),
+            },
+            status=200,
+        )
 
 
 class ChamadoSalvarDadosFiscaisView(View):

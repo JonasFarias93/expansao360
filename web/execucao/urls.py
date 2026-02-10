@@ -86,6 +86,11 @@ urlpatterns = [
         views.ChamadoSalvarExecucaoView.as_view(),
         name="chamado_salvar_execucao",
     ),
+    path(
+        "itens/<int:item_id>/configurar/",
+        views.ItemMarcarConfiguradoView.as_view(),
+        name="item_configurar",
+    ),
     # ======================
     # EVIDÊNCIAS
     # ======================
