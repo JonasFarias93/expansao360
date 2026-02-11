@@ -2,7 +2,7 @@
 
 <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 space-y-6">
 
-  {# ============================ Dados fiscais (MVP PR3)- Editável somente com permissão + sessão ativa ============================ #}
+  {# ============================ Dados fiscais (MVP PR3) ============================ #}
   <div>
     <div class="flex items-center justify-between mb-3">
       <h2 class="font-semibold text-slate-900">Dados fiscais</h2>
@@ -44,10 +44,7 @@
         </div>
 
         <div class="sm:col-span-2 flex justify-end pt-2">
-          <button
-            type="submit"
-            class="btn btn-primary"
-          >
+          <button type="submit" class="btn btn-primary">
             Salvar dados
           </button>
         </div>
@@ -82,7 +79,7 @@
   </div>
 
   {# ============================ Ações finais ============================ #}
-  {# NOTE: wrapper com data-skip-readonly para o JS não desabilitar esses botões após "Salvar execução" #}
+  {# wrapper com data-skip-readonly para o JS não desabilitar esses botões após "Salvar execução" #}
   <div data-skip-readonly>
     {% if can_execute_actions %}
       <div class="border-t pt-4 space-y-3">
@@ -93,15 +90,9 @@
         <div class="flex flex-wrap items-center gap-3">
           {# Confirmar coleta #}
           {% if pode_confirmar_coleta %}
-            <form
-              method="post"
-              action="{% url 'execucao:chamado_confirmar_coleta' chamado.id %}"
-            >
+            <form method="post" action="{% url 'execucao:chamado_confirmar_coleta' chamado.id %}">
               {% csrf_token %}
-              <button
-                type="submit"
-                class="btn btn-primary"
-              >
+              <button type="submit" class="btn btn-primary">
                 Confirmar coleta
               </button>
             </form>
@@ -116,22 +107,22 @@
             </div>
           {% endif %}
 
-          {# Finalizar chamado (entra no PR6.2) #}
-          {% if pode_finalizar %}
-            <form
-              method="post"
-              action="{% url 'execucao:chamado_finalizar' chamado.id %}"
-            >
-              {% csrf_token %}
-              <button
-                type="submit"
-                class="btn btn-danger"
-              >
-                Finalizar chamado
-              </button>
-            </form>
-          {% endif %}
+          {# Finalizar chamado #}
+          <button
+            id="btn-finalizar-chamado"
+            data-url="{% url 'execucao:chamado_finalizar' chamado.id %}"
+            class="btn btn-danger"
+            {% if not pode_finalizar %}disabled{% endif %}
+          >
+            Finalizar chamado
+          </button>
         </div>
+
+        {# feedback de pendências do finalizar (AJAX) #}
+        <div
+          id="finalizar-feedback"
+          class="hidden mt-3 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 space-y-2"
+        ></div>
       </div>
     {% endif %}
   </div>
