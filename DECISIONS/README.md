@@ -46,6 +46,7 @@ que impacta arquitetura, domínio, UI, processo ou governança.
 | ADR-010 | Ciclo de vida explícito do Chamado | 2026-02-04 | Aceito |
 | ADR-011 | Status EM_ABERTURA | 2026-02-05 | Aceito |
 | ADR-033 | Padronização de códigos (internos vs externos) | 2026-02-03 | Proposto |
+| ADR-058 | Separação do Domínio Chamado do App Execucao | 2026-02-11 | Aceito |
 
 ---
 
