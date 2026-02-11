@@ -1,300 +1,336 @@
 # REQUIREMENTS — EXPANSÃO360
 
-Este documento descreve requisitos **funcionais**, **não funcionais** e **restrições** do EXPANSÃO360,
-alinhados com:
+Este documento descreve os requisitos **funcionais**, **não funcionais** e **restrições técnicas** do EXPANSÃO360,
+alinhados com o comportamento real do sistema (as-is).
 
-* `README.md`
-* `ARCHITECTURE.md`
-* `DECISIONS.md`
-* Dependências reais registradas em `environment.yml` e no `pip` instalado
+Fontes de verdade:
 
-> Regra: requisitos aqui descritos devem ser **testáveis** (por teste automatizado, inspeção objetiva ou validação operacional).
+* Código em `web/`
+* Testes automatizados (`tests/` e `web/*/tests/`)
+* ADRs em `DECISIONS/`
+* Ambiente definido em `environment.yml`
+
+> Regra: todo requisito aqui descrito deve ser verificável por teste automatizado,
+> inspeção objetiva do código ou validação operacional reproduzível.
 
 ---
 
-## 1) Escopo do Produto
+# 1. Escopo do Produto
 
-### 1.1 Objetivo
+## 1.1 Objetivo
 
-Padronizar e governar a expansão de operações físicas, garantindo que o planejamento (Registry)
-seja executado em campo (Operation) com **histórico imutável**, **rastreabilidade** e **evidências**.
+Padronizar e governar operações físicas de expansão,
+separando planejamento (Registry) de execução real (Operation),
+com histórico imutável e rastreabilidade explícita.
 
-### 1.2 Conceito central
+## 1.2 Princípio Estrutural
 
 O sistema separa rigorosamente:
 
-* **Registry (Cadastro Mestre)**: define o que existe e como deve ser
-* **Operation (Execução)**: registra o que foi executado, quando, por quem e com quais evidências
+* **Registry (Cadastro Mestre)** → define o que existe e como deve ser.
+* **Operation (Execução)** → registra o que foi executado, quando, por quem e com quais evidências.
 
 ---
 
-## 2) Requisitos Funcionais
+# 2. Requisitos Funcionais
 
-### RF-01 — Cadastro mestre de entidades (Registry)
+## RF-01 — Cadastro Mestre (Registry)
 
-O sistema deve permitir manter cadastros mestres governados para:
+O sistema deve permitir manter entidades estruturais via camada Web (Django):
 
 * Lojas
-* Projetos e Subprojetos
-* Categorias e Tipos de Equipamento
+* Projetos
+* Subprojetos
+* Categorias
+* Tipos de Equipamento
 * Equipamentos
 * Kits e Itens de Kit
 
-**Critério de aceitação**: CRUD disponível via camada Web (Django) e/ou Admin; alterações afetam apenas execuções futuras.
+Critério de aceitação:
+
+* CRUD disponível
+* Alterações impactam apenas execuções futuras
+
+Fonte:
+
+* `web/cadastro/`
 
 ---
 
-### RF-02 — Abertura de Chamado a partir de Kit (snapshot operacional)
+## RF-02 — Snapshot Operacional ao criar Chamado
 
-Ao criar um Chamado, o sistema deve gerar automaticamente os **Itens de Execução** a partir do Kit,
-formando um **snapshot operacional** imutável.
+Ao criar um Chamado, o sistema deve gerar automaticamente os Itens de Execução
+com base no Kit selecionado.
 
-**Critério de aceitação**: mudanças posteriores no Kit não alteram Itens de Execução de Chamados já criados.
+Critério de aceitação:
+
+* Alterações futuras no Kit não alteram Chamados já criados.
+
+Fonte:
+
+* `web/execucao/models.py`
+* `test_models_chamado_itens.py`
 
 ---
 
-### RF-03 — Separação explícita entre Setup e Execução
+## RF-03 — Separação entre Setup e Execução
 
-O sistema deve suportar um estágio de **setup/planejamento** do Chamado distinto da **execução operacional**.
+O Chamado deve possuir estágio explícito de planejamento (`EM_ABERTURA`)
+distinto da execução.
 
 Regras:
 
-* Chamado nasce em `EM_ABERTURA` após a criação
-* Ao salvar o setup, o Chamado é promovido explicitamente para `ABERTO`
-* A fila operacional lista apenas Chamados `ABERTO` em diante
+* Chamado nasce em `EM_ABERTURA`
+* Após salvar setup → promovido para `ABERTO`
+* Apenas Chamados `ABERTO` em diante aparecem na fila
 
-**Critério de aceitação**: Chamados em `EM_ABERTURA` não aparecem na fila operacional.
+Fonte:
 
----
-
-### RF-04 — Execução do Chamado em fila operacional
-
-O sistema deve permitir executar Chamados em fila, registrando o andamento por status e por item.
-
-**Critério de aceitação**: UI exibe fila operacional com chamadas para execução; templates não implementam regras de negócio.
+* `web/execucao/views.py`
 
 ---
 
-### RF-05 — Evidências vinculadas ao Chamado
+## RF-04 — Execução em Fila Operacional
 
-O sistema deve permitir registrar evidências associadas a Chamados, como:
+O sistema deve permitir execução de Chamados por meio de fila operacional.
 
-* NF
+Critério de aceitação:
+
+* Chamados `ABERTO+` aparecem na fila
+* Templates não contêm regra de negócio
+
+Fonte:
+
+* `web/execucao/templates/`
+
+---
+
+## RF-05 — Evidências vinculadas ao Chamado
+
+O sistema deve permitir anexar evidências a Chamados.
+
+Exemplos:
+
+* Nota Fiscal
 * Carta de Conteúdo
 * Documentos de exceção
 
-**Critério de aceitação**: evidências são entidades próprias e consultáveis no contexto do Chamado.
+Critério de aceitação:
+
+* Evidência é entidade própria
+* Vinculada a um Chamado
+
+Fonte:
+
+* `web/execucao/models.py`
 
 ---
 
-### RF-06 — Gates operacionais (NF / coleta / finalização)
+## RF-06 — Gates Operacionais
 
-O sistema deve restringir transições de estado por regras explícitas:
+Transições de estado devem ser protegidas por validações objetivas.
 
-* Liberação de NF apenas quando:
+Exemplos:
 
-  * itens rastreáveis estiverem bipados
-  * itens contáveis estiverem confirmados
+* Liberação de NF exige itens válidos
+* Finalização exige pré-condições
+* Edição exige sessão ativa
 
-* Finalização exige:
+Critério de aceitação:
 
-  * NF registrada (quando aplicável)
-  * confirmação de coleta (quando aplicável)
-  * evidências mínimas conforme o fluxo
+* Tentativa inválida é bloqueada no backend
 
-**Critério de aceitação**: tentativa de avanço inválido é bloqueada por validação objetiva.
+Fonte:
+
+* `web/execucao/views.py`
+* `web/execucao/tests/`
 
 ---
 
-### RF-07 — Fluxo direto e fluxo inverso
+## RF-07 — Fluxo Direto e Inverso
 
 O sistema deve suportar:
 
-* Envio (Matriz → Loja)
-* Retorno (Loja → Matriz)
+* ENVIO (Matriz → Loja)
+* RETORNO (Loja → Matriz)
 
-**Critério de aceitação**: fluxos são rastreáveis e não apagam histórico; retorno/correção gera novo Chamado.
+Critério de aceitação:
 
----
+* Retorno gera novo Chamado
+* Histórico não é apagado
 
-### RF-08 — Imutabilidade operacional
+Fonte:
 
-O sistema deve preservar histórico operacional:
-
-* Chamados finalizados não são editados destrutivamente
-* Correções e retornos geram **novo Chamado**
-
-**Critério de aceitação**: operações de correção não alteram registros de eventos já concluídos.
+* `web/execucao/models.py`
 
 ---
 
-### RF-09 — Chamado externo padronizado
+## RF-08 — Imutabilidade Operacional
 
-O sistema deve suportar identificadores externos por:
+Chamados finalizados não devem ser alterados destrutivamente.
 
-* `ticket_externo_sistema`
-* `ticket_externo_id`
+Critério de aceitação:
 
-**Critério de aceitação**:
-
-* UI exibe "Chamado Externo" como `<sistema>: <id>`
-* `ticket_externo_id` é único globalmente quando preenchido
+* Correções geram novo Chamado
+* Finalizado permanece histórico
 
 ---
 
-### RF-10 — Autorização por capabilities (camada Web)
+## RF-09 — Chamado Externo
 
-A camada Web deve aplicar autorização baseada em **capabilities** para ações sensíveis.
+O sistema deve permitir registrar identificador externo.
 
-**Critério de aceitação**: enforcement no backend; templates apenas refletem permissões.
+Critério de aceitação:
+
+* `ticket_externo_id` único quando preenchido
+* UI exibe formato padronizado
+
+Fonte:
+
+* `web/execucao/models.py`
 
 ---
 
-## 3) Requisitos Não Funcionais
+## RF-10 — Autorização por Capabilities
 
-### RNF-01 — Separação de camadas (arquitetura)
+A camada Web deve aplicar autorização baseada em capabilities.
+
+Critério de aceitação:
+
+* Enforcement no backend
+* Templates apenas refletem permissões
+
+Fonte:
+
+* `web/iam/`
+
+---
+
+# 3. Requisitos Não Funcionais
+
+## RNF-01 — Separação Arquitetural
 
 O sistema deve manter:
 
-* Domínio independente de framework
-* Web/CLI como adapters
-* Regras de negócio fora de views/templates
+* Domínio independente de Django
+* Web como adapter
+* Regras fora de templates
 
-**Verificação**: inspeção arquitetural + cobertura de testes de domínio/usecases.
+Verificação:
 
----
-
-### RNF-02 — Qualidade e estilo de código (Python)
-
-O projeto deve manter padronização automática com:
-
-* `ruff`
-* `black`
-* `pre-commit`
-
-**Verificação**: execução em CI/local; hooks impedem drift.
+* Inspeção arquitetural
+* Testes de domínio
 
 ---
 
-### RNF-03 — Testes automatizados (Python)
+## RNF-02 — Qualidade de Código (Python)
 
-O projeto deve possuir testes automatizados usando:
+O projeto deve usar:
 
-* `pytest`
-* `pytest-cov`
-* `pytest-django`
-
-**Verificação**: execução de suíte de testes e relatório de cobertura.
-
----
-
-### RNF-04 — Testes automatizados (JavaScript)
-
-O projeto deve testar JavaScript puro crítico (ex.: formsets dinâmicos) com:
-
-* Jest + jsdom (via Node)
-
-**Verificação**: suíte de testes JS executável por comando único.
-
----
-
-### RNF-05 — Observabilidade mínima de execução (dev)
-
-O projeto deve oferecer feedback rápido em desenvolvimento:
-
-* `pytest-watch`/`ptw` para ciclo rápido de testes
-
-**Verificação**: comando de watch funcional no ambiente local.
-
----
-
-### RNF-06 — Evolução segura e rastreabilidade de mudanças
-
-Mudanças devem ser entregues em microtarefas e commits pequenos, com rastreabilidade.
-
-**Verificação**: histórico de commits e branches descritivas (`feat/`, `fix/`, `docs/`).
-
----
-
-## 4) Restrições Técnicas
-
-### RT-01 — Plataforma / Runtime
-
-* Python **3.11**
-* Ambiente gerenciado por **Conda** (`environment.yml`)
-
----
-
-### RT-02 — Framework web
-
-* Django é o framework adotado para a camada Web
-
----
-
-### RT-03 — Sem build frontend obrigatório
-
-* Tailwind via CDN (setup leve)
-
----
-
-### RT-04 — Stack de testes JS
-
-* Dependência de desenvolvimento: Node/npm (para Jest/jsdom)
-
----
-
-## 5) Dependências reais do projeto (baseline)
-
-> A lista abaixo é **informativa** e serve para evitar documentação desatualizada. Não substitui o `environment.yml`.
-
-### 5.1 Python (Conda / Base)
-
-* python=3.11
-* pytest
 * ruff
 * black
 * pre-commit
 
-### 5.2 Python (pip)
+Verificação:
 
-* django
-* pytest-cov
-* pytest-django
-* pytest-watch / ptw
-* typer, rich (CLI)
-
-### 5.3 Utilitários observados no ambiente
-
-* factory_boy, Faker (testes/fábricas)
-* requests (HTTP)
-* pillow (imagens)
-* openpyxl (Excel)
-* PyYAML (configs)
-* docker (automação/integração de dev)
-* nodeenv, virtualenv (suporte a tooling)
-
-> Nota: dependências listadas como “observadas” devem ser confirmadas quanto ao uso efetivo no repositório.
+* Hooks ativos
+* Execução local/CI
 
 ---
 
-## 6) Fora de Escopo (por enquanto)
+## RNF-03 — Testes Automatizados (Python)
+
+O projeto deve usar:
+
+* pytest
+* pytest-django
+* pytest-cov (quando configurado)
+
+Verificação:
+
+* Suíte executável via comando único
+
+---
+
+## RNF-04 — Testes JS
+
+O projeto deve testar JavaScript crítico com:
+
+* Jest
+* jsdom
+
+Verificação:
+
+* Testes presentes em `web/**/__tests__/`
+
+---
+
+# 4. Restrições Técnicas
+
+## RT-01 — Runtime
+
+* Python 3.11
+* Ambiente gerenciado por Conda (`environment.yml`)
+
+## RT-02 — Framework Web
+
+* Django
+
+## RT-03 — Frontend leve
+
+* Sem build obrigatório
+* Tailwind via CDN
+
+## RT-04 — Tooling JS
+
+* Node/npm apenas para testes JS
+* Não faz parte do runtime de produção
+
+---
+
+# 5. Baseline de Dependências (confirmadas por documentação interna)
+
+Dependências principais:
+
+Python:
+
+* Django
+* pytest
+* pytest-django
+* pytest-cov
+* ruff
+* black
+* pre-commit
+
+JS (dev):
+
+* Jest
+* jsdom
+
+Fonte definitiva:
+
+* `environment.yml`
+
+---
+
+# 6. Fora de Escopo Atual
 
 * APIs públicas
-* Integrações corporativas profundas
-* Hardening de infraestrutura
+* Integrações corporativas
 * Multitenancy
-* Mobile / offline-first
+* Infra hardening avançado
+* Mobile/offline-first
 
 ---
 
-## 7) Microtarefas recomendadas para fechar a lacuna de doc vs ambiente
+# 7. Governança
 
-1. **[DOC] Atualizar `environment.yml` (pip indentação e consistência)**
-2. **[DOC] Criar/atualizar seção "Dependências" no README (curta)**
-3. **[DOC] Criar `docs/dependencies.md` (opcional) com racional de cada pacote "extra"**
-4. **[DOC] Revisar se Jest/jsdom estão registrados (package.json / instruções)**
+Se um requisito mudar:
 
-### Commits sugeridos
+* Atualizar este documento no mesmo PR
+* Criar ou atualizar ADR quando necessário
 
-* `docs(requirements): registrar requisitos e baseline de dependencias reais`
-* `docs(deps): documentar dependencias instaladas e racional`
+---
+
+Última revisão: 2026-02-11
+Fonte: Código real em `web/` + testes automatizados + `environment.yml`

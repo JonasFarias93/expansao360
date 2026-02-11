@@ -6,81 +6,34 @@ garantindo **rastreabilidade, histórico e governança de ponta a ponta**.
 
 ---
 
-## Objetivo
+## 🚀 Release Atual
 
-O **EXPANSÃO360** tem como objetivo estruturar e padronizar a expansão de operações físicas,
-assegurando que o que foi definido no planejamento seja corretamente executado em campo,
-com evidências, histórico auditável e regras claras de operação.
+**v0.3.6 — Lookup de Loja por Código (Java)**
+Veja detalhes em `CHANGELOG.md`.
 
-O sistema foi concebido para evitar:
-
-* perda de histórico
-* edições destrutivas de execução
-* inconsistência entre planejamento e operação
-* falta de governança em fluxos de retorno e exceção
-
-O foco do sistema é **rastreabilidade, consistência e evolução segura** dos processos.
-
-🚀 **Release atual:** `v0.3.5 — Execução operacional mais clara`
-🚧 **Sprint atual:** Sprint 4 — UX Operacional & Views
+Sprint atual: **Sprint 4 — UX Operacional & Views**
+Status detalhado em `STATUS.md`.
 
 ---
 
-## ✨ O que mudou na versão atual
+# 🎯 Objetivo
 
-### Execução
+Estruturar e padronizar a expansão de operações físicas,
+assegurando que o planejamento (Registry) seja executado corretamente em campo (Operation),
+com evidências, histórico auditável e regras explícitas.
 
-* Separação explícita entre **setup (planejamento)** e **execução operacional**
-* Reativação do bloco de **Evidências** na tela de execução
-* Novo componente `_card_operacional_chamado_full.html`
+O sistema evita:
 
-### UI / UX
-
-* Projetos agora possuem **cor definida no cadastro**
-* Fila operacional com **identificação visual por projeto**
-* Header e cards da fila mais informativos
-
-### Arquitetura
-
-* Introdução de **templatetags de UI** (`execucao_ui`)
-* Contratos de templates respeitados
-* Refatoração incremental sem quebra de compatibilidade
-
-### Qualidade
-
-* Testes adicionados para:
-
-  * Views de execução
-  * Template tags de UI
-* Ruff / Black / Pre-commit ativos
-
-> 🔖 Esta versão consolida a transição do fluxo de execução e prepara o terreno
-> para evolução visual e operacional da fila.
+* Perda de histórico
+* Edições destrutivas de execução
+* Inconsistência entre planejamento e operação
+* Falta de governança em fluxos de retorno e exceção
 
 ---
 
-## O que já está consolidado
+# 🧱 Conceito Central
 
-* Arquitetura em camadas (Domain / Application / Infrastructure)
-* Core de domínio independente de framework
-* Regras de negócio explícitas e testadas (TDD)
-* Execução operacional baseada em **Chamados**
-* Suporte a **fluxo direto (Matriz → Loja)** e **fluxo inverso (Loja → Matriz)**
-* Registro de **Itens de Execução** como *snapshot operacional*
-* Registro de **Evidências** (NF, Carta de Conteúdo, exceções)
-* IAM mínimo baseado em **capabilities**
-* Camada Web (Django) atuando como **adapter**
-* CLI **experimental** como interface de referência do core
-* Testes automatizados e hooks de qualidade (ruff, black, pre-commit)
-
----
-
-## Conceito Central
-
-O sistema é baseado em uma separação **clara, explícita e intencional** de responsabilidades,
-que orienta toda a modelagem do domínio e evita acoplamentos indevidos.
-
-### Registry (Cadastro Mestre)
+## Registry (Cadastro Mestre)
 
 Define **o que existe** e **como deve ser padronizado**.
 
@@ -90,131 +43,77 @@ Exemplos:
 * Projetos / Subprojetos
 * Equipamentos
 * Categorias e Tipos de Equipamento
-* Kits e seus itens
+* Kits
 
-**Características**
+Características:
 
 * Fonte da verdade
-* Alterações controladas e governadas
-* Estável ao longo do tempo
+* Alterações impactam apenas execuções futuras
 * Não registra execução
-* Não depende do domínio operacional
 
 ---
 
-### Operation (Execução de Campo)
+## Operation (Execução)
 
 Registra **o que foi executado**, **quando**, **por quem** e **com quais evidências**.
 
 Exemplos:
 
 * Chamados
-* Itens de Execução
-* Evidências (anexos)
-* Fluxos de retorno e exceção
+* Itens de Execução (snapshot)
+* Evidências
+* Fluxos direto e inverso
 
-**Características**
+Características:
 
 * Histórico imutável
 * Rastreabilidade completa
-* Suporte a auditoria e contabilidade
-* Não altera o cadastro mestre
+* Não altera cadastro mestre
 
 ---
 
-## Conceito-chave: Chamado
+# 📌 Conceito-chave: Chamado
 
-O **Chamado** é a unidade central de execução operacional.
+Unidade central da execução operacional.
 
-* Representa um **evento real** no mundo físico
+* Representa evento real
 * Possui ciclo de vida explícito
-* Nunca é editado de forma destrutiva após finalização
-* Correções e retornos geram **novos Chamados**
-* Pode representar:
+* Finalizado = imutável
+* Correções geram novo Chamado
 
-  * Envio (Matriz → Loja)
-  * Retorno (Loja → Matriz)
+Estados principais:
 
-O Chamado atua como a **ponte controlada** entre planejamento (Registry) e execução (Operation).
+1. `EM_ABERTURA` (setup)
+2. `ABERTO` (entra na fila)
+3. `EM_EXECUCAO / AGUARDANDO_*`
+4. `FINALIZADO`
 
----
-
-## Ciclo de Vida do Chamado
-
-O ciclo de vida do Chamado separa explicitamente **planejamento** de **execução**:
-
-1. **EM_ABERTURA**
-
-   * Criação do chamado
-   * Geração dos itens de execução
-   * Decisão de configuração (ex.: necessidade de IP)
-   * Planejamento técnico
-
-2. **ABERTO**
-
-   * Chamado promovido explicitamente após salvar o setup
-   * Entra na fila operacional
-
-3. **EM_EXECUCAO / AGUARDANDO_***
-
-   * Execução em campo
-   * Bipagem, conferências e coleta de evidências
-
-4. **FINALIZADO**
-
-   * Estado terminal
-   * Histórico preservado
-
-Chamados em **EM_ABERTURA** **nunca aparecem** na fila operacional.
+Chamados em `EM_ABERTURA` **não aparecem na fila operacional**.
 
 ---
 
-## Gates Operacionais
+# 🛡️ Gates Operacionais
 
-O avanço do Chamado é protegido por regras explícitas:
+Avanço de status protegido por regras:
 
-* Liberação de NF exige:
+* Liberação de NF exige itens rastreáveis bipados e contáveis confirmados
+* Finalização exige NF (quando aplicável) + coleta + evidências mínimas
 
-  * Todos os itens rastreáveis bipados
-  * Todos os itens contáveis confirmados
-
-* Finalização do Chamado exige:
-
-  * NF registrada (quando aplicável)
-  * Confirmação de coleta
-  * Evidências mínimas conforme o fluxo
-
-Essas regras garantem consistência operacional e auditabilidade.
+Regras implementadas no backend e cobertas por testes.
 
 ---
 
-## Chamado Externo
+# 🖥️ Como Rodar o Projeto
 
-Chamados podem ser associados a sistemas externos através dos campos:
-
-* `ticket_externo_sistema`
-* `ticket_externo_id`
-
-Na UI, o Chamado Externo é exibido no formato:
-
-```
-<sistema>: <id>
-```
-
-O campo `ticket_externo_id` é **globalmente único** quando preenchido,
-garantindo buscas e auditoria sem ambiguidade.
-
----
-
-## Como rodar o projeto localmente
-
-### Pré-requisitos
+## Pré-requisitos
 
 * Git
 * Conda (Miniforge / Miniconda)
-* GNU Make
+* Node (para testes JS)
 
-### Setup do ambiente
+---
+
+## Setup do Ambiente
 
 ```bash
 conda env create -f environment.yml
@@ -223,74 +122,89 @@ conda activate expansao360
 
 ---
 
-## CLI (experimental / interface de referência)
-
-A CLI existe como **interface de referência** para demonstrar o core em camadas
-(Domain / Application / Infrastructure) funcionando **sem a camada Web**.
-
-> **Status:** experimental
->
-> A CLI pode não refletir todos os fluxos e validações do sistema Web.
-> A **camada Web (Django)** é o produto principal e a fonte da verdade operacional.
-
-Casos de uso da CLI:
-
-* validações rápidas do core
-* demonstrações e experimentos locais
-* testes manuais fora do contexto Web
-
-```bash
-python -m expansao360 --help
-python -m expansao360 location --help
-python -m expansao360 mount --help
-```
-
-### Nota sobre futuras integrações (APIs)
-
-Integrações externas devem ser implementadas como **adapters (APIs/serviços)**,
-consumindo os mesmos **use cases** do core.
-
-A existência da CLI **não é pré-requisito** para APIs.
-
----
-
-## Web (Django)
-
-A camada Web atua como **adapter**, oferecendo:
-
-* Cadastro administrativo (Registry)
-* Execução operacional via Chamados
-* Abertura de Chamados a partir de Kits
-* Separação clara entre setup e execução
-* Suporte a fluxo direto e inverso
-* Registro e visualização de evidências
-* IAM por capabilities
-* Interface administrativa (Django Admin)
-
-### Comandos principais
+## Banco e Servidor
 
 ```bash
 python web/manage.py migrate
 python web/manage.py runserver
-python web/manage.py test
 ```
 
 ---
 
-## Documentação do Projeto
+# 🧪 Como Rodar Testes
 
-* `ARCHITECTURE.md` — visão arquitetural
-* `DECISIONS.md` — ADRs e decisões técnicas
-* `REQUIREMENTS.md` — requisitos funcionais e não funcionais
-* `GLOSSARIO.md` — terminologia oficial do domínio
-* `STATUS.md` — status por sprint e release
+## Python (pytest)
+
+```bash
+pytest
+```
+
+ou
+
+```bash
+python web/manage.py test
+```
+
+## JavaScript (Jest)
+
+```bash
+npm install
+npm run test:js
+```
+
+Testes JS ficam em:
+
+```
+web/cadastro/static/cadastro/js/__tests__/
+```
 
 ---
 
-## Princípios do Projeto
+# 🧩 Web (Django)
 
-* Registro histórico é sagrado
-* Nenhuma execução é apagada
+Apps principais:
+
+* `cadastro` → Registry
+* `execucao` → Operation
+* `iam` → Capabilities
+* `redes` → Regras de validação de IP (MVP)
+
+A Web atua como **adapter**, não como domínio.
+
+---
+
+# 📚 Documentação
+
+* `ARCHITECTURE.md` → visão arquitetural
+* `REQUIREMENTS.md` → requisitos funcionais e não funcionais
+* `SECURITY.md` → diretrizes de segurança
+* `GLOSSARIO.md` → terminologia oficial
+* `STATUS.md` → visão executiva por sprint
+* `CHANGELOG.md` → histórico de releases
+
+Documentação operacional adicional em:
+
+```
+docs/
+```
+
+Decisões arquiteturais (ADRs) em:
+
+```
+DECISIONS/
+```
+
+---
+
+# 🧠 Princípios
+
+* Histórico é sagrado
+* Planejamento ≠ Execução
 * Correções geram novos eventos
-* Planejamento e execução não se misturam
-* Governança acima de conveniência
+* Regras explícitas > comportamento implícito
+* Evolução incremental e rastreável
+
+---
+
+Última revisão: 2026-02-11
+Fonte: Código real em `web/` + CHANGELOG + STATUS

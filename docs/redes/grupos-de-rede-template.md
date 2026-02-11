@@ -1,4 +1,7 @@
 # Grupos de Rede — Template Oficial
+> Decisão arquitetural relacionada: ADR-057
+> ⚠️ Este template define o contrato futuro para grupos completos.
+> Atualmente o código implementa apenas regras MVP para TC.
 
 Este documento define o **contrato padrão** para grupos de rede no EXPANSÃO360.
 

@@ -1,311 +1,335 @@
 # Arquitetura — EXPANSÃO360
 
-## Visão Geral
+Este documento descreve a **arquitetura atual (as-is)** do sistema EXPANSÃO360,
+com base no código existente, ADRs registrados e comportamento validado por testes.
 
-O **EXPANSÃO360** é um sistema orientado a processos de expansão e operação de campo,
-desenhado para garantir **padronização, rastreabilidade e governança**.
-
-O princípio arquitetural central é a **separação rigorosa entre planejamento e execução**:
-
-* **Registry (Cadastro Mestre)** → define *o que existe* e *como deve ser*
-* **Operation (Execução de Campo)** → registra *o que aconteceu de fato*
-
-Essa separação evita ambiguidade, preserva histórico
-em processos físicos e permite evolução segura do sistema ao longo do tempo.
+> Fonte de verdade: código em `web/`, ADRs em `DECISIONS/`, testes automatizados.
 
 ---
 
-## Camadas Conceituais
+# 1. Visão Geral
 
-### 1) Registry (Cadastro Mestre)
+O **EXPANSÃO360** é um sistema orientado a processos de expansão e operação de campo,
+com foco em:
 
-Responsável por manter entidades que funcionam como **fonte da verdade** do planejamento
-organizacional e técnico.
+* Padronização operacional
+* Rastreabilidade histórica
+* Governança explícita
 
-**Exemplos de entidades:**
+O princípio arquitetural central é a **separação entre planejamento (Registry)**
+e **execução (Operation)**.
+
+* **Registry (Cadastro Mestre)** → define o que existe e como deve ser.
+* **Operation (Execução)** → registra o que aconteceu de fato.
+
+Essa separação evita ambiguidade histórica e impede que correções
+alterem eventos já ocorridos.
+
+---
+
+# 2. Camadas Conceituais
+
+## 2.1 Registry (Cadastro Mestre)
+
+Responsável por manter entidades estruturais relativamente estáveis.
+
+Exemplos implementados no app `cadastro`:
 
 * Lojas
 * Projetos
 * Subprojetos
 * Equipamentos
-* Categorias e Tipos de Equipamento
-* Kits e composição de itens
+* Categorias
+* Tipos de Equipamento
+* Kits e seus itens
 
-**Características:**
+Características:
 
-* Dados relativamente estáveis
-* Alterações controladas e governadas
-* Impactam apenas execuções futuras
-* Não possuem histórico operacional
+* Dados governados
+* Alterações impactam apenas execuções futuras
+* Não mantém histórico operacional
+* Não depende do domínio de execução
 
-> O Registry **não depende** do domínio de execução.
+Fonte:
+
+* `web/cadastro/*`
 
 ---
 
-### 2) Operation (Execução de Campo)
+## 2.2 Operation (Execução de Campo)
 
-Responsável por registrar **eventos operacionais reais**,
-com histórico imutável e rastreabilidade completa.
+Responsável por registrar eventos reais e imutáveis.
 
-**Exemplos de entidades:**
+Exemplos implementados no app `execucao`:
 
-* Chamados
-* Itens de Execução
-* Evidências (NF, carta de conteúdo, documentos de exceção)
-* Fluxos de envio e retorno
+* Chamado
+* Itens de execução
+* Evidências
+* Sessões de execução
+* Fluxos ENVIO / RETORNO
 
-**Características:**
+Características:
 
 * Alto volume transacional
-* Histórico imutável
-* Auditoria e rastreabilidade são requisitos centrais
-* Suporte explícito a exceções operacionais
+* Histórico preservado
+* Estados explícitos
+* Gates operacionais formais
 
-> A camada Operation **referencia** Registry, nunca o contrário.
+A camada Operation referencia Registry, nunca o contrário.
 
----
+Fonte:
 
-## Entidade Central: Chamado
-
-O **Chamado** é a unidade central da execução operacional.
-
-Ele representa:
-
-* um evento real no mundo físico
-* com contexto organizacional
-* com itens, status e evidências
-* com impacto operacional e contábil
-
-### Tipos de Chamado
-
-* **ENVIO** → Matriz → Loja
-* **RETORNO** → Loja → Matriz (fluxo inverso)
-
-### Princípios fundamentais
-
-* Chamados **finalizados são imutáveis**
-* Correções e retornos geram **novos Chamados**
-* Fluxo inverso nunca edita histórico existente
+* `web/execucao/models.py`
+* `web/execucao/views.py`
 
 ---
 
-## Ciclo de Vida do Chamado
+# 3. Entidade Central: Chamado
 
-O ciclo de vida do Chamado separa explicitamente **planejamento** de **execução**:
+O **Chamado** é a unidade central da execução.
+
+Representa:
+
+* Um evento físico real
+* Com contexto organizacional
+* Com itens derivados de kit (snapshot)
+* Com status e evidências
+
+Tipos implementados:
+
+* `ENVIO`
+* `RETORNO`
+
+Princípios:
+
+* Chamados finalizados são imutáveis
+* Correções geram novos chamados
+* Fluxo inverso não altera histórico
+
+Fonte:
+
+* `web/execucao/models.py`
+* testes em `web/execucao/tests/`
+
+---
+
+# 4. Ciclo de Vida do Chamado
+
+Estados principais (conforme modelo atual):
 
 1. **EM_ABERTURA**
 
-   * Criação do Chamado
-   * Geração dos Itens de Execução
-   * Decisão de configuração (ex.: IP obrigatório)
-   * Planejamento técnico
+   * Planejamento
+   * Geração de itens
+   * Definição de configuração
 
 2. **ABERTO**
 
-   * Promoção explícita após salvar o setup
-   * Entrada na fila operacional
+   * Promovido após salvar setup
+   * Entra na fila operacional
 
 3. **EM_EXECUCAO / AGUARDANDO_***
 
-   * Execução em campo
-   * Bipagem, conferência e coleta de evidências
+   * Execução ativa
+   * Bipagem, conferência, evidências
 
 4. **FINALIZADO**
 
    * Estado terminal
    * Histórico preservado
 
-Chamados em **EM_ABERTURA** **não aparecem** na fila operacional.
+Chamados em `EM_ABERTURA` não aparecem na fila.
+
+Fonte:
+
+* `web/execucao/models.py`
+* `web/execucao/views.py`
 
 ---
 
-## Geração de Itens de Execução
+# 5. Snapshot Operacional
 
 Ao criar um Chamado:
 
-* é gerado um **snapshot operacional**
-* cada Item do Kit gera um Item de Execução
-* alterações futuras no Kit **não afetam** Chamados já criados
+* Itens do kit são copiados
+* Gera-se snapshot operacional
+* Alterações futuras no kit não afetam chamados existentes
 
-Essa abordagem garante:
+Objetivo:
 
-* rastreabilidade
-* consistência histórica
-* auditoria confiável
+* Garantir consistência histórica
+* Preservar auditoria
 
----
+Fonte:
 
-## Gates Operacionais
-
-O avanço do Chamado é protegido por regras explícitas:
-
-* **Liberação de NF** exige:
-
-  * todos os itens rastreáveis bipados
-  * todos os itens contáveis confirmados
-
-* **Finalização** exige:
-
-  * NF registrada (quando aplicável)
-  * confirmação de coleta
-  * evidências mínimas conforme o fluxo
-
-Esses gates impedem estados inválidos e preservam a integridade do processo.
+* `web/execucao/models.py`
+* `test_models_chamado_itens.py`
 
 ---
 
-## Modelo em Camadas (Visão Lógica)
+# 6. Gates Operacionais
+
+O avanço do Chamado é protegido por validações formais.
+
+Exemplos implementados:
+
+* Liberação de NF exige itens válidos
+* Finalização exige pré-condições
+* Sessão ativa obrigatória para edição
+
+Validações ocorrem na camada Application/Web,
+com regras no domínio quando aplicável.
+
+Fonte:
+
+* `web/execucao/views.py`
+* `web/execucao/tests/`
+
+---
+
+# 7. Modelo em Camadas (Visão Lógica)
 
 ```
 ┌────────────────────────────┐
 │ Interfaces / Adapters      │
-│ Web • CLI • APIs (futuro)  │
+│ Web (Django) • CLI         │
 └────────────▲───────────────┘
              │
 ┌────────────┴───────────────┐
 │ Application                │
-│ Casos de uso / Orquestração│
+│ Views / Orquestração       │
 └────────────▲───────────────┘
              │
 ┌────────────┴───────────────┐
-│ Domain                     │
-│ Regras de negócio puras    │
+│ Domain / Services          │
+│ Regras puras               │
 └────────────────────────────┘
 ```
 
----
+Observação:
 
-## Core de Domínio
-
-O **core** do EXPANSÃO360:
-
-* é independente de framework
-* concentra regras de negócio
-* não conhece UI, banco ou permissões
-* é validado via testes automatizados (TDD)
-
-**Exemplos de regras no core:**
-
-* validação de finalização de Chamado
-* regras de rastreabilidade (`tem_ativo`)
-* fluxo inverso e exceções
+* O domínio não depende de Django.
+* A Web atua como adapter.
 
 ---
 
-## Adapters / Interfaces
+# 8. Stack Web
 
-### CLI
+Framework:
 
-* Interface de linha de comando
-* Compartilha o mesmo domínio
-* Útil para testes, simulações e demonstrações
+* Django
 
----
+Apps principais:
 
-### Web (Django)
+* `cadastro`
+* `execucao`
+* `iam`
+* `redes`
 
-A camada Web atua como **adapter de entrega**, não como domínio.
+Diretrizes arquiteturais:
 
-**Apps principais:**
+* Models não concentram regra crítica
+* Views orquestram
+* Templates não implementam regra
+* Admin é ferramenta técnica
 
-* `cadastro` → Registry
-* `execucao` → Operation
-* `iam` → Identidade e permissões
+Fonte:
 
-**Diretrizes:**
-
-* Models Django **não contêm regras de negócio**
-* Views orquestram casos de uso
-* Templates apenas apresentam estado resolvido
-* Django Admin é ferramenta técnica, não operacional
+* Estrutura real do diretório `web/`
 
 ---
 
-## IAM (Autorização)
+# 9. IAM (Autorização)
 
-O sistema adota um modelo **mínimo e explícito** de autorização:
+Modelo baseado em capabilities.
 
-* Baseado em **capabilities**
 * Enforcement ocorre na camada Web
-* O domínio permanece permission-agnostic
+* Domínio é permission-agnostic
 
-**Exemplos:**
+Exemplos:
 
 * `execucao.chamado.finalizar`
 * `execucao.evidencia.upload`
-* `cadastro.editar`
+
+Fonte:
+
+* `web/iam/`
+* `CapabilityRequiredMixin`
 
 ---
 
-## UI Web (Templates)
+# 10. Redes (Domínio Técnico)
 
-A UI é tratada como **adapter de apresentação**.
+Validação de IP implementada como service isolado.
 
-### Estrutura
+* Contrato em `docs/redes/validacao-ip-mvp.md`
+* Código em `web/redes/services/validacao.py`
+* Testes em `web/redes/tests/`
 
-```
-templates/
-├── base.html
-├── partials/
-│   ├── _sidebar.html
-│   ├── _messages.html
-│   └── ...
-├── cadastro/
-├── execucao/
-│   └── components/
-└── iam/
-```
-
-**Diretrizes:**
-
-* Templates não contêm regra de negócio
-* Componentes são reutilizáveis
-* Estados vazios e mensagens são explícitos
-* Tailwind via CDN (setup leve)
+O domínio redes é independente da UI.
 
 ---
 
-## Testes JavaScript
+# 11. Testes
 
-O projeto utiliza **Jest + jsdom** para validar comportamentos críticos de
-JavaScript puro (sem framework), especialmente em formulários dinâmicos
-(e.g. formsets).
+Stack ativa:
 
-Os testes ficam próximos aos arquivos estáticos de cada app Django e são
-integrados ao fluxo de qualidade via Makefile.
+* pytest
+* pytest-django
+* Jest + jsdom (frontend)
+
+Testes Python em:
+
+* `tests/`
+* `web/*/tests/`
+
+Testes JS em:
+
+* `web/**/static/**/__tests__/`
+
+Objetivo:
+
+* TDD no domínio
+* Regressão protegida
 
 ---
 
-## Princípios Arquiteturais
+# 12. Princípios Arquiteturais Ativos
 
-* Separação clara de responsabilidades
-* Histórico nunca é destruído
-* Fluxos explícitos (direto e inverso)
-* Mudanças pequenas e rastreáveis
-* Decisões registradas em `DECISIONS.md`
+* Separação Registry vs Operation
+* Histórico imutável
+* Gates explícitos
+* Pequenas mudanças rastreáveis
+* Decisões registradas em ADR
 
 ---
 
-## Fora de Escopo (por enquanto)
+# 13. Fora de Escopo Atual
 
 * APIs públicas
 * Integrações corporativas
-* Hardening de infraestrutura
 * Multitenancy
-* Mobile / offline-first
+* Infra hardening avançado
+* Mobile/offline-first
 
-Esses pontos serão abordados conforme a maturidade do produto.
+---
+
+# 14. Conclusão
+
+A arquitetura atual privilegia:
+
+* Clareza estrutural
+* Governança
+* Evolução segura
+* Rastreabilidade real
+
+Não é arquitetura teórica — é arquitetura validada pelo código existente.
 
 ---
 
-## Conclusão
+Última revisão: 2026-02-11
+Fonte:
 
-O **EXPANSÃO360** é projetado para **resistir ao tempo**:
-
-* sem atalhos destrutivos
-* sem acoplamento prematuro
-* com rastreabilidade como princípio, não como feature
-
-A arquitetura privilegia clareza, governança
-
----
+* Estrutura real em `web/`
+* Testes automatizados
+* ADRs em `DECISIONS/`
