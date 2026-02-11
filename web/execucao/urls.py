@@ -1,8 +1,6 @@
 # web/execucao/urls.py
 from django.urls import path
 
-from execucao.views import ChamadoFinalizarView
-
 from . import views
 from .api_views import loja_lookup_por_codigo
 
@@ -92,11 +90,6 @@ urlpatterns = [
         "itens/<int:item_id>/configurar/",
         views.ItemMarcarConfiguradoView.as_view(),
         name="item_configurar",
-    ),
-    path(
-        "chamados/<int:chamado_id>/finalizar/",
-        ChamadoFinalizarView.as_view(),
-        name="chamado_finalizar",
     ),
     # ======================
     # EVIDÊNCIAS
