@@ -101,7 +101,6 @@ class Chamado(models.Model):
     coleta_confirmada_em = models.DateTimeField(null=True, blank=True)
     coleta_confirmada = models.BooleanField(default=False)
 
-    coleta_confirmada_em = models.DateTimeField(null=True, blank=True)
     coleta_confirmada_por = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         null=True,
