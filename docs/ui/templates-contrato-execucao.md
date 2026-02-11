@@ -7,8 +7,14 @@ do app `execucao`, para evitar mistura entre abertura/planejamento e execução 
 - Página (`execucao/*.html`) **orquestra** componentes; não implementa regra de negócio.
 - Componente (`execucao/components/*.html`) concentra UI/ações do bloco específico.
 - **Fila não pode virar detalhe.**
-- `ABERTO` = planejamento; `EM_EXECUCAO+` = operação.
+- `ABERTO` = estado de fila/transição (setup obrigatório via guard server-side).
+- Execução ativa ocorre a partir de `EM_EXECUCAO` (primeiro save operacional promove `ABERTO -> EM_EXECUCAO`).
 - Setup é uma tela dedicada e obrigatória quando status = `ABERTO`.
+
+Fonte (guard/fluxo):
+- Guard ABERTO → setup: `web/execucao/views.py:539` (e também `771`, `1023`, `1028`)
+- Promoção ABERTO → EM_EXECUCAO: `web/execucao/views.py:815-816`
+- Enum de status: `web/execucao/models.py:41-43`
 
 ---
 
@@ -37,8 +43,11 @@ do app `execucao`, para evitar mistura entre abertura/planejamento e execução 
 
 **Inclui (ordem recomendada):**
 1. `components/_header_chamado.html`
-2. `components/_itens_chamado.html` (modo planejamento)
+2. `components/_itens_chamado_setup.html` (modo planejamento)
 3. `components/_setup_actions.html` (CTA “Iniciar execução”, salvar, validações visuais)
+
+Fonte (include itens setup):
+- `web/execucao/templates/execucao/chamado_setup.html:19`
 
 **Não pode conter:**
 - upload de evidências
@@ -63,7 +72,10 @@ do app `execucao`, para evitar mistura entre abertura/planejamento e execução 
 **Inclui (ordem recomendada):**
 1. `components/_header_chamado.html`
 2. `components/_card_operacional_chamado.html`
-3. `components/_itens_chamado.html` (modo operação)
+3. `components/_itens_chamado_execucao.html` (modo operação)
+
+Fonte (include itens execução):
+- `web/execucao/templates/execucao/chamado_execucao.html:21`
 
 **Nota:**
 - Evidências ficam dentro do card operacional (ponta final).
@@ -127,6 +139,10 @@ do app `execucao`, para evitar mistura entre abertura/planejamento e execução 
 **Modo Compact (fila):**
 - apenas resumo + link "Abrir"
 
+Arquivos relacionados (as-is):
+- `components/_card_operacional_chamado.html` (wrapper / modo compacto)
+- `components/_card_operacional_chamado_full.html` (modo full)
+
 **Recebe no contexto (full):**
 - `chamado`
 - `pode_liberar_nf`
@@ -136,23 +152,28 @@ do app `execucao`, para evitar mistura entre abertura/planejamento e execução 
 **Recebe no contexto (compact):**
 - `chamado`
 
+Fonte (include evidências no full):
+- `web/execucao/templates/execucao/components/_card_operacional_chamado_full.html:81`
+
 ---
 
-## components/_itens_chamado.html
+## components/_itens_chamado_setup.html
 
-**Responsabilidade:** Itens do chamado com “modo” por status.
+**Responsabilidade:** Itens do chamado em modo planejamento (`status == ABERTO`).
 
 **Recebe no contexto:**
 - `chamado`
 - `itens`
 
-**Modo Planejamento (`status == ABERTO`):**
-- `deve_configurar`
-- `ip` obrigatório quando configurável e marcado
+---
 
-**Modo Operação (`status != ABERTO`):**
-- bipagem (ativo/série) e conferência (confirmado)
-- status de configuração + IP (edição controlada com log)
+## components/_itens_chamado_execucao.html
+
+**Responsabilidade:** Itens do chamado em modo operação (`status != ABERTO`).
+
+**Recebe no contexto:**
+- `chamado`
+- `itens`
 
 ---
 
@@ -176,3 +197,19 @@ do app `execucao`, para evitar mistura entre abertura/planejamento e execução 
 - `chamado`
 - (opcional) `pode_iniciar_execucao`
 - (opcional) `motivos_bloqueio` (lista de strings)
+
+---
+
+## Provas automatizadas (nível 2)
+
+- Execução usa template correto:
+  - `web/execucao/tests/test_views_chamado_execucao_get.py:44`
+- Fila operacional tem cobertura:
+  - `web/execucao/tests/test_views_fila_operacional.py:*`
+- Fluxo de setup/abrir:
+  - `web/execucao/tests/test_chamado_abrir_inicia_sessao.py:34`
+
+---
+
+Última revisão: 2026-02-11  
+Fonte: `web/execucao/views.py`, `web/execucao/models.py`, `web/execucao/templates/execucao/*`, `web/execucao/tests/*`

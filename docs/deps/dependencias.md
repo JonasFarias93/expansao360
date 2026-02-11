@@ -1,149 +1,208 @@
-# Auditoria de Dependências — EXPANSÃO360
+# Auditoria de Dependências Python — EXPANSÃO360
 
-Este documento registra **todas as dependências Python do projeto**, sua origem
-e responsabilidade, evitando acoplamento acidental e crescimento descontrolado
-da stack.
+Este documento registra todas as dependências Python utilizadas
+no projeto EXPANSÃO360, sua responsabilidade arquitetural
+e seu impacto no sistema.
 
-> Regra: nenhuma dependência entra no projeto sem estar documentada aqui.
-
----
-
-## 1. Fontes auditadas
-
-### 1.1 environment.yml
-- Status: ⬜ auditado | ⬜ não auditado
-- Observação: ambiente base de desenvolvimento (conda)
-
-### 1.2 requirements*.txt / pyproject.toml
-- Status: ⬜ inexistente | ⬜ auditado
-- Observação: dependências Python diretas do projeto
-
-### 1.3 Dependências implícitas
-- Instaladas manualmente (`pip install …`)
-- Introduzidas por decisões arquiteturais
-- Ferramentas de qualidade / hooks
+> Regra de governança:
+> Nenhuma dependência entra no projeto sem ser documentada aqui.
+> Dependências não registradas são consideradas não autorizadas.
 
 ---
 
-## 2. Dependências por responsabilidade
+# 1. Source of Truth
 
-### 2.1 Core / Domínio
-Dependências necessárias para regras de negócio puras,
-independentes de framework e UI.
+As dependências Python devem ser verificadas em:
 
-| Dependência | Origem | Justificativa | Observações |
-|------------|-------|---------------|-------------|
-| _(vazio)_  | —     | —             | Core permanece framework-agnostic |
-
-🧠 Decisão atual:
-- O **domínio não depende de Django**
-- Services são testáveis sem infra
+* `environment.yml` (ambiente Conda)
+* `requirements*.txt` ou `pyproject.toml` (se existirem)
+* `pre-commit-config.yaml`
+* Importações reais no código (`grep -R "import "`)
 
 ---
 
-### 2.2 Web (Django)
-Dependências usadas exclusivamente na camada web.
-
-| Dependência | Origem | Justificativa |
-|------------|-------|---------------|
-| Django | ADR 2026-01-21 | Framework web principal |
-| django-templatetags | decisão implícita | Extensão de UI (templatetags) |
-
-📌 Observação:
-- Models Django **não contêm regra de negócio**
-- CBVs e templatetags são considerados decisão arquitetural
+# 2. Dependências por Camada
 
 ---
 
-### 2.3 Testes
-Ferramentas de teste e validação automática.
+## 2.1 Domínio (Core)
 
-| Dependência | Origem | Justificativa |
-|------------|-------|---------------|
-| pytest | decisão técnica | Testes unitários e de contrato |
-| pytest-django | implícita | Integração com Django |
-| coverage | _(se existir)_ | Métrica de cobertura |
+Responsabilidade:
 
-🧠 Regra:
-- Testes são **contrato vivo**
-- Quebra de teste = regressão
+* Regras de negócio puras
+* Services independentes de framework
 
----
+### Status atual
 
-### 2.4 Qualidade (Lint / Format / Hooks)
-Ferramentas que **impõem padrão**, não opcionais.
+✔ O domínio não depende de Django
+✔ Services são testáveis sem infraestrutura
 
-| Dependência | Origem | Justificativa |
-|------------|-------|---------------|
-| ruff | decisão técnica | Lint + format unificado |
-| black | legado | Formatação (a avaliar consolidação) |
-| pre-commit | decisão técnica | Garantir qualidade antes do commit |
+Dependências explícitas:
 
-📌 Observação:
-- Formatação automática **é requisito**, não preferência pessoal
+| Dependência   | Justificativa                |
+| ------------- | ---------------------------- |
+| Python stdlib | Dataclasses, Enum, ipaddress |
+
+Decisão arquitetural:
+
+* O domínio deve permanecer framework-agnostic.
 
 ---
 
-### 2.5 CLI
-Dependências usadas no modo CLI (Sprint inicial).
+## 2.2 Camada Web (Django)
 
-| Dependência | Origem | Justificativa |
-|------------|-------|---------------|
-| argparse / click | _(confirmar)_ | Interface CLI |
+Responsabilidade:
 
----
+* HTTP
+* ORM
+* Templates
+* Permissões
 
-### 2.6 Infra / Dev Tooling
-Ferramentas de suporte ao desenvolvimento.
+| Dependência | Justificativa           | Origem                 |
+| ----------- | ----------------------- | ---------------------- |
+| Django      | Framework web principal | ADR (adoção do Django) |
 
-| Dependência | Origem | Justificativa |
-|------------|-------|---------------|
-| conda | decisão inicial | Isolamento de ambiente |
-| make | opcional | Atalhos de automação |
-| git | obrigatório | Versionamento |
+Observações:
 
----
-
-## 3. Dependências não documentadas (achados)
-
-> Lista de dependências que **apareceram no meio do caminho**
-> e precisam ser validadas, mantidas ou removidas.
-
-| Dependência | Onde apareceu | Ação |
-|------------|--------------|------|
-| _(exemplo)_ jest | assets JS | Avaliar necessidade |
-| _(exemplo)_ requests | script local | Remover / documentar |
+* Models Django não devem conter regra de negócio estrutural.
+* A lógica crítica deve permanecer no domínio/service layer.
 
 ---
 
-## 4. Dependências que viram requisitos do sistema
+## 2.3 Testes
 
-Estas dependências **geram requisitos funcionais ou não funcionais**.
+Responsabilidade:
 
-### 4.1 Requisitos explícitos
+* Contrato vivo do sistema
+* Garantia de regressão
 
-- O sistema **deve impor formatação automática** antes de aceitar commits
-- O sistema **deve suportar testes automatizados** desde o domínio até a web
+| Dependência         | Justificativa              |
+| ------------------- | -------------------------- |
+| pytest              | Runner principal de testes |
+| pytest-django       | Integração pytest ↔ Django |
+| coverage (se ativo) | Métrica de cobertura       |
 
-### 4.2 Requisitos em avaliação
+Regra:
 
-- ⬜ Suporte a testes JS (ex.: Jest)
-- ⬜ Padronização completa em Ruff (substituir Black)
-
----
-
-## 5. Próximos passos (bloqueios)
-
-Antes de iniciar o **Ciclo 2**:
-
-- [ ] Confirmar conteúdo do `environment.yml`
-- [ ] Decidir fonte única de dependências (conda vs pip)
-- [ ] Consolidar stack de qualidade (Ruff vs Black)
-- [ ] Atualizar REQUIREMENTS.md com impactos
+* Quebra de teste = regressão
+* Testes são parte do contrato do sistema
 
 ---
 
-## Status
-- Documento criado: ⬜
-- Auditoria concluída: ⬜
-- Aprovado para início do Ciclo 2: ⬜
+## 2.4 Qualidade (Lint / Format / Hooks)
+
+Responsabilidade:
+
+* Padronização automática
+* Redução de divergência entre desenvolvedores
+
+| Dependência | Justificativa                                   |
+| ----------- | ----------------------------------------------- |
+| ruff        | Lint + formatação unificada                     |
+| black       | Legado / compatibilidade (avaliar consolidação) |
+| pre-commit  | Execução automática antes de commit             |
+
+Requisito não funcional derivado:
+
+* O sistema deve impor padronização automática antes do commit.
+
+---
+
+## 2.5 CLI (Legado / Sprint Inicial)
+
+Responsabilidade:
+
+* Interface inicial de linha de comando
+
+Dependências possíveis:
+
+| Dependência       | Status                   |
+| ----------------- | ------------------------ |
+| argparse (stdlib) | Confirmado               |
+| click             | Confirmar se ainda ativo |
+
+⚠ Caso CLI deixe de ser parte ativa do produto,
+essa seção deve ser reavaliada via ADR.
+
+---
+
+## 2.6 Infra / Dev Tooling
+
+Ferramentas que não fazem parte do runtime do sistema.
+
+| Ferramenta | Papel                  |
+| ---------- | ---------------------- |
+| conda      | Isolamento de ambiente |
+| make       | Atalhos de automação   |
+| git        | Versionamento          |
+
+Observação:
+
+* Nenhuma dessas ferramentas é requisito do sistema em produção.
+
+---
+
+# 3. Dependências Implícitas (Auditoria Técnica)
+
+Dependências detectadas devem ser validadas via:
+
+```
+pip freeze
+grep -R "import " web/
+```
+
+Toda dependência externa encontrada deve:
+
+1. Estar documentada aqui
+2. Ter justificativa arquitetural
+3. Ser classificada por camada
+
+---
+
+# 4. Dependências que Geram Requisitos
+
+Algumas dependências impõem requisitos sistêmicos:
+
+## 4.1 RNF-QA-001 — Testabilidade
+
+O sistema deve suportar:
+
+* Testes automatizados de domínio
+* Testes de integração Django
+* (Opcional) Testes JS
+
+---
+
+## 4.2 RNF-QA-002 — Padronização de Código
+
+O sistema deve impor:
+
+* Lint automático
+* Formatação automática
+* Bloqueio de commit em caso de erro
+
+---
+
+# 5. Decisões em Aberto
+
+* Consolidar Ruff como único formatador?
+* Remover Black definitivamente?
+* Manter CLI como parte ativa?
+* Adotar fonte única de dependências (Conda vs pip)?
+
+Qualquer decisão estrutural exige ADR.
+
+---
+
+# 6. Status da Auditoria
+
+* [x] Dependências principais identificadas
+* [x] Camadas classificadas
+* [x] Requisitos derivados explicitados
+* [ ] Confirmar alinhamento entre `environment.yml` e imports reais
+* [ ] Consolidar fonte única de dependências
+
+---
+
+Última revisão: 2026-02-11
+Fonte: estrutura do repositório + imports reais + ferramentas configuradas

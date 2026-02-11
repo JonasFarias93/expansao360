@@ -1,131 +1,132 @@
 # Auditoria de Dependências Frontend / JS — EXPANSÃO360
 
-Este documento registra a **stack JavaScript utilizada (ou planejada)** no projeto,
-sua motivação, impacto na qualidade e consequências da remoção.
+Este documento registra a stack JavaScript utilizada no projeto,
+sua motivação técnica, impacto arquitetural e critérios de manutenção.
 
-> Regra: qualquer dependência JS introduzida vira requisito não funcional
-> e precisa estar documentada aqui.
-
----
-
-## 1️⃣ Stack JS atual
-
-### 1.1 Node / npm
-
-- **Status:** Presente (via ambiente de desenvolvimento / tooling)
-- **Uso:** Execução de ferramentas de teste e automação JS
-
-📌 Observação:
-- Node **não é dependência de runtime do sistema**
-- É dependência de **qualidade e desenvolvimento**
+> Toda dependência JS deve ser documentada aqui.
+> Dependências não registradas são consideradas não autorizadas.
 
 ---
 
-### 1.2 Jest
+# 1. Source of Truth
 
-- **Status:** Introduzido (exemplo citado)
-- **Categoria:** Testes frontend / qualidade
-
-Jest é utilizado para:
-- Testar código JavaScript de frontend
-- Garantir comportamento de scripts sem navegador real
-- Automatizar regressões em interações DOM
+- Código JS: `web/**/static/**`
+- Testes JS: `web/**/static/**/__tests__/`
+- Testes ativos encontrados:
+  - `web/cadastro/static/cadastro/js/__tests__/tipos_formset.test.js`
+  - `web/cadastro/static/cadastro/js/__tests__/tipos_formset_dynamic_row.test.js`
+- Comandos:
+  - `npm run test:js`
+  - `make test` (Python + JS)
 
 ---
 
-### 1.3 jsdom
+# 2. Stack JS Atual (ativa)
 
-- **Status:** Dependência do Jest
-- **Categoria:** Ambiente de simulação de DOM
+## 2.1 Node / npm
 
-jsdom fornece:
-- `document`
+**Categoria:** Tooling de desenvolvimento  
+**Escopo:** Ambiente de dev e CI  
+
+- Executa testes JS
+- Suporta Jest
+- Não faz parte do runtime de produção
+
+---
+
+## 2.2 Jest
+
+**Categoria:** Testes automatizados de frontend  
+**Status:** Ativo  
+
+Usado para:
+
+- Testar manipulação de DOM
+- Testar comportamento dinâmico de formsets
+- Detectar regressões em scripts frontend
+
+Exemplos reais no repositório:
+
+- `tipos_formset.test.js`
+- `tipos_formset_dynamic_row.test.js`
+
+---
+
+## 2.3 jsdom
+
+**Categoria:** Simulação de ambiente DOM  
+
+Fornece:
+
 - `window`
-- eventos DOM
-- manipulação de elementos HTML
+- `document`
+- eventos
+- manipulação de HTML
 
-➡️ Permite testar JS **sem browser real**.
-
----
-
-## 2️⃣ Motivação técnica (por que existe)
-
-### Problema real que cobre
-Scripts JS no projeto:
-- manipulam DOM
-- reagem a eventos
-- alteram estado visual/funcional da UI
-
-Sem Jest + jsdom:
-- esses scripts **não são testáveis automaticamente**
-- bugs só aparecem em runtime/manual QA
-
-### Exemplos de bugs cobertos
-- JS não dispara evento esperado
-- seletor DOM quebrado após refactor HTML
-- script falha silenciosamente
-- regressão visual/funcional não detectada
+Permite execução de testes JS sem navegador real.
 
 ---
 
-## 3️⃣ O que acontece se remover
+# 3. Requisitos Não Funcionais Derivados
 
-### Sem Jest + jsdom:
+## RNF-FE-001 — Testabilidade de Frontend
 
-❌ Não há testes automatizados de frontend  
-❌ Regressões JS passam despercebidas  
-❌ Confiança cai em mudanças de UI  
-❌ QA vira manual e reativo  
-
-➡️ Qualquer ajuste em JS vira risco oculto.
-
----
-
-## 4️⃣ Classificação como requisito não funcional
-
-A partir desta auditoria, ficam explícitos os seguintes **requisitos não funcionais**:
-
-### RNF-FE-001 — Testabilidade de frontend
-O sistema **deve permitir testes automatizados de JavaScript**
+O sistema deve permitir testes automatizados de JavaScript
 sem dependência de navegador real.
 
-➡️ Justificativa:
-- Reduz regressões
-- Aumenta confiança em refactors de UI
-- Padroniza qualidade
+Justificativa:
+
+- Redução de regressões
+- Refactor seguro de UI
+- Padronização de qualidade
 
 ---
 
-### RNF-FE-002 — Isolamento de runtime
-Ferramentas JS (Node, Jest, jsdom):
-- **não fazem parte do runtime de produção**
-- são exclusivas do ambiente de desenvolvimento e CI
+## RNF-FE-002 — Isolamento de Runtime
+
+Ferramentas JS:
+
+- Não são parte do runtime de produção
+- São restritas ao ambiente de desenvolvimento e CI
 
 ---
 
-## 5️⃣ Decisão arquitetural implícita (agora explícita)
+# 4. Consequências da Remoção
 
-- ✔️ A stack JS existe **por qualidade**, não por moda
-- ✔️ Remover Jest/jsdom **reduz cobertura e confiança**
-- ✔️ Manter exige:
-  - Node disponível em ambiente de dev/CI
-  - Documentação clara (este arquivo)
+Remover Jest/jsdom implica:
 
----
+- ❌ Remoção de testes JS existentes
+- ❌ Perda de cobertura de regressões de UI
+- ❌ Maior risco em refactors frontend
 
-## 6️⃣ Próximos passos (Ciclo 2)
-
-- [ ] Confirmar se existem testes JS no repositório
-- [ ] Se existirem, registrar exemplos reais
-- [ ] Se não existirem ainda:
-  - manter Jest/jsdom como **stack aprovada**
-  - só remover mediante decisão formal (ADR)
+Qualquer remoção exige ADR formal.
 
 ---
 
-## Status da auditoria
+# 5. Critério Objetivo de Manutenção
+
+A stack JS deve permanecer enquanto:
+
+- Existirem testes JS no repositório
+- Scripts manipularem DOM dinamicamente
+- CI executar testes JS
+
+Pode ser removida apenas se:
+
+- Testes JS forem removidos formalmente
+- Scripts JS deixarem de existir
+- ADR aprovar a remoção
+
+---
+
+# 6. Status da Auditoria
 
 - [x] Stack JS mapeada
-- [x] Motivação registrada
-- [x] Impacto da remoção explícito
-- [x] Requisitos não funcionais derivados
+- [x] Testes JS confirmados no repositório
+- [x] RNFs derivados explicitados
+- [x] Impacto da remoção formalizado
+
+---
+
+Última revisão: 2026-02-11  
+Fonte: `web/cadastro/static/cadastro/js/__tests__/`
