@@ -46,9 +46,11 @@ from execucao.services.chamado_status import recalcular_status
 from execucao.services.execution_session import (
     NoActiveSessionToTakeError,
     end_session_save,
+    get_active_session,
     take_session,
     usuario_tem_sessao_ativa_no_chamado,
 )
+from execucao.services.finalizacao import validar_finalizacao
 from execucao.services.open_session import SessionBlockedError, open_session
 
 from .forms import ChamadoCreateForm, ChamadoDadosFiscaisForm
@@ -880,21 +882,100 @@ class ChamadoAtualizarItensView(CapabilityRequiredMixin, View):
 # sessao:chamado_finalizacao
 # ================
 class ChamadoFinalizarView(CapabilityRequiredMixin, View):
-    required_capability = "execucao.chamado.finalizar"
+    required_capability = CAP_EXECUCAO_CHAMADO_FINALIZAR
 
     @transaction.atomic
     def post(self, request: HttpRequest, chamado_id: int, *args, **kwargs) -> HttpResponse:
-        chamado = get_object_or_404(Chamado, pk=chamado_id)
-        chamado.gerar_itens_de_instalacao()
+        chamado = get_object_or_404(
+            Chamado.objects.select_for_update().select_related(
+                "loja", "projeto", "subprojeto", "kit"
+            ),
+            pk=chamado_id,
+        )
 
-        try:
-            chamado.finalizar()
-        except ValidationError as exc:
-            _push_validation_error_messages(request, exc)
+        # idempotência / bloqueio
+        if chamado.status == Chamado.Status.FINALIZADO:
+            messages.info(request, "Chamado já está finalizado.")
             return redirect("execucao:chamado_detalhe", chamado_id=chamado.id)
 
-        messages.success(request, "Chamado finalizado com sucesso.")
+        # exige sessão ativa do usuário
+        sessao = get_active_session(chamado=chamado)
+        if sessao is None:
+            # contrato: sem sessão -> bloqueado
+            if _is_ajax(request):
+                return JsonResponse({"ok": False, "error": "SEM_SESSAO"}, status=403)
+            return HttpResponseForbidden("Sem sessão ativa no chamado.")
+
+        # valida domínio
+        result = validar_finalizacao(chamado)
+
+        if not result.ok:
+            if _is_ajax(request):
+                return JsonResponse(
+                    {
+                        "ok": False,
+                        "pendencias": {
+                            "fiscais": [p.__dict__ for p in result.fiscais],
+                            "coleta": [p.__dict__ for p in result.coleta],
+                            "itens": [p.__dict__ for p in result.itens],
+                        },
+                    },
+                    status=400,
+                )
+
+            # HTML/messages: mostra um resumão (simples, mas útil)
+            messages.error(request, "Não é possível finalizar. Existem pendências:")
+            for p in result.fiscais:
+                messages.error(request, f"Fiscal: {p.message}")
+            for p in result.coleta:
+                messages.error(request, f"Coleta: {p.message}")
+            for it in result.itens[:20]:  # evita spam
+                messages.error(request, f"Item {it.item_id} ({it.equipamento}): {it.message}")
+            if len(result.itens) > 20:
+                messages.error(
+                    request, f"... e mais {len(result.itens) - 20} pendência(s) de itens."
+                )
+
+            return redirect("execucao:chamado_detalhe", chamado_id=chamado.id)
+
+        chamado.status = Chamado.Status.FINALIZADO
+
+        # encerra sessão com motivo FINALIZE
+        sessao.ended_at = timezone.now()
+        sessao.ended_reason = "FINALIZE"
+        sessao.save(update_fields=["ended_at", "ended_reason"])
+
+        chamado.save(update_fields=["status"])
+
+        # log MVP (sem saber seu logger exato):
+        _registrar_log_finalizacao(chamado=chamado, user=request.user)
+
+        # feedback
+        hhmm = timezone.localtime().strftime("%H:%M")
+        messages.success(request, f"Finalizado por {request.user} às {hhmm}.")
+
+        if _is_ajax(request):
+            return JsonResponse({"ok": True, "status": chamado.status}, status=200)
+
         return redirect("execucao:chamado_detalhe", chamado_id=chamado.id)
+
+
+def _is_ajax(request: HttpRequest) -> bool:
+    return request.headers.get("X-Requested-With") == "XMLHttpRequest"
+
+
+def _registrar_log_finalizacao(*, chamado: Chamado, user) -> None:
+    """
+    MVP: tenta usar um mecanismo existente de log se existir.
+    Se o projeto tiver um model tipo ChamadoLog/ChamadoHistorico, plugue aqui.
+    """
+    # Exemplo de fallback seguro:
+    fn = getattr(chamado, "registrar_log", None)
+    if callable(fn):
+        fn(f"Finalizado por {user}.")
+        return
+
+    return
 
 
 # ================
