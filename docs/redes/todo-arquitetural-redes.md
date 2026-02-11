@@ -1,5 +1,9 @@
 # TODO Arquitetural — Integração de Regras de Rede com Cadastro e Execução
 
+> ⚠️ Este documento não é contrato ativo.
+> Representa decisões já tomadas + roadmap técnico futuro.
+> A fonte da verdade atual é o service em `web/redes/services/validacao.py`.
+
 Este documento registra **passos futuros já decididos**, evitando rediscussão
 e garantindo evolução consistente do domínio de redes.
 

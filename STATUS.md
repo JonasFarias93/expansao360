@@ -1,162 +1,150 @@
 # STATUS — EXPANSÃO360
 
-Este documento apresenta uma **visão executiva e técnica** do andamento do projeto,
-organizada por **sprints** e **releases**, servindo como referência rápida para alinhamento,
-onboarding e acompanhamento de evolução.
+Este documento apresenta o estado atual do projeto com base nos releases publicados
+e no comportamento real implementado no código.
+
+Fonte de verdade:
+
+* Tags de release (Git)
+* CHANGELOG.md
+* Código em `web/`
 
 ---
 
-## Sprint Atual
+# 📦 Release Atual
 
-**Sprint 4 — UX Operacional & Views**
-📌 **Status:** 🟡 Em andamento
-🏷 **Releases associados:** v0.3.1 → v0.3.5
+## v0.3.6
 
-### 🎯 Objetivo da Sprint
+Data: 08/02/2026
+Tag: `0fb9f9d`
 
-Evoluir a **experiência operacional** do sistema,
-refinando UI, views e feedbacks visuais,
-**sem alterações no core de domínio**.
+### Added
 
-Esta sprint foca exclusivamente em:
+* Lookup API de loja por código (Java) para uso no fluxo de chamados
+* Novo input "Loja (Java)" no Abrir Chamado com validação e feedback ao usuário
 
-* clareza operacional
-* redução de atrito na execução
-* comunicação visual de status, prioridade e permissões
-* consolidação de contratos de templates
+### Changed
 
----
+* Seleção de loja no Abrir Chamado deixa de depender de `<select>` grande
+* `<select>` mantido apenas como fallback técnico (preenchido via JS)
 
-### ✅ Entregas realizadas na Sprint 4
+### Security / Integrity
 
-#### Registry (Cadastro Mestre)
+* Validação server-side impede criação de chamado sem loja válida
+* Proteção contra ID inválido ou injetado no backend
 
-* Importação **idempotente** de Lojas via CSV e XLSX (v0.3.1)
-* Mapeamento operacional:
+### Tests
 
-  * Filial → Java
-  * Nome Filial → Nome loja
-* Normalização automática de campos críticos:
+Cobertura para o endpoint de lookup de loja:
 
-  * UF em maiúsculo
-  * Logomarca padronizada (uppercase / dropdown)
-* UX aprimorada no cadastro e listagem de Lojas
+* 200 (sucesso)
+* 404 (loja inexistente)
+* 400 (código inválido)
 
-#### Execução Operacional
-
-* Separação explícita entre:
-
-  * **Setup do Chamado** (`EM_ABERTURA`)
-  * **Execução operacional** (`ABERTO` em diante)
-* Reativação do bloco de **Evidências** na tela de execução
-* Consolidação do fluxo de execução em fila operacional
-
-#### UI / UX
-
-* Projetos com **cor definida no cadastro**
-* Fila operacional com **identificação visual por projeto**
-* Header da fila com **cards-resumo interativos**
-* Preview inline de detalhes do Chamado na fila
-* Novo componente `_card_operacional_chamado_full.html`
-
-#### Arquitetura
-
-* Introdução de **templatetags de UI** (`execucao_ui`)
-* Separação de responsabilidades em templates
-* Refatoração incremental **sem quebra de compatibilidade**
-
-#### Qualidade
-
-* Testes automatizados adicionados para:
-
-  * Views de execução
-  * Template tags de UI
-* Stack de qualidade ativa:
-
-  * Ruff
-  * Black
-  * Pre-commit
-* Integração de testes JS (Jest + jsdom) mantida
+Ajustes nos testes do form conforme novo contrato de validação.
 
 ---
 
-### 🔜 Pendências conhecidas da Sprint 4
+# 🟡 Sprint Atual
 
-* Refinar métricas visuais da fila (densidade e leitura rápida)
-* Ajustar microcopy e feedbacks de erro na execução
-* Avaliar próximos passos de UX para filtros avançados
+## Sprint 4 — UX Operacional & Views
 
----
+Status: Em andamento
+Releases associados: v0.3.1 → v0.3.6
 
-## Sprint Anterior
+### Objetivo
 
-**Sprint 3 — Fluxo Inverso e Evolução Operacional**
-📌 **Status:** ✅ Concluída
-🏷 **Release:** v0.3.0
+Evoluir a experiência operacional sem alterar o core de domínio.
 
-### 🎯 Objetivo da Sprint
+Foco em:
 
-Consolidar o **core operacional** do EXPANSÃO360,
-incluindo fluxo inverso, evidências, regras de exceção
-e IAM mínimo por capability.
-
-### ✅ Entregas
-
-* Chamado com suporte a:
-
-  * fluxo direto (Matriz → Loja)
-  * fluxo inverso (Loja → Matriz)
-* Regras completas de finalização e retorno
-* Modelo de itens operacionais com rastreabilidade
-* Evidências associadas à execução (anexos)
-* IAM mínimo baseado em capabilities
-* Views Web funcionais para execução operacional
-* Testes automatizados cobrindo regras críticas
-
-Encerramento formal do release **v0.3.0**.
+* Clareza visual
+* Redução de atrito
+* Contratos de templates
+* Feedback operacional
 
 ---
 
-## Sprint 2
+## Entregas Consolidadas (Sprint 4)
 
-**Sprint 2 — Cadastro e Execução Base (Web + CLI)**
-📌 **Status:** ✅ Concluída
+### Registry
 
-### 🎯 Objetivo da Sprint
+* Importação idempotente de Lojas (CSV/XLSX)
+* Normalização automática de campos críticos
+* UX aprimorada na listagem de Lojas
 
-Consolidar o **Cadastro Mestre (Registry)** e a
-**Execução Base (Operation)**,
-com testes automatizados e separação clara entre core, CLI e Web.
+### Execução
 
-### ✅ Principais Entregas
+* Separação explícita entre `EM_ABERTURA` e `ABERTO`
+* Reativação de evidências na execução
+* Consolidação da fila operacional
 
-* Core de domínio independente de framework
-* CLI funcional para Registry e Operation
-* Camada Web (Django) para:
+### UI
 
-  * Cadastro administrativo
-  * Execução operacional
-* Entidade Chamado com workflow e validações
-* UI Web inicial para:
+* Projetos com cor definida
+* Cards-resumo na fila operacional
+* Preview inline de Chamado
+* Componente `_card_operacional_chamado_full.html`
 
-  * histórico
-  * detalhe
-  * edição de Chamados
+### Arquitetura
 
----
+* Introdução de templatetags de UI (`execucao_ui`)
+* Refatoração incremental de templates
 
-## Observações Arquiteturais
+### Qualidade
 
-* O core permanece **independente de framework**.
-* Django atua exclusivamente como **camada de entrega (adapter)**.
-* Nenhuma regra de negócio foi adicionada durante a Sprint 4.
-* Evoluções estruturais exigem **ADR explícita** registrada em `DECISIONS.md`.
+* Testes para views de execução
+* Testes para templatetags
+* Stack ativa: Ruff, Black, Pre-commit
+* Testes JS (Jest + jsdom)
 
 ---
 
-## Leitura complementar
+# ✅ Sprint 3 — Core Operacional
 
-* `README.md` — visão geral e onboarding
-* `ARCHITECTURE.md` — contratos arquiteturais
-* `DECISIONS.md` — histórico de decisões técnicas
-* `CHANGELOG.md` — histórico de releases
+Release: v0.3.0
+Status: Concluída
+
+### Entregas
+
+* Fluxo direto e inverso (ENVIO / RETORNO)
+* Regras completas de finalização
+* Evidências vinculadas ao Chamado
+* IAM mínimo por capability
+* Testes cobrindo regras críticas
+
+---
+
+# ✅ Sprint 2 — Base Estrutural
+
+Status: Concluída
+
+### Entregas
+
+* Core independente de framework
+* CLI funcional (Registry e Operation)
+* Camada Web inicial (Django)
+* Workflow básico de Chamado
+* Testes automatizados estruturais
+
+---
+
+# 📌 Próximos Passos Técnicos
+
+* Refinamento visual da fila
+* Ajuste de microcopy
+* Avaliação de filtros avançados
+
+---
+
+# 📚 Leitura Relacionada
+
+* `README.md`
+* `ARCHITECTURE.md`
+* `CHANGELOG.md`
+* `DECISIONS/`
+
+---
+
+Última revisão: 2026-02-11
+Fonte: Tags Git + CHANGELOG.md + código real em `web/`

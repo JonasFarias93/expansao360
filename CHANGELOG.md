@@ -5,169 +5,147 @@ O versionamento segue o padrão **SemVer**.
 
 ---
 
+## [v0.3.6] — 2026-02-08
+
+### Lookup de Loja por Código (Java)
+
+Este release evolui o fluxo de abertura de Chamado, substituindo a seleção por
+`<select>` massivo por um modelo baseado em lookup assíncrono.
+
+### ✨ Added
+
+* Endpoint de lookup de Loja por código ("Java")
+* Novo input **"Loja (Java)"** no Abrir Chamado
+* Feedback visual para sucesso/erro na validação
+
+### 🔄 Changed
+
+* Seleção de loja não depende mais de `<select>` gigante
+* `<select>` mantido como fallback técnico (preenchido via JS)
+
+### 🔐 Security / Integrity
+
+* Validação server-side garante loja válida
+* Proteção contra ID inválido/injetado
+
+### 🧪 Tests
+
+Cobertura para o endpoint de lookup:
+
+* 200 — sucesso
+* 404 — loja inexistente
+* 400 — código inválido
+
+Ajustes nos testes do form conforme novo contrato de validação.
+
+---
+
 ## [v0.3.5] — 2026-02-07
 
 ### Execução operacional mais clara
 
-Este release consolida a **separação explícita entre setup e execução operacional**,
-fecha lacunas de UX na fila e reforça contratos arquiteturais, sem quebra de compatibilidade.
+Consolida a separação explícita entre setup e execução operacional, reforçando contratos arquiteturais sem quebra de compatibilidade.
 
 ### ✨ Execução
 
-* Reativação do bloco de **Evidências** na tela de execução
-* Separação clara entre **setup** e **execução operacional**
+* Reativação do bloco de Evidências na execução
+* Separação clara entre setup e execução operacional
 * Novo componente `_card_operacional_chamado_full.html`
 
 ### 🎨 UI / UX
 
-* Projetos passam a possuir **cor definida no cadastro**
-* Fila operacional com **identificação visual por projeto**
-* Header e cards da fila mais informativos
+* Projetos com cor definida no cadastro
+* Identificação visual por projeto na fila
+* Header e cards mais informativos
 
-### 🛠️ Arquitetura
+### 🛠 Arquitetura
 
-* Introdução de **templatetags de UI** (`execucao_ui`)
-* Contratos de templates respeitados
-* Refatoração incremental sem quebra de compatibilidade
+* Introdução de templatetags (`execucao_ui`)
+* Refatoração incremental de templates
 
 ### 🧪 Qualidade
 
-* Testes adicionados para:
-
-  * Views de execução
-  * Template tags de UI
+* Testes para views de execução
+* Testes para template tags
 * Ruff / Black / Pre-commit ativos
-
-### 🔖 Notas
-
-Esta versão consolida a transição do fluxo de execução e prepara o terreno
-para evolução visual e operacional da fila.
 
 ---
 
 ## [v0.3.3] — 2026-02-04
 
-### Fechamento da fase funcional (Cadastro + Execução + IAM)
-
-Este release consolida a **fase funcional** do EXPANSÃO360, com Registry, Execução e IAM
-estabilizados e cobertura de testes ampliada.
+### Consolidação funcional (Cadastro + Execução + IAM)
 
 ### ✨ Destaques
 
-* Consolidação de **Registry (Cadastro)**, **Operation (Execução)** e **IAM**
-* UI normalizada e cobertura de testes ampliada
+* Registry, Operation e IAM estabilizados
+* UI normalizada
+* Cobertura de testes ampliada
 
-### 🔄 Registry (Cadastro)
+### 🔄 Registry
 
-* Ajustes em models, forms, views e telas
-* Correções e melhorias em formsets (kits e tipos)
+* Ajustes em models, forms, views
+* Melhorias em formsets
 * Migração incluída
 
 ### 🔄 Execução
 
-* Consolidação de fluxos e regras operacionais
+* Consolidação de regras operacionais
 * Validações para fechamento de Chamados
 
 ### 🎨 UI
 
 * Remoção de JS inline
-* Normalização de templates base e sidebar
+* Normalização de templates
 
 ### 🧪 Testes
 
 * Novos testes para AJAX e formsets
-* Configuração do pytest consolidada
-
-### 🧰 Front tooling
-
-* Dependências e lockfile adicionados
-* Alias `npm test` → `npm run test:js`
-
-### 🔖 Notas
-
-* Migração incluída: revisar e aplicar com cuidado em ambientes com dados
+* Configuração pytest consolidada
 
 ---
 
 ## [v0.3.2] — 2026-02-03
 
-### Registry: Tipos de Equipamento por Categoria + UI
+### Tipos de Equipamento por Categoria
 
-Este release consolida a padronização de **Tipos de Equipamento** como cadastro mestre
-ligado à **Categoria**, eliminando texto livre e melhorando consistência histórica.
+* `TipoEquipamento` vinculado à `Categoria`
+* Ativar/inativar tipos sem apagar histórico
+* `ItemKit.tipo` migra de texto livre para FK
 
-### ✨ Principais entregas
+### 🎨 UI
 
-* `TipoEquipamento` vinculado à `Categoria` (1:N)
-* Suporte a ativar/inativar tipos sem apagar histórico
-* `ItemKit.tipo` migra de texto livre para FK (`PROTECT`)
-
-### 🎨 UI de Categoria
-
-* Edição de Categoria com Tipos inline (formset)
-* Ajuda visual explicando estados (ativo/remover)
-
-### 🛠️ Admin
-
-* Ajustes no Django Admin para refletir os novos relacionamentos
+* Edição inline de tipos (formset)
 
 ### 🧪 Testes
 
-* Cobertura de unicidade e comportamento de `TipoEquipamento`
-* Ajustes por conta da migração de schema
-
-### 🔖 Notas técnicas
-
-* Migração adicionada (atenção em ambientes com dados existentes)
-* Tipos antigos em texto precisam ser convertidos
-
-### 📌 Por que isso importa
-
-* Reduz inconsistência (ex.: "lcd", "LCD ", "Monitor LCD")
-* Destrava filtros e relatórios confiáveis
-* Mantém o Registry governado: Categoria → Equipamento → Tipo
+* Cobertura de unicidade
+* Ajustes por migração de schema
 
 ---
 
 ## [v0.3.1] — 2026-02-02
 
-### Importação de Lojas (CSV/XLSX) + UX do Cadastro
+### Importação de Lojas (CSV/XLSX)
 
-Este release evolui o **Cadastro Mestre (Registry)** com foco em realidade operacional
-por meio de importação idempotente e refinamento de UI.
+* Import idempotente
+* Normalização automática (UF, logomarca)
+* UX aprimorada na listagem
 
-### ✨ Destaques
+### 🧪 Testes
 
-* Importação idempotente de Lojas via **CSV e XLSX**
-* Mapeamento operacional:
+* Cobertura para normalização e idempotência
 
-  * Filial → Java
-  * Nome Filial → Nome loja
-* Normalização automática:
+---
 
-  * UF em maiúsculo
-  * Logomarca padronizada (uppercase / dropdown)
+## [v0.3.0] — 2026-01-30
 
-### 🎨 UI
+### Fluxo Inverso e Consolidação Operacional
 
-* Cadastro de Loja expandido (endereço e dados reais)
-* Listagem de lojas aprimorada (colunas e ordenação)
-
-### 🧪 Qualidade
-
-* Testes cobrindo:
-
-  * normalização de dados
-  * idempotência do import
-  * regras de padronização
-
-### 🧾 Notas operacionais
-
-```bash
-python web/manage.py import_lojas web/data/imports/lojas/lojas_bases.csv
-```
-
-* Arquivos de import permanecem fora do versionamento
+* Suporte a fluxo direto e inverso
+* Regras completas de finalização
+* Evidências associadas
+* IAM mínimo por capability
+* Testes cobrindo regras críticas
 
 ---
 
@@ -175,35 +153,15 @@ python web/manage.py import_lojas web/data/imports/lojas/lojas_bases.csv
 
 ### Web v1 (Registry + Chamado)
 
-Primeira versão utilizável end-to-end do EXPANSÃO360.
+* Core independente de framework
+* CLI funcional
+* Cadastro via Web
+* Chamado com protocolo automático
+* Snapshot operacional de itens
+* Workflow básico
+* UI inicial (histórico/detalhe)
 
-### ✨ Core + CLI
+---
 
-* Core de domínio independente de framework
-* Casos de uso com TDD
-* CLI funcional para Registry e Operation
-
-### 🗂️ Web — Cadastro (Registry)
-
-* Categoria, Equipamento, Loja, Projeto/Subprojeto
-* Kit / ItemKit
-* Admin configurado e migrations aplicadas
-
-### 🧾 Web — Execução (Chamado)
-
-* Entidade Chamado com protocolo automático
-* Workflow de status
-* Geração automática de itens de execução (snapshot)
-* Validações de finalização
-
-### 🎨 UI / Layout
-
-* Layout base e estrutura de templates
-* Tailwind via CDN
-* Histórico e detalhe de Chamados
-
-### 🔖 Observações
-
-* Core permanece desacoplado de framework
-* Django atua apenas como camada de entrega
-* Decisões arquiteturais registradas via ADRs
+Última revisão: 2026-02-11
+Fonte: Tags Git + código versionado
