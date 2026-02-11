@@ -55,6 +55,7 @@ INSTALLED_APPS = [
     "execucao",
     "iam",
     "redes",
+    "chamados",
 ]
 
 MIDDLEWARE = [
