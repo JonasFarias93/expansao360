@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from django.core.files.uploadedfile import SimpleUploadedFile
-
 from execucao.models import Chamado, EvidenciaChamado
 
 from ._base import ChamadoBaseTestCase

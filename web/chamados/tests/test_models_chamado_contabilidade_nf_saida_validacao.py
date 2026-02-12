@@ -1,5 +1,4 @@
 from django.core.exceptions import ValidationError
-
 from execucao.models import NF_SAIDA_ONLY_DIGITS_ERROR, Chamado
 from execucao.tests._base import ChamadoBaseTestCase
 

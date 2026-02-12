@@ -1,5 +1,4 @@
 from django.urls import reverse
-
 from execucao.models import Chamado
 from execucao.tests._base import WebAuthBaseTestCase, grant_cap
 

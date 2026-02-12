@@ -3,7 +3,6 @@ from __future__ import annotations
 from cadastro.models import Equipamento
 from django.core.exceptions import ValidationError
 from django.utils import timezone
-
 from execucao.models import Chamado, InstalacaoItem
 
 from ._base import ChamadoBaseTestCase

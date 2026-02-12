@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from django.db import IntegrityError
-
 from execucao.models import Chamado
 
 from ._base import ChamadoBaseTestCase

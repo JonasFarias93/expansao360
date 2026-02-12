@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 from cadastro.models import Categoria, Equipamento, ItemKit, Kit, TipoEquipamento
-from chamados.services.chamado_status import recalcular_status
 from django.utils import timezone
-
 from execucao.models import Chamado
 from execucao.tests._base import ChamadoBaseTestCase
+
+from chamados.services.chamado_status import recalcular_status
 
 
 class RecalcularStatusServiceTests(ChamadoBaseTestCase):

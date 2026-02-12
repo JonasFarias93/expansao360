@@ -2,11 +2,10 @@ from __future__ import annotations
 
 from django.urls import reverse
 from django.utils import timezone
-from iam.models import UserCapability
-
 from execucao.models import Chamado
 from execucao.services.execution_session import create_active_session
 from execucao.tests._base import WebAuthBaseTestCase, grant_cap
+from iam.models import UserCapability
 
 
 class ChamadoFinalizarViewTests(WebAuthBaseTestCase):

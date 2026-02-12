@@ -15,7 +15,6 @@ from cadastro.models import (
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 from django.utils import timezone
-
 from execucao.models import Chamado, StatusConfiguracao
 
 

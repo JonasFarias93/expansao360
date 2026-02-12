@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from cadastro.models import Categoria, Equipamento, ItemKit, Kit, TipoEquipamento
 from django.urls import reverse
-
 from execucao.models import Chamado, ExecutionSession
 from execucao.services.execution_session import create_active_session, get_active_session
 from execucao.tests._base import WebAuthBaseTestCase

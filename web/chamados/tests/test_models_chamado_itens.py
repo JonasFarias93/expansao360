@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from cadastro.models import Equipamento, ItemKit, TipoEquipamento
-
 from execucao.models import Chamado, InstalacaoItem
 
 from ._base import ChamadoBaseTestCase

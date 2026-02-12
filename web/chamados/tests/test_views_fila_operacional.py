@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from django.urls import reverse
 from django.utils import timezone
-
 from execucao.models import Chamado
 
 from ._base import WebAuthBaseTestCase, grant_cap

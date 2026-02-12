@@ -1,10 +1,9 @@
 from __future__ import annotations
 
-from iam.models import UserCapability
-
 from execucao.models import Chamado
 from execucao.services.execution_session import create_active_session
 from execucao.tests._base import WebAuthBaseTestCase
+from iam.models import UserCapability
 
 
 class SalvarDadosFiscaisPermissoesTests(WebAuthBaseTestCase):

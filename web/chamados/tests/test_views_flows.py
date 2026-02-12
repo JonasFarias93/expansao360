@@ -3,7 +3,6 @@ from __future__ import annotations
 from cadastro.models import Equipamento
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.urls import reverse
-
 from execucao.models import Chamado, InstalacaoItem
 
 from ._base import WebAuthBaseTestCase

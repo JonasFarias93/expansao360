@@ -3,7 +3,6 @@ from __future__ import annotations
 from cadastro.models import Equipamento, ItemKit, TipoEquipamento
 from django.contrib.auth import get_user_model
 from django.urls import reverse
-
 from execucao.models import Chamado
 from execucao.services.execution_session import create_active_session
 from execucao.tests._base import WebAuthBaseTestCase

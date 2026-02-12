@@ -3,7 +3,6 @@ from __future__ import annotations
 from cadastro.models import Equipamento, ItemKit, TipoEquipamento
 from django.contrib.auth import get_user_model
 from django.utils import timezone
-
 from execucao.models import Chamado
 from execucao.tests._base import ChamadoBaseTestCase
 

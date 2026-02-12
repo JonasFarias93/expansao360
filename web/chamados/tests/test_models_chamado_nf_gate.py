@@ -9,7 +9,6 @@ from cadastro.models import (
     TipoEquipamento,
 )
 from django.test import TestCase
-
 from execucao.models import Chamado
 
 
