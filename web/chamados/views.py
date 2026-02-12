@@ -33,13 +33,11 @@ from django.views import View
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.generic import TemplateView
 from execucao.models import ExecutionSession
-from execucao.services.chamado_status import recalcular_status
 from execucao.services.execution_session import (
     end_session_save,
     get_active_session,
     usuario_tem_sessao_ativa_no_chamado,
 )
-from execucao.services.finalizacao import validar_finalizacao
 from iam.decorators import user_has_capability
 from iam.execucao_capabilities import (
     CAP_EXECUCAO_CHAMADO_EDITAR,
@@ -47,6 +45,9 @@ from iam.execucao_capabilities import (
     CAP_EXECUCAO_SESSAO_TOMAR,
 )
 from iam.mixins import CapabilityRequiredMixin
+
+from chamados.services.chamado_status import recalcular_status
+from chamados.services.finalizacao import validar_finalizacao
 
 from .forms import ChamadoCreateForm, ChamadoDadosFiscaisForm
 from .models import (

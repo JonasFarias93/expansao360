@@ -1,9 +1,9 @@
 from __future__ import annotations
 
+from chamados.services.finalizacao import validar_finalizacao
 from django.utils import timezone
 
 from execucao.models import Chamado
-from execucao.services.finalizacao import validar_finalizacao
 from execucao.tests._base import ChamadoBaseTestCase
 
 
