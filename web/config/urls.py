@@ -15,7 +15,8 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("", root_redirect),
     # Operation
-    path("execucao/", include(("execucao.urls", "execucao"), namespace="execucao")),
+    path("execucao/", include("chamados.urls")),
+    path("execucao/", include(("chamados.urls", "execucao"), namespace="execucao")),
     # Registry (cadastro)
     path("cadastro/", include(("cadastro.urls", "cadastro"), namespace="cadastro")),
     # IAM

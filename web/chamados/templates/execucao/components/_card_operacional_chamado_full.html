@@ -1,0 +1,130 @@
+{# web/execucao/templates/execucao/components/_card_operacional_chamado_full.html #}
+
+<div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 space-y-6">
+
+  {# ============================ Dados fiscais (MVP PR3) ============================ #}
+  <div>
+    <div class="flex items-center justify-between mb-3">
+      <h2 class="font-semibold text-slate-900">Dados fiscais</h2>
+      {% if can_edit_dados_fiscais %}
+        <div class="text-xs text-slate-500">Editável (sessão ativa)</div>
+      {% else %}
+        <div class="text-xs text-slate-500">Somente leitura</div>
+      {% endif %}
+    </div>
+
+    {% if can_edit_dados_fiscais %}
+      <form
+        method="post"
+        action="{% url 'execucao:chamado_salvar_dados_fiscais' chamado.id %}"
+        class="grid grid-cols-1 sm:grid-cols-2 gap-3"
+      >
+        {% csrf_token %}
+
+        <div class="sm:col-span-1">
+          <label class="block text-xs font-medium text-slate-700">Chamado contábil</label>
+          <input
+            type="text"
+            name="contabilidade_numero"
+            value="{{ chamado.contabilidade_numero|default:'' }}"
+            class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900"
+          />
+        </div>
+
+        <div class="sm:col-span-1">
+          <label class="block text-xs font-medium text-slate-700">NF Saída</label>
+          <input
+            type="text"
+            inputmode="numeric"
+            name="nf_saida_numero"
+            value="{{ chamado.nf_saida_numero|default:'' }}"
+            class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900"
+          />
+          <p class="mt-1 text-xs text-slate-500">Apenas números.</p>
+        </div>
+
+        <div class="sm:col-span-2 flex justify-end pt-2">
+          <button type="submit" class="btn btn-primary">
+            Salvar dados
+          </button>
+        </div>
+      </form>
+    {% else %}
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div class="rounded-xl border border-slate-200 bg-slate-50 p-3">
+          <div class="text-xs text-slate-500">Chamado contábil</div>
+          <div class="text-sm font-medium text-slate-900 truncate mt-1">
+            {{ chamado.contabilidade_numero|default:"—" }}
+          </div>
+        </div>
+
+        <div class="rounded-xl border border-slate-200 bg-slate-50 p-3">
+          <div class="text-xs text-slate-500">NF Saída</div>
+          <div class="text-sm font-medium text-slate-900 truncate mt-1">
+            {{ chamado.nf_saida_numero|default:"—" }}
+          </div>
+        </div>
+      </div>
+    {% endif %}
+  </div>
+
+  {# ============================ Evidências ============================ #}
+  <div>
+    <div class="flex items-center justify-between mb-3">
+      <h2 class="font-semibold text-slate-900">Evidências</h2>
+      <div class="text-sm text-slate-500">{{ evidencias|length }} arquivo(s)</div>
+    </div>
+
+    {% include "execucao/components/_evidencias_chamado.html" with chamado=chamado evidencias=evidencias evidencia_tipos=evidencia_tipos only %}
+  </div>
+
+  {# ============================ Ações finais ============================ #}
+  {# wrapper com data-skip-readonly para o JS não desabilitar esses botões após "Salvar execução" #}
+  <div data-skip-readonly>
+    {% if can_execute_actions %}
+      <div class="border-t pt-4 space-y-3">
+        <div class="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+          Ações finais
+        </div>
+
+        <div class="flex flex-wrap items-center gap-3">
+          {# Confirmar coleta #}
+          {% if pode_confirmar_coleta %}
+            <form method="post" action="{% url 'execucao:chamado_confirmar_coleta' chamado.id %}">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-primary">
+                Confirmar coleta
+              </button>
+            </form>
+          {% else %}
+            <div class="text-sm text-slate-500">
+              Coleta:
+              {% if chamado.coleta_confirmada_em %}
+                confirmada
+              {% else %}
+                pendente
+              {% endif %}
+            </div>
+          {% endif %}
+
+          {# Finalizar chamado #}
+          <button
+            id="btn-finalizar-chamado"
+            data-url="{% url 'execucao:chamado_finalizar' chamado.id %}"
+            class="btn btn-danger"
+            {% if not pode_finalizar %}disabled{% endif %}
+          >
+            Finalizar chamado
+          </button>
+        </div>
+
+        {# feedback de pendências do finalizar (AJAX) #}
+        <div
+          id="finalizar-feedback"
+          class="hidden mt-3 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 space-y-2"
+        ></div>
+      </div>
+    {% endif %}
+  </div>
+
+</div>
