@@ -33,6 +33,7 @@ que impacta arquitetura, domínio, UI, processo ou governança.
 | ADR-020 | Web atua como Adapter (Camada de Entrega) | 2026-02-04 | Aceito |
 | ADR-046 | Reorganização do diretório DECISIONS (índice + domínios) | 2026-02-11 | Aceito |
 | ADR-059 | Criar app Django dedicado para o domínio Chamados | 2026-02-11 | Aceito |
+| ADR-060 | Boundary final: chamados (workflow) vs execucao (sessão) | 2026-02-12 | Aceito |
 
 ---
 
