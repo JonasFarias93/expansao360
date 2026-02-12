@@ -8,8 +8,13 @@ from datetime import timedelta
 # =========
 # imports
 # =========
-from chamados.models import (
+from chamados.models import (  # noqa: F401,E402
+    NF_SAIDA_ONLY_DIGITS_ERROR,
     Chamado,
+    EvidenciaChamado,
+    InstalacaoItem,
+    ItemConfiguracaoLog,
+    StatusConfiguracao,
 )
 from django.conf import settings
 from django.db import models
