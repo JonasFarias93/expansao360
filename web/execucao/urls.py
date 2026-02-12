@@ -1,8 +1,8 @@
 # web/execucao/urls.py
+from chamados.api_views import loja_lookup_por_codigo
 from django.urls import path
 
 from . import views
-from .api_views import loja_lookup_por_codigo
 
 app_name = "execucao"
 
