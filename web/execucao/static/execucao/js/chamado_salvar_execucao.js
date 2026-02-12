@@ -22,17 +22,19 @@
 
   function setReadOnly() {
     // Deixa a tela read-only desabilitando inputs do fluxo de execução.
-    // Limita ao container para não travar navegação/header.
     const container = document.getElementById("execucao-container") || document;
 
-    container.querySelectorAll("input, select, textarea, button").forEach((el) => {
-      // não desabilitar CTA de abrir e o próprio botão (para manter o status visível)
-      if (el.id === "btn-abrir-para-continuar") return;
-      if (el.id === "btn-salvar-execucao") return;
+    container
+      .querySelectorAll("input, select, textarea, button")
+      .forEach((el) => {
+        // manter CTA de abrir e o próprio botão de salvar
+        if (el.id === "btn-abrir-para-continuar") return;
+        if (el.id === "btn-salvar-execucao") return;
 
-      // não desabilitar botões de navegação/voltar se estiverem fora do container (fallback)
-      el.disabled = true;
-    });
+        if (el.closest("[data-skip-readonly]")) return;
+
+        el.disabled = true;
+      });
   }
 
   function showAbrirParaContinuar() {
@@ -44,8 +46,10 @@
     // Persistimos fiscais aqui porque o endpoint aceita isso.
     // Itens já são persistidos no fluxo atual (inputs salvam em endpoints próprios),
     // então o "Salvar execução" consolida status + encerra sessão.
-    const cont = document.querySelector('input[name="contabilidade_numero"]')?.value ?? "";
-    const nf = document.querySelector('input[name="nf_saida_numero"]')?.value ?? "";
+    const cont =
+      document.querySelector('input[name="contabilidade_numero"]')?.value ?? "";
+    const nf =
+      document.querySelector('input[name="nf_saida_numero"]')?.value ?? "";
 
     const formData = new FormData();
     formData.append("contabilidade_numero", cont);
@@ -93,6 +97,7 @@
       btn.textContent = LABEL_DEFAULT;
       setStatus(hhmm ? `Salvo às ${hhmm}` : "Salvo");
 
+      // entra em read-only SEM bloquear ações finais
       setReadOnly();
       showAbrirParaContinuar();
     } catch (err) {
