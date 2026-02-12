@@ -1,8 +1,9 @@
 # web/execucao/urls.py
+from chamados import views as chamados_views
 from chamados.api_views import loja_lookup_por_codigo
 from django.urls import path
 
-from . import views
+from execucao import views as execucao_views
 
 app_name = "execucao"
 
@@ -10,33 +11,33 @@ urlpatterns = [
     # ======================
     # FILA / HISTÓRICO
     # ======================
-    path("", views.ChamadoFilaView.as_view(), name="fila"),
-    path("historico/", views.HistoricoView.as_view(), name="historico"),
+    path("", chamados_views.ChamadoFilaView.as_view(), name="fila"),
+    path("historico/", chamados_views.HistoricoView.as_view(), name="historico"),
     # ======================
     # CHAMADO
     # ======================
     # Abertura
     path(
         "chamados/novo/",
-        views.ChamadoCreateView.as_view(),
+        chamados_views.ChamadoCreateView.as_view(),
         name="chamado_create",
     ),
     # Setup (planejamento) — status ABERTO
     path(
         "chamados/<int:chamado_id>/setup/",
-        views.ChamadoSetupView.as_view(),
+        chamados_views.ChamadoSetupView.as_view(),
         name="chamado_setup",
     ),
     # Detalhe / Execução — status != ABERTO
     path(
         "chamados/<int:chamado_id>/",
-        views.ChamadoExecucaoView.as_view(),
+        chamados_views.ChamadoExecucaoView.as_view(),
         name="chamado_detalhe",  # mantido por compatibilidade
     ),
     path("api/lojas/lookup/", loja_lookup_por_codigo, name="api_loja_lookup"),
     path(
         "chamados/<int:chamado_id>/take-session/",
-        views.chamado_take_session,
+        execucao_views.chamado_take_session,
         name="chamado_take_session",
     ),
     # ======================
@@ -44,51 +45,51 @@ urlpatterns = [
     # ======================
     path(
         "chamados/<int:chamado_id>/itens/",
-        views.ChamadoAtualizarItensView.as_view(),
+        chamados_views.ChamadoAtualizarItensView.as_view(),
         name="chamado_atualizar_itens",
     ),
     path(
         "chamados/<int:chamado_id>/itens/<int:item_id>/status/",
-        views.ItemSetStatusConfiguracaoView.as_view(),
+        chamados_views.ItemSetStatusConfiguracaoView.as_view(),
         name="item_set_status_configuracao",
     ),
-    path("chamados/<int:chamado_id>/abrir/", views.chamado_abrir, name="chamado_abrir"),
+    path("chamados/<int:chamado_id>/abrir/", execucao_views.chamado_abrir, name="chamado_abrir"),
     # ======================
     # AÇÕES OPERACIONAIS
     # ======================
     path(
         "chamados/<int:chamado_id>/contabil/",
-        views.ChamadoInformarContabilView.as_view(),
+        chamados_views.ChamadoInformarContabilView.as_view(),
         name="chamado_informar_contabil",
     ),
     path(
         "chamados/<int:chamado_id>/nf-saida/",
-        views.ChamadoInformarNFSaidaView.as_view(),
+        chamados_views.ChamadoInformarNFSaidaView.as_view(),
         name="chamado_informar_nf_saida",
     ),
     path(
         "chamados/<int:chamado_id>/confirmar-coleta/",
-        views.ChamadoConfirmarColetaView.as_view(),
+        chamados_views.ChamadoConfirmarColetaView.as_view(),
         name="chamado_confirmar_coleta",
     ),
     path(
         "chamados/<int:chamado_id>/finalizar/",
-        views.ChamadoFinalizarView.as_view(),
+        chamados_views.ChamadoFinalizarView.as_view(),
         name="chamado_finalizar",
     ),
     path(
         "chamado/<int:chamado_id>/salvar-dados-fiscais/",
-        views.ChamadoSalvarDadosFiscaisView.as_view(),
+        chamados_views.ChamadoSalvarDadosFiscaisView.as_view(),
         name="chamado_salvar_dados_fiscais",
     ),
     path(
         "chamados/<int:chamado_id>/salvar/",
-        views.ChamadoSalvarExecucaoView.as_view(),
+        chamados_views.ChamadoSalvarExecucaoView.as_view(),
         name="chamado_salvar_execucao",
     ),
     path(
         "itens/<int:item_id>/configurar/",
-        views.ItemMarcarConfiguradoView.as_view(),
+        chamados_views.ItemMarcarConfiguradoView.as_view(),
         name="item_configurar",
     ),
     # ======================
@@ -96,12 +97,12 @@ urlpatterns = [
     # ======================
     path(
         "chamados/<int:chamado_id>/evidencias/add/",
-        views.ChamadoAdicionarEvidenciaView.as_view(),
+        chamados_views.ChamadoAdicionarEvidenciaView.as_view(),
         name="chamado_adicionar_evidencia",
     ),
     path(
         "chamados/<int:chamado_id>/evidencias/<int:evidencia_id>/remover/",
-        views.EvidenciaRemoverView.as_view(),
+        chamados_views.EvidenciaRemoverView.as_view(),
         name="evidencia_remover",
     ),
     # ======================
@@ -109,7 +110,7 @@ urlpatterns = [
     # ======================
     path(
         "ajax/subprojetos/",
-        views.subprojetos_por_projeto,
+        chamados_views.subprojetos_por_projeto,
         name="ajax_subprojetos",
     ),
 ]
