@@ -1,9 +1,9 @@
 name: CI
 
 on:
-  pull_request:
   push:
-    branches: [develop, main]
+    branches: [ "develop", "main" ]
+  pull_request:
 
 jobs:
   test:
@@ -20,43 +20,55 @@ jobs:
           - 5432:5432
         options: >-
           --health-cmd="pg_isready -U expansao360 -d expansao360"
-          --health-interval=5s
-          --health-timeout=3s
-          --health-retries=20
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
 
     env:
-      # Banco (alinha com settings.py)
       DB_ENGINE: postgres
-      DB_HOST: 127.0.0.1
+      DB_HOST: localhost
       DB_PORT: "5432"
       DB_NAME: expansao360
       DB_USER: expansao360
       DB_PASSWORD: expansao360
-
-      # Django
-      DJANGO_DEBUG: "0"
-      DJANGO_SETTINGS_MODULE: config.settings
+      PYTHONUNBUFFERED: "1"
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Setup Conda (environment.yml)
+        uses: conda-incubator/setup-miniconda@v3
         with:
-          python-version: "3.11"
+          auto-update-conda: true
+          miniforge-variant: Miniforge3
+          use-mamba: true
+          environment-file: environment.yml
+          activate-environment: expansao360
 
-      - name: Install dependencies (pip)
+      - name: Show Python
+        shell: bash -l {0}
         run: |
-          python -m pip install --upgrade pip
-          pip install -e .
-          # Se você não tiver psycopg no pyproject/requirements ainda:
-          # pip install "psycopg[binary]" python-dotenv
+          python --version
+          pip --version
 
-      - name: Run migrations
+      - name: Install deps (pyproject)
+        shell: bash -l {0}
         run: |
-          python web/manage.py migrate
+          make deps-install
 
-      - name: Run tests
+      - name: Run tests (pytest)
+        shell: bash -l {0}
         run: |
-          pytest -qq
+          make test-py
+
+
+            - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Run tests (jest)
+        run: |
+          npm ci
+          make test-js
