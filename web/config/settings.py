@@ -10,11 +10,18 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
+from __future__ import annotations
+
 import os
 from pathlib import Path
 
+from django.core.exceptions import ImproperlyConfigured
+from dotenv import load_dotenv
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+REPO_DIR = BASE_DIR.parent
+load_dotenv(REPO_DIR / ".env")
 
 
 # Quick-start development settings - unsuitable for production
@@ -92,12 +99,58 @@ WSGI_APPLICATION = "config.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
-    }
-}
+
+def env(name: str, default: str | None = None) -> str | None:
+    value = os.getenv(name, default)
+    if value is None:
+        return None
+    value = value.strip()
+    return value if value != "" else None
+
+
+def require_env(name: str) -> str:
+    value = env(name)
+    if not value:
+        raise ImproperlyConfigured(f"Missing required env var: {name}")
+    return value
+
+
+def build_databases(base_dir: Path) -> dict:
+    engine = (env("DB_ENGINE", "postgres") or "postgres").lower()
+
+    if engine in {"sqlite", "sqlite3"}:
+        sqlite_path = env("SQLITE_PATH")
+        db_name = sqlite_path or str(base_dir / "db.sqlite3")
+        return {
+            "default": {
+                "ENGINE": "django.db.backends.sqlite3",
+                "NAME": db_name,
+            }
+        }
+
+    if engine in {"postgres", "postgresql", "psql"}:
+        return {
+            "default": {
+                "ENGINE": "django.db.backends.postgresql",
+                "NAME": require_env("DB_NAME"),
+                "USER": require_env("DB_USER"),
+                "PASSWORD": require_env("DB_PASSWORD"),
+                "HOST": require_env("DB_HOST"),
+                "PORT": env("DB_PORT", "5432"),
+                "CONN_MAX_AGE": int(env("DB_CONN_MAX_AGE", "60") or "60"),
+                "OPTIONS": {
+                    "connect_timeout": int(env("DB_CONNECT_TIMEOUT", "10") or "10"),
+                },
+            }
+        }
+
+    raise ImproperlyConfigured(
+        f"Invalid DB_ENGINE={engine!r}. Use 'postgres' (default) or 'sqlite'."
+    )
+
+
+# Database
+DATABASES = build_databases(BASE_DIR)
 
 
 # Password validation

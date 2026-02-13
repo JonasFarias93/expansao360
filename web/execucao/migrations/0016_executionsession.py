@@ -3,7 +3,6 @@
 from django.conf import settings
 from django.db import migrations, models
 import django.db.models.deletion
-import django.db.models.functions.datetime
 import django.utils.timezone
 
 import execucao.models
@@ -71,10 +70,7 @@ class Migration(migrations.Migration):
                 ],
                 "constraints": [
                     models.UniqueConstraint(
-                        condition=models.Q(
-                            ("ended_at__isnull", True),
-                            ("expires_at__gt", django.db.models.functions.datetime.Now()),
-                        ),
+                        condition=models.Q(("ended_at__isnull", True)),
                         fields=("chamado",),
                         name="uniq_active_execution_session_per_chamado",
                     )
