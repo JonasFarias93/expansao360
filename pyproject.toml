@@ -21,6 +21,14 @@ dev = [
   "deptry>=0.16",
 ]
 
-[tool.pytest.ini_options]
-addopts = "-q"
-testpaths = ["web"]
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["expansao360*"]
+exclude = ["web*", "DECISIONS*", "docs*", "tests*", "node_modules*"]
