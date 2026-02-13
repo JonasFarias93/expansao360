@@ -32,7 +32,7 @@ env-create:
 deps-install:
 	@echo "🔹 Instalando dependências Python via pyproject.toml"
 	@$(CONDA) run -n $(ENV_NAME) $(PYTHON) -m pip install --upgrade pip
-	@$(CONDA) run -n $(ENV_NAME) $(PYTHON) -m pip install -e .
+	conda run -n $(ENV_NAME) $(PYTHON) -m pip install -e ".[test]"
 	@echo "✅ Dependências instaladas."
 
 rebuild-clean:
@@ -43,6 +43,17 @@ rebuild-clean:
 	@$(MAKE) check
 	@echo "🚀 Rebuild limpo concluído."
 
+deps-snapshot:
+	@echo "📦 Gerando snapshots versionáveis em docs/deps/..."
+	@mkdir -p docs/deps
+	@conda env export -n $(ENV_NAME) --no-builds > docs/deps/environment.snapshot.yml
+	@conda run -n $(ENV_NAME) $(PYTHON) -m pip freeze > docs/deps/pip-freeze.snapshot.txt
+	@echo "✅ Snapshots atualizados em docs/deps/"
+
+
+deps-check:
+	@echo "🔎 Auditando dependências Python (deptry)..."
+	@conda run -n $(ENV_NAME) deptry .
 # =========================
 # Qualidade / Testes
 # =========================
@@ -63,7 +74,7 @@ test-js:
 
 test: test-py test-js
 
-check: lint test
+check: lint deps-check test
 
 hooks:
 	pre-commit install

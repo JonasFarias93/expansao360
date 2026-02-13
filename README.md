@@ -282,6 +282,31 @@ DECISIONS/
 
 ---
 
+## 📦 Snapshots de Dependências
+
+Arquivos como `_env_dump.yml` e `_pip_dump.txt` são tratados como **artefatos gerados**, não como fonte de verdade.
+
+A fonte oficial de dependências permanece:
+
+* `pyproject.toml` → dependências Python
+* `environment.yml` → base Conda (python + libs nativas)
+
+Para gerar snapshots do ambiente atual:
+
+```bash
+make deps-snapshot
+```
+
+Snapshots podem ser:
+
+* Versionados em `docs/deps/` para auditoria
+  **ou**
+* Ignorados via `.gitignore`, caso sejam usados apenas localmente
+
+Eles **não devem** ser editados manualmente.
+
+---
+
 ## 🧠 Princípios
 
 * Histórico é sagrado

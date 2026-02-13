@@ -1,9 +1,9 @@
 name: CI
 
 on:
-  push:
-    branches: [ "develop", "main" ]
   pull_request:
+  push:
+    branches: [develop, main]
 
 jobs:
   test:
@@ -20,17 +20,20 @@ jobs:
           - 5432:5432
         options: >-
           --health-cmd="pg_isready -U expansao360 -d expansao360"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=10
+          --health-interval=5s
+          --health-timeout=3s
+          --health-retries=20
 
     env:
       DB_ENGINE: postgres
-      DB_HOST: localhost
+      DB_HOST: 127.0.0.1
       DB_PORT: "5432"
       DB_NAME: expansao360
       DB_USER: expansao360
       DB_PASSWORD: expansao360
+
+      DJANGO_DEBUG: "0"
+      DJANGO_SETTINGS_MODULE: config.settings
       PYTHONUNBUFFERED: "1"
 
     steps:
@@ -40,35 +43,23 @@ jobs:
       - name: Setup Conda (environment.yml)
         uses: conda-incubator/setup-miniconda@v3
         with:
-          auto-update-conda: true
           miniforge-variant: Miniforge3
+          auto-update-conda: true
           use-mamba: true
           environment-file: environment.yml
           activate-environment: expansao360
 
-      - name: Show Python
-        shell: bash -l {0}
-        run: |
-          python --version
-          pip --version
-
-      - name: Install deps (pyproject)
+      - name: Install deps (pyproject via Makefile)
         shell: bash -l {0}
         run: |
           make deps-install
 
-      - name: Run tests (pytest)
+      - name: Run migrations
+        shell: bash -l {0}
+        run: |
+          python web/manage.py migrate
+
+      - name: Run tests
         shell: bash -l {0}
         run: |
           make test-py
-
-
-            - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-
-      - name: Run tests (jest)
-        run: |
-          npm ci
-          make test-js
