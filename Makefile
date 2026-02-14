@@ -140,3 +140,21 @@ demo:
 	@$(CONDA) run -n $(ENV_NAME) python -m expansao360 location list
 	@$(CONDA) run -n $(ENV_NAME) python -m expansao360 mount list
 
+compose-smoke:
+	@echo "🧪 Smoke test docker-compose + postgres + pytest"
+	@docker compose up -d db
+	@echo "⏳ Aguardando postgres ficar healthy..."
+	@bash -lc '\
+		for i in {1..40}; do \
+			status=$$(docker inspect -f "{{.State.Health.Status}}" expansao360_db 2>/dev/null || echo "starting"); \
+			if [ "$$status" = "healthy" ]; then echo "✅ Postgres healthy"; exit 0; fi; \
+			echo "  - status=$$status (tentativa $$i/40)"; \
+			sleep 1; \
+		done; \
+		echo "❌ Postgres não ficou healthy"; \
+		docker compose logs db; \
+		exit 1; \
+	'
+	@$(CONDA) run -n $(ENV_NAME) $(PYTHON) web/manage.py migrate
+	@$(CONDA) run -n $(ENV_NAME) pytest -q
+	@echo "✅ compose-smoke OK"
