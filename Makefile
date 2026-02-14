@@ -100,6 +100,11 @@ check: lint deps-check test
 hooks:
 	@$(CONDA) run -n $(ENV_NAME) pre-commit install
 
+ptw:
+	@$(CONDA) run -n $(ENV_NAME) ptw
+
+ptw-fast:
+	@$(CONDA) run -n $(ENV_NAME) ptw -c -- -q
 # =========================
 # Utilitários (mantidos)
 # =========================
