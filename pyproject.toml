@@ -3,16 +3,20 @@ name = "expansao360"
 version = "0.4.0"
 requires-python = ">=3.11"
 dependencies = [
-  "Django>=4.2",
-  "python-dotenv>=1.0",
+  "typer>=0.12",
+  "rich>=13",
 ]
 
 [project.optional-dependencies]
+web = [
+  "Django>=4.2",
+  "python-dotenv>=1.0",
+  'psycopg[binary]>=3.2',
+]
 test = [
   "pytest>=8",
   "pytest-django>=4.8",
   "pytest-cov>=5",
-  'psycopg[binary]>=3.2',
 ]
 dev = [
   "black>=24",
@@ -32,3 +36,8 @@ include-package-data = true
 where = ["."]
 include = ["expansao360*"]
 exclude = ["web*", "DECISIONS*", "docs*", "tests*", "node_modules*"]
+
+[tool.deptry]
+pep621_dev_dependency_groups = ["dev", "test"]
+ignore = ["DEP002"]
+per_rule_ignores = { "DEP002" = ["Django", "python-dotenv", "psycopg"] }

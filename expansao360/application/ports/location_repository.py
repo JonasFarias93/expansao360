@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 
-from expansao360.domain.registry import Location
-from expansao360.domain.value_objects import LocationId
+from ...domain.registry import Location
+from ...domain.value_objects import LocationId
 
 
 class LocationRepository(ABC):

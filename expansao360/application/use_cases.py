@@ -2,11 +2,11 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from expansao360.application.ports.location_repository import LocationRepository
-from expansao360.application.ports.operation_repository import OperationRepository
-from expansao360.domain.models import OperationMount
-from expansao360.domain.registry import Location
-from expansao360.domain.value_objects import LocationId
+from .ports.location_repository import LocationRepository
+from .ports.operation_repository import OperationRepository
+from ..domain.models import OperationMount
+from ..domain.registry import Location
+from ..domain.value_objects import LocationId
 
 
 def register_mount(

@@ -1,5 +1,5 @@
 from __future__ import annotations
 
-from expansao360.cli import app
+from .cli import app
 
 app()
