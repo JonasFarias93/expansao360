@@ -4,7 +4,17 @@ Todas as mudanças relevantes do projeto são documentadas neste arquivo.
 O versionamento segue o padrão **SemVer**.
 
 ---
+## v0.4.1 - YYYY-MM-DD
 
+### Changed
+- Reset estrutural de migrations após split definitivo
+- Remoção de duplicidade de templatetags
+- Alinhamento de admin ao boundary de domínio
+
+### Internal
+- Boundary final: chamados = domínio / execucao = sessão/fila
+- pytest 160 passed / 1 skipped
+- manage.py check limpo
 ---
 
 ## [v0.4.0] — 2026-02-13
