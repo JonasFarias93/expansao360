@@ -72,3 +72,6 @@ def projeto_color_text_active(projeto) -> str:
     """
     slug = _slug(projeto)
     return COLOR_TO_TEXT_ACTIVE_CLASS.get(slug, COLOR_TO_TEXT_ACTIVE_CLASS["SLATE"])
+
+
+# teste
