@@ -1,21 +1,4 @@
 // web/execucao/static/execucao/js/execucao_salvar.js
-/**
- * Usado em:
- * - web/chamados/templates/execucao/chamado_execucao.html
- *
- * Responsabilidade:
- * - Enviar POST de "Salvar execução" via AJAX e atualizar feedback de UI (status "Salvo...").
- * - NÃO deve gerenciar estado global de tela (centralizado pelo state manager).
- *
- * Pré-requisitos DOM:
- * - IDs: btn-salvar-execucao, salvar-status (opcional), abrir-para-continuar (opcional), execution-root
- * - data-attrs: data-url em #btn-salvar-execucao
- * - Cookie: csrftoken
- *
- * Observações:
- * - Carregado via <script defer> no template de página.
- * - Não deve ser importado por componentes/parciais.
- */
 (function () {
   const btn = document.getElementById("btn-salvar-execucao");
   if (!btn) return;
@@ -35,6 +18,23 @@
   function setStatus(text) {
     if (!statusEl) return;
     statusEl.textContent = text;
+  }
+
+  function setReadOnly() {
+    // Deixa a tela read-only desabilitando inputs do fluxo de execução.
+    const container = document.getElementById("execucao-container") || document;
+
+    container
+      .querySelectorAll("input, select, textarea, button")
+      .forEach((el) => {
+        // manter CTA de abrir e o próprio botão de salvar
+        if (el.id === "btn-abrir-para-continuar") return;
+        if (el.id === "btn-salvar-execucao") return;
+
+        if (el.closest("[data-skip-readonly]")) return;
+
+        el.disabled = true;
+      });
   }
 
   function showAbrirParaContinuar() {
@@ -77,25 +77,12 @@
       throw new Error(`Falha ao salvar (${resp.status})`);
     }
 
+    // endpoint retorna JSON no modo AJAX
     const data = await resp.json();
     if (!data || data.ok !== true) {
       throw new Error("Resposta inválida do servidor.");
     }
     return data;
-  }
-
-  function syncExecutionContractAfterSave() {
-    // Após salvar, a sessão é encerrada -> UI deve virar read-only.
-    const root = document.getElementById("execution-root");
-    if (!root) return;
-
-    root.dataset.hasSession = "0";
-    root.dataset.canEdit = "0";
-    // canFinalize mantém como está (gates podem permitir ações finais em próximas MTs)
-  }
-
-  function requestApplyState() {
-    document.dispatchEvent(new CustomEvent("execucao:apply-state"));
   }
 
   btn.addEventListener("click", async () => {
@@ -110,11 +97,8 @@
       btn.textContent = LABEL_DEFAULT;
       setStatus(hhmm ? `Salvo às ${hhmm}` : "Salvo");
 
-      // Centralização (ISSUE #71): contrato + reaplicar estado via state manager
-      syncExecutionContractAfterSave();
-      document.dispatchEvent(new CustomEvent("execucao:mark-items-bipado"));
-      requestApplyState();
-
+      // entra em read-only SEM bloquear ações finais
+      setReadOnly();
       showAbrirParaContinuar();
     } catch (err) {
       btn.disabled = false;

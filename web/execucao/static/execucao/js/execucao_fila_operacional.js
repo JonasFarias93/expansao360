@@ -1,18 +1,4 @@
 // web/execucao/static/execucao/js/execucao_fila_operacional.js
-/**
- * Usado em:
- * - web/chamados/templates/execucao/fila_operacional.html
- *
- * Responsabilidade:
- * - Comportamentos da fila operacional (ações de fila, interações do operador, navegação/atualização da lista).
- *
- * Pré-requisitos DOM:
- * - (preencher conforme o arquivo) IDs/classes usados no script.
- *
- * Observações:
- * - Carregado via <script defer> no template de página.
- * - Não deve ser importado por componentes/parciais.
- */
 (function () {
   function initDetailsAccordion() {
     const toggles = document.querySelectorAll("[data-details-toggle]");

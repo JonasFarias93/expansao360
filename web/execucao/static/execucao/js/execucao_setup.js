@@ -1,4 +1,4 @@
-// web/execucao/static/execucao/js/chamado_setup.js
+// web/execucao/static/execucao/js/execucao_setup.js
 
 (function () {
   function toggleBox(itemId, isChecked) {

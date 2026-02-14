@@ -1,17 +1,3 @@
-/**
- * Usado em:
- * - web/chamados/templates/execucao/chamado_execucao.html
- *
- * Responsabilidade:
- * - Ações de finalização do chamado/executar encerramento (ex: submit/fetch + UI de confirmação).
- *
- * Pré-requisitos DOM:
- * - (preencher) IDs/classes/data-* utilizados no script.
- *
- * Observações:
- * - Carregado via <script defer> no template de página.
- */
-
 (function () {
   const btn = document.getElementById("btn-finalizar-chamado");
   if (!btn) return;

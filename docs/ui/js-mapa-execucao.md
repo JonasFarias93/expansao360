@@ -72,10 +72,10 @@ Ownership definido
 
 | JS                         | App dono | Justificativa curta            |
 | -------------------------- | -------- | ------------------------------ |
-| fila_operacional.js        | execucao | Fluxo operacional de fila      |
-| chamado_abertura.js        | chamados | Abertura do domínio do chamado |
-| chamado_setup.js           | chamados | Setup estrutural do chamado    |
-| chamado_detalhe.js         | execucao | Tela ativa de execução         |
-| chamado_salvar_execucao.js | execucao | Encerramento de sessão         |
-| chamado_finalizar.js       | execucao | Finalização operacional        |
-| item_configurado.js        | execucao | Controle de itens na execução  |
+| execucao_fila_operacional.js       | execucao | Fluxo operacional de fila      |
+| execucao_abertura.js       | chamados | Abertura do domínio do chamado |
+| execucao_setup.js           | chamados | Setup estrutural do chamado    |
+| execucao_detalhe.js         | execucao | Tela ativa de execução         |
+| execucao_salvar.js | execucao | Encerramento de sessão         |
+| execucao_finalizar.js       | execucao | Finalização operacional        |
+| execucao_item_configurado.js        | execucao | Controle de itens na execução  |
