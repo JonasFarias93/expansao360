@@ -1,3 +1,5 @@
+# web/chamados/models.py
+
 from __future__ import annotations
 
 from cadastro.models import Equipamento, Kit, Loja, Projeto, Subprojeto
@@ -153,7 +155,6 @@ class Chamado(models.Model):
                 )
 
     class Meta:
-        app_label = "execucao"
         constraints = [
             models.UniqueConstraint(
                 fields=["ticket_externo_sistema", "ticket_externo_id"],
@@ -442,7 +443,6 @@ class InstalacaoItem(models.Model):
     )
 
     class Meta:
-        app_label = "execucao"
         verbose_name = "Item de Instalação"
         verbose_name_plural = "Itens de Instalação"
 
@@ -452,7 +452,7 @@ class InstalacaoItem(models.Model):
 
 class ItemConfiguracaoLog(models.Model):
     item = models.ForeignKey(
-        "InstalacaoItem",
+        InstalacaoItem,
         on_delete=models.CASCADE,
         related_name="logs_configuracao",
     )
@@ -471,7 +471,6 @@ class ItemConfiguracaoLog(models.Model):
     )
 
     class Meta:
-        app_label = "execucao"
         ordering = ["-criado_em", "-id"]
 
     def __str__(self) -> str:
@@ -498,7 +497,6 @@ class EvidenciaChamado(models.Model):
     criado_em = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        app_label = "execucao"
         ordering = ["-criado_em", "-id"]
 
     def __str__(self) -> str:
