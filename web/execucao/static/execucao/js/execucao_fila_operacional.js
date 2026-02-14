@@ -1,4 +1,4 @@
-// web/execucao/static/execucao/js/fila_operacional.js
+// web/execucao/static/execucao/js/execucao_fila_operacional.js
 (function () {
   function initDetailsAccordion() {
     const toggles = document.querySelectorAll("[data-details-toggle]");

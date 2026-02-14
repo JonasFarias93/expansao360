@@ -1,4 +1,4 @@
-/* web/execucao/static/execucao/js/chamado_abertura.js */
+/* web/execucao/static/execucao/js/execucao_abertura.js */
 
 (function () {
   function initLojaLookup() {

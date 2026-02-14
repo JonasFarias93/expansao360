@@ -43,9 +43,9 @@
 {% endblock %}
 
 {% block extra_js %}
-  <script src="{% static 'execucao/js/chamado_detalhe.js' %}" defer></script>
-  <script src="{% static 'execucao/js/chamado_salvar_execucao.js' %}" defer></script>
-  <script src="{% static 'execucao/js/item_configurado.js' %}" defer></script>
+  <script src="{% static '→ execucao/js/execucao_detalhe.js' %}" defer></script>
+  <script src="{% static 'execucao/js/execucao_salvar.js' %}" defer></script>
+  <script src="{% static 'execucao/js/execucao_item_configurado.js' %}" defer></script>
   {{ block.super }}
-  <script src="{% static 'execucao/js/chamado_finalizar.js' %}" defer></script>
+  <script src="{% static 'execucao/js/execucao_finalizar.js' %}" defer></script>
 {% endblock %}
