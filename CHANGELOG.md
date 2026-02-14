@@ -4,7 +4,7 @@ Todas as mudanças relevantes do projeto são documentadas neste arquivo.
 O versionamento segue o padrão **SemVer**.
 
 ---
-## v0.4.1 - YYYY-MM-DD
+## v0.4.1 - 2026-02-14
 
 ### Changed
 - Reset estrutural de migrations após split definitivo
