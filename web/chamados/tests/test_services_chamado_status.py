@@ -90,7 +90,9 @@ class RecalcularStatusServiceTests(ChamadoBaseTestCase):
         self.chamado.save(update_fields=["status"])
         self.assertEqual(str(recalcular_status(self.chamado)), "EM_EXECUCAO")
 
-    def test_item_configurado_promove_para_em_configuracao_quando_em_execucao(self) -> None:
+    def test_item_configurado_promove_para_em_configuracao_quando_em_execucao(
+        self,
+    ) -> None:
         self.chamado.status = "EM_EXECUCAO"
         self.chamado.save(update_fields=["status"])
 

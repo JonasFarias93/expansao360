@@ -2,7 +2,10 @@ from __future__ import annotations
 
 from django.contrib.auth import get_user_model
 from django.urls import reverse
-from iam.execucao_capabilities import CAP_EXECUCAO_CHAMADO_EDITAR, CAP_EXECUCAO_SESSAO_TOMAR
+from iam.execucao_capabilities import (
+    CAP_EXECUCAO_CHAMADO_EDITAR,
+    CAP_EXECUCAO_SESSAO_TOMAR,
+)
 from iam.models import Capability, UserCapability
 
 from execucao.models import Chamado, ExecutionSession, ExecutionSessionLog
@@ -22,14 +25,18 @@ class ChamadoTakeSessionTests(WebAuthBaseTestCase):
             status=Chamado.Status.ABERTO,
         )
 
-        self.url_abrir = reverse("execucao:chamado_abrir", kwargs={"chamado_id": self.chamado.id})
+        self.url_abrir = reverse(
+            "execucao:chamado_abrir", kwargs={"chamado_id": self.chamado.id}
+        )
         self.url_take = reverse(
             "execucao:chamado_take_session",
             kwargs={"chamado_id": self.chamado.id},
         )
 
         # User comum (self.user) precisa da cap de editar pra abrir sessão
-        cap_editar, _ = Capability.objects.get_or_create(code=CAP_EXECUCAO_CHAMADO_EDITAR)
+        cap_editar, _ = Capability.objects.get_or_create(
+            code=CAP_EXECUCAO_CHAMADO_EDITAR
+        )
         UserCapability.objects.get_or_create(user=self.user, capability=cap_editar)
 
         # Admin
@@ -71,14 +78,20 @@ class ChamadoTakeSessionTests(WebAuthBaseTestCase):
         self.assertEqual(old.ended_reason, "ADMIN_TAKE")
 
         # nova sessão ativa para admin
-        new = ExecutionSession.objects.filter(chamado=self.chamado).order_by("-started_at").first()
+        new = (
+            ExecutionSession.objects.filter(chamado=self.chamado)
+            .order_by("-started_at")
+            .first()
+        )
         assert new is not None
         self.assertEqual(new.usuario_id, self.admin.id)
         self.assertIsNone(new.ended_at)
 
         # auditoria mínima
         log = (
-            ExecutionSessionLog.objects.filter(chamado=self.chamado).order_by("-created_at").first()
+            ExecutionSessionLog.objects.filter(chamado=self.chamado)
+            .order_by("-created_at")
+            .first()
         )
         assert log is not None
         self.assertEqual(log.reason, "ADMIN_TAKE")

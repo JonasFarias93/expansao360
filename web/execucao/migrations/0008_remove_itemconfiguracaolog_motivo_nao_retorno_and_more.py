@@ -32,7 +32,10 @@ class Migration(migrations.Migration):
             name="status_retorno",
             field=models.CharField(
                 blank=True,
-                choices=[("RETORNADO", "Retornado"), ("NAO_RETORNADO", "Não retornado")],
+                choices=[
+                    ("RETORNADO", "Retornado"),
+                    ("NAO_RETORNADO", "Não retornado"),
+                ],
                 default=None,
                 help_text="Obrigatório para itens em Chamado do tipo RETORNO.",
                 max_length=20,

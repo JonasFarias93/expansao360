@@ -25,7 +25,9 @@ class ChamadoAbrirPermissoesTests(ChamadoBaseTestCase):
             status=Chamado.Status.ABERTO,
         )
 
-        self.url = reverse("execucao:chamado_abrir", kwargs={"chamado_id": self.chamado.id})
+        self.url = reverse(
+            "execucao:chamado_abrir", kwargs={"chamado_id": self.chamado.id}
+        )
 
     @patch("execucao.views.user_has_capability", return_value=False)
     def test_sem_perm_editar_retorna_403_e_nao_cria_sessao(self, _mock_cap) -> None:

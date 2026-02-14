@@ -13,7 +13,8 @@ class Migration(migrations.Migration):
             model_name="instalacaoitem",
             name="deve_configurar",
             field=models.BooleanField(
-                default=False, help_text="Decisão do chamado: este item deve ser configurado?"
+                default=False,
+                help_text="Decisão do chamado: este item deve ser configurado?",
             ),
         ),
         migrations.AddField(

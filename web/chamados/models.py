@@ -102,8 +102,12 @@ class Chamado(models.Model):
     )
 
     # Administrativo/financeiro (já existia)
-    contabilidade_numero = models.CharField(max_length=40, unique=True, null=True, blank=True)
-    nf_saida_numero = models.CharField(max_length=40, unique=True, null=True, blank=True)
+    contabilidade_numero = models.CharField(
+        max_length=40, unique=True, null=True, blank=True
+    )
+    nf_saida_numero = models.CharField(
+        max_length=40, unique=True, null=True, blank=True
+    )
 
     def __str__(self) -> str:
         return self.protocolo or f"Chamado {self.pk}"
@@ -143,7 +147,9 @@ class Chamado(models.Model):
         else:
             if self.chamado_origem_id:
                 raise ValidationError(
-                    {"chamado_origem": "Chamado de envio não deve possuir chamado de origem."}
+                    {
+                        "chamado_origem": "Chamado de envio não deve possuir chamado de origem."
+                    }
                 )
 
     class Meta:
@@ -215,7 +221,10 @@ class Chamado(models.Model):
 
         for item in qs:
             if item.tem_ativo:
-                if not (item.ativo or "").strip() or not (item.numero_serie or "").strip():
+                if (
+                    not (item.ativo or "").strip()
+                    or not (item.numero_serie or "").strip()
+                ):
                     return False
             else:
                 if not item.confirmado:
@@ -262,7 +271,9 @@ class Chamado(models.Model):
                 erros.append("Não é possível finalizar: informe a NF de saída.")
 
             if self.coleta_confirmada_em is None:
-                erros.append("Não é possível finalizar: confirme a coleta pela transportadora.")
+                erros.append(
+                    "Não é possível finalizar: confirme a coleta pela transportadora."
+                )
 
             for item in itens:
                 if item.deve_configurar:
@@ -279,7 +290,10 @@ class Chamado(models.Model):
                         )
 
                 if item.tem_ativo:
-                    if not (item.ativo or "").strip() or not (item.numero_serie or "").strip():
+                    if (
+                        not (item.ativo or "").strip()
+                        or not (item.numero_serie or "").strip()
+                    ):
                         erros.append(
                             "Item rastreável "
                             f"'{item.equipamento.nome} {item.tipo}' "
@@ -313,7 +327,10 @@ class Chamado(models.Model):
 
                 if item.status_retorno == item.StatusRetorno.RETORNADO:
                     if item.tem_ativo:
-                        if not (item.ativo or "").strip() or not (item.numero_serie or "").strip():
+                        if (
+                            not (item.ativo or "").strip()
+                            or not (item.numero_serie or "").strip()
+                        ):
                             erros.append(
                                 "Item rastreável retornado "
                                 f"'{item.equipamento.nome} {item.tipo}' "
@@ -472,7 +489,9 @@ class EvidenciaChamado(models.Model):
         EXCECAO = "EXCECAO", "Exceção"
         OUTRO = "OUTRO", "Outro"
 
-    chamado = models.ForeignKey(Chamado, on_delete=models.CASCADE, related_name="evidencias")
+    chamado = models.ForeignKey(
+        Chamado, on_delete=models.CASCADE, related_name="evidencias"
+    )
     tipo = models.CharField(max_length=30, choices=Tipo.choices)
     arquivo = models.FileField(upload_to="execucao/evidencias/")
     descricao = models.CharField(max_length=255, blank=True, default="")

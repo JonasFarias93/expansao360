@@ -62,6 +62,10 @@ def open_session(*, chamado: Chamado, user) -> ExecutionSession:
             .order_by("-started_at")
             .first()
         )
-        if current is not None and current.expires_at > now and current.usuario_id == user.id:
+        if (
+            current is not None
+            and current.expires_at > now
+            and current.usuario_id == user.id
+        ):
             return current
         raise SessionBlockedError from err

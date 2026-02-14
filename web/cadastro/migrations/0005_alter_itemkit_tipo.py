@@ -14,7 +14,8 @@ class Migration(migrations.Migration):
             model_name="itemkit",
             name="tipo",
             field=models.ForeignKey(
-                on_delete=django.db.models.deletion.PROTECT, to="cadastro.tipoequipamento"
+                on_delete=django.db.models.deletion.PROTECT,
+                to="cadastro.tipoequipamento",
             ),
         ),
     ]

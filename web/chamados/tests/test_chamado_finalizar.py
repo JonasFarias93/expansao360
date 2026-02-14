@@ -11,7 +11,9 @@ from iam.models import UserCapability
 class ChamadoFinalizarViewTests(WebAuthBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
-        self.url = lambda cid: reverse("execucao:chamado_finalizar", kwargs={"chamado_id": cid})
+        self.url = lambda cid: reverse(
+            "execucao:chamado_finalizar", kwargs={"chamado_id": cid}
+        )
 
     def _mk_chamado(
         self,
@@ -89,7 +91,9 @@ class ChamadoFinalizarViewTests(WebAuthBaseTestCase):
         self.assertIn("pendencias", data)
 
         pend = data["pendencias"]
-        self.assertTrue(any(p["code"] == "COLETA_NAO_CONFIRMADA" for p in pend.get("coleta", [])))
+        self.assertTrue(
+            any(p["code"] == "COLETA_NAO_CONFIRMADA" for p in pend.get("coleta", []))
+        )
 
         chamado.refresh_from_db()
         self.assertNotEqual(chamado.status, Chamado.Status.FINALIZADO)
@@ -197,7 +201,9 @@ class ChamadoFinalizarViewTests(WebAuthBaseTestCase):
 
         item.save()
 
-        resp = self.client.post(self.url(chamado.id), HTTP_X_REQUESTED_WITH="XMLHttpRequest")
+        resp = self.client.post(
+            self.url(chamado.id), HTTP_X_REQUESTED_WITH="XMLHttpRequest"
+        )
         self.assertEqual(resp.status_code, 400)
 
         pend = resp.json()["pendencias"]["itens"]

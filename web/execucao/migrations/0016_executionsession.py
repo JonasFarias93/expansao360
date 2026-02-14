@@ -21,11 +21,17 @@ class Migration(migrations.Migration):
                 (
                     "id",
                     models.BigAutoField(
-                        auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
                     ),
                 ),
                 ("started_at", models.DateTimeField(default=django.utils.timezone.now)),
-                ("expires_at", models.DateTimeField(default=execucao.models._default_expires_at)),
+                (
+                    "expires_at",
+                    models.DateTimeField(default=execucao.models._default_expires_at),
+                ),
                 ("ended_at", models.DateTimeField(blank=True, null=True)),
                 (
                     "ended_reason",
@@ -61,12 +67,16 @@ class Migration(migrations.Migration):
             options={
                 "indexes": [
                     models.Index(
-                        fields=["chamado", "ended_at"], name="execucao_ex_chamado_d01c5c_idx"
+                        fields=["chamado", "ended_at"],
+                        name="execucao_ex_chamado_d01c5c_idx",
                     ),
                     models.Index(
-                        fields=["usuario", "ended_at"], name="execucao_ex_usuario_988b76_idx"
+                        fields=["usuario", "ended_at"],
+                        name="execucao_ex_usuario_988b76_idx",
                     ),
-                    models.Index(fields=["expires_at"], name="execucao_ex_expires_292641_idx"),
+                    models.Index(
+                        fields=["expires_at"], name="execucao_ex_expires_292641_idx"
+                    ),
                 ],
                 "constraints": [
                     models.UniqueConstraint(

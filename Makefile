@@ -102,7 +102,6 @@ deps-check:
 
 fmt:
 	@$(CONDA) run -n $(ENV_NAME) ruff format .
-	@$(CONDA) run -n $(ENV_NAME) black .
 
 lint:
 	@$(CONDA) run -n $(ENV_NAME) ruff check .

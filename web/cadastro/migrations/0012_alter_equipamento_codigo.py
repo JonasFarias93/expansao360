@@ -5,7 +5,10 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("cadastro", "0011_alter_categoria_options_alter_codesequence_options_and_more"),
+        (
+            "cadastro",
+            "0011_alter_categoria_options_alter_codesequence_options_and_more",
+        ),
     ]
 
     operations = [

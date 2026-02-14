@@ -21,7 +21,15 @@ from .forms import (
     SubprojetoForm,
     TipoEquipamentoFormSet,
 )
-from .models import Categoria, Equipamento, Kit, Loja, Projeto, Subprojeto, TipoEquipamento
+from .models import (
+    Categoria,
+    Equipamento,
+    Kit,
+    Loja,
+    Projeto,
+    Subprojeto,
+    TipoEquipamento,
+)
 
 
 class CadastroHomeView(TemplateView):
@@ -104,7 +112,9 @@ class LojaListView(CapabilityRequiredMixin, ListView):
             return qs.filter(Q(codigo__iexact=q) | Q(hist__iexact=q))
 
         # texto
-        return qs.filter(Q(nome__icontains=q) | Q(cidade__icontains=q) | Q(uf__icontains=q))
+        return qs.filter(
+            Q(nome__icontains=q) | Q(cidade__icontains=q) | Q(uf__icontains=q)
+        )
 
 
 class LojaCreateView(CapabilityRequiredMixin, CreateView):
@@ -177,7 +187,9 @@ class SubprojetoListView(CapabilityRequiredMixin, ListView):
 
     def get_queryset(self):
         qs = (
-            Subprojeto.objects.select_related("projeto").all().order_by("projeto__codigo", "codigo")
+            Subprojeto.objects.select_related("projeto")
+            .all()
+            .order_by("projeto__codigo", "codigo")
         )
 
         projeto_id = self.request.GET.get("projeto")

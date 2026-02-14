@@ -14,7 +14,9 @@ class ItemConfigurarEndpointTests(WebAuthBaseTestCase):
 
         # kit com 1 item
         tipo = TipoEquipamento.objects.create(categoria=self.categoria, nome="Micro")
-        eq = Equipamento.objects.create(categoria=self.categoria, codigo="MICRO", nome="Micro")
+        eq = Equipamento.objects.create(
+            categoria=self.categoria, codigo="MICRO", nome="Micro"
+        )
         ItemKit.objects.create(kit=self.kit, equipamento=eq, tipo=tipo, quantidade=1)
 
         self.chamado = Chamado.objects.create(

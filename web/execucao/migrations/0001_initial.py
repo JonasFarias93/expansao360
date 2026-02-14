@@ -18,7 +18,10 @@ class Migration(migrations.Migration):
                 (
                     "id",
                     models.BigAutoField(
-                        auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
                     ),
                 ),
                 (
@@ -49,13 +52,15 @@ class Migration(migrations.Migration):
                 (
                     "projeto",
                     models.ForeignKey(
-                        on_delete=django.db.models.deletion.PROTECT, to="cadastro.projeto"
+                        on_delete=django.db.models.deletion.PROTECT,
+                        to="cadastro.projeto",
                     ),
                 ),
                 (
                     "subprojeto",
                     models.ForeignKey(
-                        on_delete=django.db.models.deletion.PROTECT, to="cadastro.subprojeto"
+                        on_delete=django.db.models.deletion.PROTECT,
+                        to="cadastro.subprojeto",
                     ),
                 ),
             ],
@@ -66,7 +71,10 @@ class Migration(migrations.Migration):
                 (
                     "id",
                     models.BigAutoField(
-                        auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
                     ),
                 ),
                 ("tipo", models.CharField(max_length=80)),
@@ -74,7 +82,10 @@ class Migration(migrations.Migration):
                 ("tem_ativo", models.BooleanField()),
                 ("confirmado", models.BooleanField(default=False)),
                 ("ativo", models.CharField(blank=True, default="", max_length=80)),
-                ("numero_serie", models.CharField(blank=True, default="", max_length=120)),
+                (
+                    "numero_serie",
+                    models.CharField(blank=True, default="", max_length=120),
+                ),
                 (
                     "chamado",
                     models.ForeignKey(
@@ -86,7 +97,8 @@ class Migration(migrations.Migration):
                 (
                     "equipamento",
                     models.ForeignKey(
-                        on_delete=django.db.models.deletion.PROTECT, to="cadastro.equipamento"
+                        on_delete=django.db.models.deletion.PROTECT,
+                        to="cadastro.equipamento",
                     ),
                 ),
             ],

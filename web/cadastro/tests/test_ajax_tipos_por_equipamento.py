@@ -14,7 +14,9 @@ def test_ajax_tipos_por_equipamento_retorna_json(client):
         categoria=cat,
     )
 
-    t1 = TipoEquipamento.objects.create(categoria=cat, nome="LCD", codigo="LCD", disponivel=True)
+    t1 = TipoEquipamento.objects.create(
+        categoria=cat, nome="LCD", codigo="LCD", disponivel=True
+    )
     t2 = TipoEquipamento.objects.create(
         categoria=cat, nome="Touch", codigo="TOUCH", disponivel=True
     )

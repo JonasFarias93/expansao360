@@ -10,7 +10,10 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name="CodeSequence",
             fields=[
-                ("prefix", models.CharField(max_length=8, primary_key=True, serialize=False)),
+                (
+                    "prefix",
+                    models.CharField(max_length=8, primary_key=True, serialize=False),
+                ),
                 ("last_value", models.PositiveIntegerField(default=0)),
                 ("updated_at", models.DateTimeField(auto_now=True)),
             ],

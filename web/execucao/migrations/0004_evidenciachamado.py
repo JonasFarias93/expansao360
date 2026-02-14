@@ -6,7 +6,10 @@ import django.db.models.deletion
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("execucao", "0003_chamado_contabilidade_numero_chamado_nf_saida_numero_and_more"),
+        (
+            "execucao",
+            "0003_chamado_contabilidade_numero_chamado_nf_saida_numero_and_more",
+        ),
     ]
 
     operations = [
@@ -16,7 +19,10 @@ class Migration(migrations.Migration):
                 (
                     "id",
                     models.BigAutoField(
-                        auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
                     ),
                 ),
                 (

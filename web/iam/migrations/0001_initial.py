@@ -19,11 +19,17 @@ class Migration(migrations.Migration):
                 (
                     "id",
                     models.BigAutoField(
-                        auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
                     ),
                 ),
                 ("code", models.CharField(max_length=120, unique=True)),
-                ("description", models.CharField(blank=True, default="", max_length=255)),
+                (
+                    "description",
+                    models.CharField(blank=True, default="", max_length=255),
+                ),
                 ("created_at", models.DateTimeField(auto_now_add=True)),
             ],
             options={
@@ -38,7 +44,10 @@ class Migration(migrations.Migration):
                 (
                     "id",
                     models.BigAutoField(
-                        auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
                     ),
                 ),
                 ("created_at", models.DateTimeField(auto_now_add=True)),
@@ -51,7 +60,8 @@ class Migration(migrations.Migration):
                 (
                     "user",
                     models.ForeignKey(
-                        on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to=settings.AUTH_USER_MODEL,
                     ),
                 ),
             ],
@@ -60,9 +70,12 @@ class Migration(migrations.Migration):
                 "verbose_name_plural": "User Capabilities",
                 "indexes": [
                     models.Index(
-                        fields=["user", "capability"], name="iam_usercap_user_id_933eb0_idx"
+                        fields=["user", "capability"],
+                        name="iam_usercap_user_id_933eb0_idx",
                     ),
-                    models.Index(fields=["capability"], name="iam_usercap_capabil_9dedc7_idx"),
+                    models.Index(
+                        fields=["capability"], name="iam_usercap_capabil_9dedc7_idx"
+                    ),
                 ],
                 "unique_together": {("user", "capability")},
             },

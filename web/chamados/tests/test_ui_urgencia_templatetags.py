@@ -1,6 +1,9 @@
 from types import SimpleNamespace
 
-from web.execucao.templatetags.execucao_urgencia import urgencia_badge_class, urgencia_label
+from web.execucao.templatetags.execucao_urgencia import (
+    urgencia_badge_class,
+    urgencia_label,
+)
 
 
 def test_urgencia_defaults_to_normal_when_missing():

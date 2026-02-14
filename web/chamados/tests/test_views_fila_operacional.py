@@ -25,12 +25,20 @@ class TestFilaOperacionalView(WebAuthBaseTestCase):
 
     def test_fila_operacional_counts(self) -> None:
         # Na fila
-        self._make_chamado(prioridade=Chamado.Prioridade.CRITICA, status=Chamado.Status.ABERTO)
-        self._make_chamado(prioridade=Chamado.Prioridade.CRITICA, status=Chamado.Status.EM_EXECUCAO)
-        self._make_chamado(prioridade=Chamado.Prioridade.ALTA, status=Chamado.Status.ABERTO)
+        self._make_chamado(
+            prioridade=Chamado.Prioridade.CRITICA, status=Chamado.Status.ABERTO
+        )
+        self._make_chamado(
+            prioridade=Chamado.Prioridade.CRITICA, status=Chamado.Status.EM_EXECUCAO
+        )
+        self._make_chamado(
+            prioridade=Chamado.Prioridade.ALTA, status=Chamado.Status.ABERTO
+        )
 
         # Fora da fila
-        self._make_chamado(prioridade=Chamado.Prioridade.BAIXA, status=Chamado.Status.FINALIZADO)
+        self._make_chamado(
+            prioridade=Chamado.Prioridade.BAIXA, status=Chamado.Status.FINALIZADO
+        )
 
         resp = self.client.get(reverse("execucao:fila"))
         self.assertEqual(resp.status_code, 200)
@@ -46,7 +54,9 @@ class TestFilaOperacionalView(WebAuthBaseTestCase):
         crit = self._make_chamado(
             prioridade=Chamado.Prioridade.CRITICA, status=Chamado.Status.ABERTO
         )
-        self._make_chamado(prioridade=Chamado.Prioridade.ALTA, status=Chamado.Status.ABERTO)
+        self._make_chamado(
+            prioridade=Chamado.Prioridade.ALTA, status=Chamado.Status.ABERTO
+        )
 
         resp = self.client.get(reverse("execucao:fila") + "?prio=CRITICO")
         self.assertEqual(resp.status_code, 200)
@@ -57,8 +67,12 @@ class TestFilaOperacionalView(WebAuthBaseTestCase):
         self.assertEqual(resp.context["prio_selected"], "CRITICO")
 
     def test_fila_operacional_prio_invalida_ignorada(self) -> None:
-        self._make_chamado(prioridade=Chamado.Prioridade.CRITICA, status=Chamado.Status.ABERTO)
-        self._make_chamado(prioridade=Chamado.Prioridade.ALTA, status=Chamado.Status.ABERTO)
+        self._make_chamado(
+            prioridade=Chamado.Prioridade.CRITICA, status=Chamado.Status.ABERTO
+        )
+        self._make_chamado(
+            prioridade=Chamado.Prioridade.ALTA, status=Chamado.Status.ABERTO
+        )
 
         resp = self.client.get(reverse("execucao:fila") + "?prio=QUALQUERCOISA")
         self.assertEqual(resp.status_code, 200)

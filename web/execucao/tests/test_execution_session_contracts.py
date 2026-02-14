@@ -104,7 +104,9 @@ class ExecutionSessionContractsTests(WebAuthBaseTestCase):
         self.assertEqual(ExecutionSession.objects.count(), 2)
 
         new_s = (
-            ExecutionSession.objects.filter(chamado=self.chamado).order_by("-started_at").first()
+            ExecutionSession.objects.filter(chamado=self.chamado)
+            .order_by("-started_at")
+            .first()
         )
         assert new_s is not None
         self.assertEqual(new_s.usuario_id, self.user_b.id)

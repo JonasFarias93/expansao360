@@ -15,7 +15,11 @@ class LojaListBuscaTests(WebAuthBaseTestCase):
             codigo="01", nome="Loja Paulista", hist="H123", cidade="São Paulo", uf="SP"
         )
         Loja.objects.create(
-            codigo="02", nome="Loja Centro", hist="PAULISTA-99", cidade="Campinas", uf="SP"
+            codigo="02",
+            nome="Loja Centro",
+            hist="PAULISTA-99",
+            cidade="Campinas",
+            uf="SP",
         )
         Loja.objects.create(
             codigo="03", nome="Loja Rio", hist="H000", cidade="Rio de Janeiro", uf="RJ"
@@ -38,7 +42,9 @@ class LojaListBuscaTests(WebAuthBaseTestCase):
             self.assertIn(nome, content_q_vazio)
 
     def test_q_numerico_bate_em_java_ou_hist(self) -> None:
-        Loja.objects.create(codigo="6", nome="Loja Seis", hist="6", cidade="São Paulo", uf="SP")
+        Loja.objects.create(
+            codigo="6", nome="Loja Seis", hist="6", cidade="São Paulo", uf="SP"
+        )
 
         url = reverse("registry:loja_list")
         resp = self.client.get(url, {"q": "6", "per_page": "25"})
@@ -52,7 +58,9 @@ class LojaListBuscaTests(WebAuthBaseTestCase):
         self.assertNotIn("Loja Rio", content)
 
     def test_q_texto_busca_por_nome(self) -> None:
-        Loja.objects.create(codigo="10", nome="PAULISTA", hist="", cidade="Sao Paulo", uf="SP")
+        Loja.objects.create(
+            codigo="10", nome="PAULISTA", hist="", cidade="Sao Paulo", uf="SP"
+        )
 
         url = reverse("registry:loja_list")
         resp = self.client.get(url, {"q": "PAULISTA", "per_page": "25"})

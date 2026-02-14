@@ -88,7 +88,9 @@ def classificar_ip(perfil: Any, base_ip: str, ip: str) -> ClassificationResult:
     )
 
 
-def validar_ip_para_tipo(perfil: Any, base_ip: str, ip: str, tipo: str) -> ValidationResult:
+def validar_ip_para_tipo(
+    perfil: Any, base_ip: str, ip: str, tipo: str
+) -> ValidationResult:
     """
     validar_ip_para_tipo(perfil, base_ip, ip, tipo) -> ok/erro + motivo
     MVP: tipo é o codigo da regra (ex: "TC")

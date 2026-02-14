@@ -24,7 +24,10 @@ class Migration(migrations.Migration):
             model_name="chamado",
             name="protocolo",
             field=models.CharField(
-                default=django.utils.timezone.now, editable=False, max_length=32, unique=True
+                default=django.utils.timezone.now,
+                editable=False,
+                max_length=32,
+                unique=True,
             ),
             preserve_default=False,
         ),

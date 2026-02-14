@@ -19,7 +19,9 @@ class KitItensEndpointTests(TestCase):
 
         self.kit = Kit.objects.create(nome="Kit A")
         self.categoria = Categoria.objects.create(nome="Impressoras")
-        self.equip = Equipamento.objects.create(nome="Impressora", categoria=self.categoria)
+        self.equip = Equipamento.objects.create(
+            nome="Impressora", categoria=self.categoria
+        )
         self.tipo = TipoEquipamento.objects.create(
             nome="Térmica",
             categoria=self.categoria,

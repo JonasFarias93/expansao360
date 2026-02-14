@@ -3,7 +3,10 @@ from __future__ import annotations
 from cadastro.models import Categoria, Equipamento, ItemKit, Kit, TipoEquipamento
 from django.urls import reverse
 from execucao.models import Chamado, ExecutionSession
-from execucao.services.execution_session import create_active_session, get_active_session
+from execucao.services.execution_session import (
+    create_active_session,
+    get_active_session,
+)
 from execucao.tests._base import WebAuthBaseTestCase
 
 
@@ -104,13 +107,19 @@ class ChamadoSalvarExecucaoViewTests(WebAuthBaseTestCase):
         # sessão ativa deve ter sido encerrada
         self.assertIsNone(get_active_session(chamado=self.chamado))
 
-        last = ExecutionSession.objects.filter(chamado=self.chamado).order_by("-started_at").first()
+        last = (
+            ExecutionSession.objects.filter(chamado=self.chamado)
+            .order_by("-started_at")
+            .first()
+        )
         self.assertIsNotNone(last)
         assert last is not None
         self.assertIsNotNone(last.ended_at)
         self.assertEqual(last.ended_reason, ExecutionSession.EndReason.SAVE)
 
-    def test_promove_para_aguardando_nf_quando_gate_nf_ok_e_contabil_preenchido(self) -> None:
+    def test_promove_para_aguardando_nf_quando_gate_nf_ok_e_contabil_preenchido(
+        self,
+    ) -> None:
         kit = self._setup_kit_com_itens_gate_nf()
 
         chamado = Chamado.objects.create(
@@ -168,7 +177,9 @@ class ChamadoSalvarExecucaoViewTests(WebAuthBaseTestCase):
         # sessão ativa encerrada
         self.assertIsNone(get_active_session(chamado=chamado))
 
-    def test_salvar_execucao_promove_para_em_configuracao_quando_item_configurado(self) -> None:
+    def test_salvar_execucao_promove_para_em_configuracao_quando_item_configurado(
+        self,
+    ) -> None:
         kit = self._setup_kit_com_itens_gate_nf()
 
         chamado = Chamado.objects.create(

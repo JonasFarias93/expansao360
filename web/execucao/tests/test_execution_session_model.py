@@ -21,7 +21,9 @@ class ExecutionSessionModelTests(WebAuthBaseTestCase):
             status=Chamado.Status.ABERTO,
         )
 
-    def test_execution_session_queryset_active_filtra_por_ended_at_e_expires_at(self) -> None:
+    def test_execution_session_queryset_active_filtra_por_ended_at_e_expires_at(
+        self,
+    ) -> None:
         # s1: aberta e ativa
         s1 = ExecutionSession.objects.create(chamado=self.chamado, usuario=self.user)
 

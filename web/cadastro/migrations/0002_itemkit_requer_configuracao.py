@@ -13,7 +13,8 @@ class Migration(migrations.Migration):
             model_name="itemkit",
             name="requer_configuracao",
             field=models.BooleanField(
-                default=False, help_text="Define se este item exige configuração técnica neste kit."
+                default=False,
+                help_text="Define se este item exige configuração técnica neste kit.",
             ),
         ),
     ]

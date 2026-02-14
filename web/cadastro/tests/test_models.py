@@ -76,7 +76,9 @@ class CadastroModelsTest(TestCase):
         Subprojeto.objects.create(projeto=projeto, codigo="S1", nome="Sub 1")
 
         with self.assertRaises(IntegrityError):
-            Subprojeto.objects.create(projeto=projeto, codigo="S1", nome="Sub duplicado")
+            Subprojeto.objects.create(
+                projeto=projeto, codigo="S1", nome="Sub duplicado"
+            )
 
 
 # ==========================

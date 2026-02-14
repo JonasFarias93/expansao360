@@ -14,7 +14,9 @@ class InstalacaoItemConfiguradoAuditTests(ChamadoBaseTestCase):
 
         # mínimo para gerar itens do chamado via kit.itens
         tipo = TipoEquipamento.objects.create(categoria=self.categoria, nome="Micro")
-        eq = Equipamento.objects.create(categoria=self.categoria, codigo="MICRO", nome="Micro")
+        eq = Equipamento.objects.create(
+            categoria=self.categoria, codigo="MICRO", nome="Micro"
+        )
 
         ItemKit.objects.create(
             kit=self.kit,
