@@ -6,8 +6,8 @@ from execucao.models import Chamado
 from ._base import ChamadoBaseTestCase
 
 
-class TestChamadoProtocoloETicketExternoConstraints(ChamadoBaseTestCase):
-    def test_quando_cria_chamado_entao_protocolo_e_gerado_no_padrao(self) -> None:
+class ChamadoProtocoloEReferenciasTest(ChamadoBaseTestCase):
+    def test_protocolo_e_gerado_automaticamente(self) -> None:
         chamado = Chamado.objects.create(
             loja=self.loja,
             projeto=self.projeto,
@@ -17,9 +17,7 @@ class TestChamadoProtocoloETicketExternoConstraints(ChamadoBaseTestCase):
         self.assertTrue(chamado.protocolo)
         self.assertRegex(chamado.protocolo, r"^CHA-\d{6}$")
 
-    def test_quando_cria_dois_chamados_entao_protocolo_e_unico_e_incrementa(
-        self,
-    ) -> None:
+    def test_protocolo_e_unico_e_incremental(self) -> None:
         c1 = Chamado.objects.create(
             loja=self.loja,
             projeto=self.projeto,
@@ -39,7 +37,7 @@ class TestChamadoProtocoloETicketExternoConstraints(ChamadoBaseTestCase):
         n2 = int(c2.protocolo.split("-", 1)[1])
         self.assertGreater(n2, n1)
 
-    def test_quando_salva_novamente_entao_protocolo_nao_muda(self) -> None:
+    def test_protocolo_nao_muda_em_save_posterior(self) -> None:
         chamado = Chamado.objects.create(
             loja=self.loja,
             projeto=self.projeto,
@@ -53,9 +51,7 @@ class TestChamadoProtocoloETicketExternoConstraints(ChamadoBaseTestCase):
         chamado.refresh_from_db()
         self.assertEqual(chamado.protocolo, original)
 
-    def test_quando_repite_ticket_externo_mesmo_sistema_entao_violacao_de_unicidade(
-        self,
-    ) -> None:
+    def test_ticket_externo_nao_repete_por_sistema(self) -> None:
         Chamado.objects.create(
             loja=self.loja,
             projeto=self.projeto,
@@ -75,9 +71,7 @@ class TestChamadoProtocoloETicketExternoConstraints(ChamadoBaseTestCase):
                 ticket_externo_id="SN-1002",
             )
 
-    def test_quando_repite_ticket_externo_em_sistemas_diferentes_entao_e_permitido(
-        self,
-    ) -> None:
+    def test_ticket_externo_pode_repetir_em_sistemas_diferentes(self) -> None:
         Chamado.objects.create(
             loja=self.loja,
             projeto=self.projeto,

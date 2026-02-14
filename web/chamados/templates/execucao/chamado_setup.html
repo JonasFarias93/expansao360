@@ -1,5 +1,4 @@
 {# web/execucao/templates/execucao/chamado_setup.html #}
-{# Depends on (defer): chamados/js/chamados_setup.js #}
 {% extends "base.html" %}
 {% load static %}
 
@@ -26,5 +25,5 @@
 {% endblock %}
 
 {% block extra_js %}
-<script src="{% static 'chamados/js/chamados_setup.js' %}" defer></script>
+<script src="{% static 'execucao/js/chamado_setup.js' %}"></script>
 {% endblock %}

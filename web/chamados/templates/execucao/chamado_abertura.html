@@ -1,5 +1,4 @@
 {# web/execucao/templates/execucao/chamado_abertura.html #}
-{# Depends on (defer): chamados/js/chamados_abertura.js #}
 {% extends "base.html" %}
 {% load static %}
 {% block title %}Abrir Chamado — Execução{% endblock %}
@@ -194,5 +193,5 @@
   </div>
 </div>
 
-<script src="{% static 'chamados/js/chamados_abertura.js' %}" defer></script>
+<script src="{% static 'execucao/js/chamado_abertura.js' %}"></script>
 {% endblock %}

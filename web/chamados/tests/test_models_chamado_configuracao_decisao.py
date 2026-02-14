@@ -1,3 +1,5 @@
+# web/execucao/tests/test_models_chamado_configuracao_decisao.py
+
 from __future__ import annotations
 
 from cadastro.models import (
@@ -16,7 +18,7 @@ from django.utils import timezone
 from execucao.models import Chamado, StatusConfiguracao
 
 
-class TestChamadoFinalizarExigeConfiguracaoQuandoItemMarcado(TestCase):
+class ChamadoConfiguracaoDecididaNoChamadoTests(TestCase):
     def setUp(self) -> None:
         # base cadastro
         self.categoria = Categoria.objects.create(nome="Informatica")
@@ -40,7 +42,7 @@ class TestChamadoFinalizarExigeConfiguracaoQuandoItemMarcado(TestCase):
             equipamento=self.eq_micro,
             tipo=self.tipo,
             quantidade=1,
-            # cadastro não deve obrigar configuração
+            # IMPORTANTÍSSIMO: cadastro não deve obrigar configuração
             requer_configuracao=False,
         )
 
@@ -58,6 +60,7 @@ class TestChamadoFinalizarExigeConfiguracaoQuandoItemMarcado(TestCase):
             subprojeto=self.subprojeto,
             kit=self.kit,
             tipo=Chamado.Tipo.ENVIO,
+            # gates de fechamento (ENVIO)
             nf_saida_numero="NF-123",
             coleta_confirmada_em=timezone.now(),
         )
@@ -65,6 +68,7 @@ class TestChamadoFinalizarExigeConfiguracaoQuandoItemMarcado(TestCase):
         return chamado
 
     def _bipar_todos_os_itens(self, chamado: Chamado) -> None:
+        # como só tem 1 item rastreável aqui
         for item in chamado.itens.all():
             if item.tem_ativo:
                 item.ativo = "ATV-123"
@@ -75,33 +79,46 @@ class TestChamadoFinalizarExigeConfiguracaoQuandoItemMarcado(TestCase):
                 item.save(update_fields=["confirmado"])
 
     def _liberar_gates_envio(self, chamado: Chamado) -> None:
+        """
+        A partir da regra nova, Chamado ENVIO só finaliza se:
+        - nf_saida_numero preenchido
+        - coleta_confirmada_em preenchido
+        """
         chamado.nf_saida_numero = "NF-123"
         chamado.coleta_confirmada_em = timezone.now()
         chamado.save(update_fields=["nf_saida_numero", "coleta_confirmada_em"])
 
-    def test_quando_item_nao_marcado_para_configurar_entao_ip_nao_e_exigido(
-        self,
-    ) -> None:
+    def test_item_configuravel_nao_exige_ip_se_nao_for_marcado_para_configurar(self):
+        """
+        Regra: mesmo que o Equipamento seja configurável, se o Chamado NÃO marcar
+        que deve configurar, então IP não é exigido.
+        """
         chamado = self._criar_chamado_envio_com_itens()
         self._bipar_todos_os_itens(chamado)
         self._liberar_gates_envio(chamado)
 
         item = chamado.itens.get()
 
+        # item.deve_configurar (bool) por padrão deve ser False.
         self.assertFalse(item.deve_configurar)
 
         # não marcamos pra configurar => deve finalizar sem exigir IP/configuração
         chamado.finalizar()
 
-    def test_quando_item_marcado_para_configurar_entao_exige_status_configurado_e_ip(
-        self,
-    ) -> None:
+    def test_se_marcado_para_configurar_entao_exige_status_configurado_e_ip(self):
+        """
+        Regra: se no Chamado o item foi marcado como 'deve_configurar',
+        então finalização exige:
+          - status_configuracao=CONFIGURADO
+          - ip preenchido
+        """
         chamado = self._criar_chamado_envio_com_itens()
         self._bipar_todos_os_itens(chamado)
         self._liberar_gates_envio(chamado)
 
         item = chamado.itens.get()
 
+        # marca decisão do chamado
         item.deve_configurar = True
         item.save(update_fields=["deve_configurar"])
 

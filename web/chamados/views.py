@@ -552,17 +552,7 @@ class ChamadoExecucaoView(CapabilityRequiredMixin, TemplateView):
             and gate_nf_ok
         )
 
-        # TODO(PR6 Extra): preencher regra real de finalização com gates
         pode_finalizar = False
-
-        # -----------------------------------------
-        # Execution UI state (PR6 Extra) — data-* contract
-        # -----------------------------------------
-        has_session = bool(sessao_ativa)
-        # "can_edit" aqui é o modo editável da página de execução (não é "editar dados fiscais")
-        can_edit = bool(sessao_ativa and chamado.status != Chamado.Status.FINALIZADO)
-        # "can_finalize" representa o estado efetivo do botão (capability + sessão + gates)
-        can_finalize = bool(pode_finalizar)
 
         # -----------------------------------------
         # Itens / progresso
@@ -615,10 +605,6 @@ class ChamadoExecucaoView(CapabilityRequiredMixin, TemplateView):
                 "can_execute_actions": can_execute_actions,
                 "pode_confirmar_coleta": pode_confirmar_coleta,
                 "pode_finalizar": pode_finalizar,
-                # execution state contract
-                "has_session": has_session,
-                "can_edit": can_edit,
-                "can_finalize": can_finalize,
             }
         )
         return ctx

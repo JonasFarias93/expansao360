@@ -8,9 +8,13 @@ from django.test import TestCase
 from cadastro.models import Loja
 from cadastro.services.import_lojas import importar_lojas, normalizar_loja_row
 
+# ==========================
+# Import / Normalização Loja
+# ==========================
 
-class TestNormalizarLojaRow(TestCase):
-    def test_quando_row_valida_entao_normaliza_campos_corretamente(self) -> None:
+
+class LojaImportMapperTest(TestCase):
+    def test_normalizar_loja_row_mapeia_campos(self) -> None:
         row = {
             "Filial": " 123 ",
             "Hist.": "H1",
@@ -37,7 +41,7 @@ class TestNormalizarLojaRow(TestCase):
         self.assertEqual(out["telefone"], "11999990000")
         self.assertEqual(out["ip_banco_12"], "10.0.0.1")
 
-    def test_quando_ip_vazio_entao_ip_banco_12_vira_none(self) -> None:
+    def test_normalizar_loja_row_ip_vazio_vira_none(self) -> None:
         row = {
             "Filial": "123",
             "Hist.": "",
@@ -55,8 +59,13 @@ class TestNormalizarLojaRow(TestCase):
         self.assertIsNone(out["ip_banco_12"])
 
 
-class TestImportarLojasService(TestCase):
-    def test_quando_mesmo_payload_duas_vezes_entao_import_e_idempotente(self) -> None:
+# ==========================
+#  Import  / Lojas
+# ==========================
+
+
+class ImportLojasServiceTest(TestCase):
+    def test_importar_lojas_idempotente(self) -> None:
         rows = [
             {
                 "Filial": "6",
@@ -76,12 +85,14 @@ class TestImportarLojasService(TestCase):
         self.assertEqual(r1["created"], 1)
         self.assertEqual(Loja.objects.count(), 1)
 
+        # segunda rodada: não cria, não altera
         r2 = importar_lojas(rows)
         self.assertEqual(r2["created"], 0)
         self.assertEqual(r2["updated"], 0)
         self.assertEqual(r2["unchanged"], 1)
         self.assertEqual(Loja.objects.count(), 1)
 
+        # altera um campo: deve atualizar
         rows2 = [dict(rows[0])]
         rows2[0]["Telefone"] = "(11) 00000000"
         r3 = importar_lojas(rows2)
@@ -91,8 +102,8 @@ class TestImportarLojasService(TestCase):
         self.assertEqual(loja.telefone, "(11) 00000000")
 
 
-class TestImportLojasCommand(TestCase):
-    def test_quando_executa_command_import_lojas_entao_exibe_resumo(self) -> None:
+class ImportLojasCommandTest(TestCase):
+    def test_command_import_lojas_csv(self) -> None:
         csv_content = (
             "Filial;Hist.;Nome Filial;Endereço;Bairro;Cidade;UF;Logomarca;Telefone;IP Banco 12\n"
             "6;6;PAULISTA;AV PAULISTA, 807;BELA VISTA;SAO PAULO;SP;RAIA;(11) 31710248;10.140.6.12\n"
