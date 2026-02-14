@@ -44,8 +44,8 @@
 
 {% block extra_js %}
   <script src="{% static 'execucao/js/chamado_detalhe.js' %}" defer></script>
-  <script src="{% static 'execucao/js/chamado_salvar_execucao.js' %}"></script>
-  <script src="{% static 'execucao/js/item_configurado.js' %}"></script>
+  <script src="{% static 'execucao/js/chamado_salvar_execucao.js' %}" defer></script>
+  <script src="{% static 'execucao/js/item_configurado.js' %}" defer></script>
   {{ block.super }}
   <script src="{% static 'execucao/js/chamado_finalizar.js' %}" defer></script>
 {% endblock %}
