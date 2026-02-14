@@ -1,12 +1,9 @@
-# Source of truth: execucao.templatetags._ui.py
+# web/execucao/templatetags/execucao_ui.py
 from __future__ import annotations
 
-Mantém imports legados como:
-- execucao.templatetags.execucao_ui
-- web.execucao.templatetags.execucao_ui
+from django import template
 
-Source of truth: chamados.templatetags.execucao_ui
-
+register = template.Library()
 
 COLOR_TO_CLASS = {
     "SLATE": "bg-slate-200",
@@ -44,6 +41,3 @@ def get_item(mapping, key):
         return None
 
     return getter(key)
-
-
-# teste

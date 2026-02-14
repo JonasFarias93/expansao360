@@ -1,9 +1,6 @@
-# Source of truth: execucao.templatetags.projeto_cores
-
 from __future__ import annotations
 
-Source of truth: chamados.templatetags.execucao_projeto_cores
-
+from django import template
 
 register = template.Library()
 
@@ -73,6 +70,3 @@ def projeto_color_text_active(projeto) -> str:
     """
     slug = _slug(projeto)
     return COLOR_TO_TEXT_ACTIVE_CLASS.get(slug, COLOR_TO_TEXT_ACTIVE_CLASS["SLATE"])
-
-
-# teste
