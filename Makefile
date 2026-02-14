@@ -1,10 +1,15 @@
+SHELL := /usr/bin/env bash
+
 .PHONY: help fmt lint test test-py test-js check hooks \
         env-create deps-install deps-install-dev rebuild-clean \
-        deps-snapshot deps-check cli demo
+        deps-snapshot deps-check cli demo ptw ptw-fast
 
 ENV_NAME ?= expansao360
-CONDA ?= conda
-PYTHON ?= python
+PYTHON   ?= python
+
+# Preferir CONDA_EXE (CI/setup-miniconda) e cair pro "command -v conda"
+CONDA_EXE_FALLBACK := $(shell command -v conda 2>/dev/null)
+CONDA ?= $(if $(CONDA_EXE),$(CONDA_EXE),$(CONDA_EXE_FALLBACK))
 
 help:
 	@echo ""
@@ -22,6 +27,8 @@ help:
 	@echo "  make test-js           -> Rodar testes (jest)"
 	@echo "  make check             -> Lint + deps-check + testes"
 	@echo "  make hooks             -> Instalar hooks do pre-commit"
+	@echo "  make ptw               -> pytest-watch (python -m pytest_watch)"
+	@echo "  make ptw-fast          -> ptw com -c e pytest -q"
 	@echo ""
 
 # =========================
@@ -94,17 +101,18 @@ test-js:
 	npm run test:js
 
 test: test-py test-js
-
 check: lint deps-check test
 
 hooks:
 	@$(CONDA) run -n $(ENV_NAME) pre-commit install
 
+# ✅ Mais robusto do que chamar o binário "ptw" direto:
 ptw:
-	@$(CONDA) run -n $(ENV_NAME) ptw
+	@$(CONDA) run -n $(ENV_NAME) $(PYTHON) -m pytest_watch
 
 ptw-fast:
-	@$(CONDA) run -n $(ENV_NAME) ptw -c -- -q
+	@$(CONDA) run -n $(ENV_NAME) $(PYTHON) -m pytest_watch -c -- -q
+
 # =========================
 # Utilitários (mantidos)
 # =========================
