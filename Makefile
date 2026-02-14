@@ -11,6 +11,19 @@ PYTHON   ?= python
 CONDA_EXE_FALLBACK := $(shell command -v conda 2>/dev/null)
 CONDA ?= $(if $(CONDA_EXE),$(CONDA_EXE),$(if $(CONDA_EXE_FALLBACK),$(CONDA_EXE_FALLBACK),conda))
 
+# Se CONDA vier como diretório (ex.: /home/runner/miniconda3), ajustar para o binário
+ifeq ($(shell test -d "$(CONDA)" && echo yes),yes)
+CONDA := $(CONDA)/bin/conda
+endif
+
+
+ci-debug:
+	@echo "CONDA_EXE=$(CONDA_EXE)"
+	@echo "CONDA_EXE_FALLBACK=$(CONDA_EXE_FALLBACK)"
+	@echo "CONDA=$(CONDA)"
+	@$(CONDA) --version || true
+
+	
 help:
 	@echo ""
 	@echo "Comandos disponíveis:"
@@ -41,6 +54,7 @@ env-create:
 	@$(CONDA) env update -f environment.yml -n $(ENV_NAME) --prune
 	@echo "✅ Ambiente pronto."
 
+- run: make ci-debug
 deps-install:
 	@echo "🔹 Instalando dependências Python (web+test) via pyproject.toml"
 	@$(CONDA) run -n $(ENV_NAME) $(PYTHON) -m pip install --upgrade pip
@@ -126,3 +140,4 @@ demo:
 	@$(CONDA) run -n $(ENV_NAME) python -m expansao360 mount register LOC-001 jonas
 	@$(CONDA) run -n $(ENV_NAME) python -m expansao360 location list
 	@$(CONDA) run -n $(ENV_NAME) python -m expansao360 mount list
+
