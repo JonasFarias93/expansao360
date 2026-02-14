@@ -1,0 +1,335 @@
+# web/cadastro/models.py
+import re
+
+from django.core.exceptions import ValidationError
+from django.db import models
+
+from cadastro.services.codes import generate_code
+
+
+class CodeSequence(models.Model):
+    """
+    Contador por prefixo para geração de códigos no formato PREFIXO-000001.
+    """
+
+    prefix = models.CharField(max_length=8, primary_key=True)
+    last_value = models.PositiveIntegerField(default=0)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Sequência de Código"
+        verbose_name_plural = "Sequências de Código"
+
+    def __str__(self) -> str:
+        return f"{self.prefix}={self.last_value}"
+
+
+class Categoria(models.Model):
+    codigo = models.CharField(max_length=50, unique=True, blank=True)
+    nome = models.CharField(max_length=80, unique=True)
+    disponivel = models.BooleanField(default=True)
+
+    def clean(self):
+        super().clean()
+        self.nome = (self.nome or "").strip()
+        if self.pk:
+            old = (
+                self.__class__.objects.filter(pk=self.pk)
+                .values_list("codigo", flat=True)
+                .first()
+            )
+            if old is not None and (self.codigo or "") != old:
+                raise ValidationError({"codigo": "Código é imutável após criação."})
+
+    def save(self, *args, **kwargs):  # type: ignore[override]
+        self.nome = (self.nome or "").strip()
+        if not (self.codigo or "").strip():
+            self.codigo = generate_code("CAT")
+        return super().save(*args, **kwargs)
+
+
+def _normalize_code(value: str) -> str:
+    """
+    Gera um código interno estável:
+    - trim
+    - uppercase
+    - espaços/traços -> underscore
+    - remove caracteres inválidos (mantém A-Z, 0-9, _)
+    """
+    value = (value or "").strip().upper()
+    value = re.sub(r"[\s\-]+", "_", value)
+    value = re.sub(r"[^A-Z0-9_]", "", value)
+    value = re.sub(r"_+", "_", value).strip("_")
+    return value
+
+
+class Equipamento(models.Model):
+    codigo = models.CharField(max_length=50, unique=True, blank=True)  # EQP-000001
+    nome = models.CharField(max_length=120)  # Micro, Monitor
+    categoria = models.ForeignKey(
+        Categoria,
+        on_delete=models.PROTECT,
+        related_name="equipamentos",
+    )
+    tem_ativo = models.BooleanField(default=True)
+    configuravel = models.BooleanField(default=False)
+
+    class Meta:
+        verbose_name = "Equipamento"
+        verbose_name_plural = "Equipamentos"
+
+    def clean(self):
+        super().clean()
+        self.nome = (self.nome or "").strip()
+
+        # imutabilidade do codigo após criação
+        if self.pk:
+            old = (
+                Equipamento.objects.filter(pk=self.pk)
+                .values_list("codigo", flat=True)
+                .first()
+            )
+            if old is not None and (self.codigo or "") != old:
+                raise ValidationError({"codigo": "Código é imutável após criação."})
+
+    def save(self, *args, **kwargs):  # type: ignore[override]
+        self.nome = (self.nome or "").strip()
+
+        if not (self.codigo or "").strip():
+            from cadastro.services.codes import generate_code
+
+            self.codigo = generate_code("EQP")
+
+        return super().save(*args, **kwargs)
+
+    def __str__(self) -> str:
+        return f"{self.nome} ({self.codigo})"
+
+
+class TipoEquipamento(models.Model):
+    categoria = models.ForeignKey(
+        Categoria,
+        on_delete=models.PROTECT,
+        related_name="tipos",
+    )
+    # pode ficar vazio; o model gera automaticamente
+    codigo = models.CharField(max_length=50, blank=True)
+    nome = models.CharField(max_length=80)
+    disponivel = models.BooleanField(default=True)
+
+    class Meta:
+        verbose_name = "Tipo de Equipamento"
+        verbose_name_plural = "Tipos de Equipamento"
+        unique_together = ("categoria", "codigo")
+
+    def clean(self):
+        super().clean()
+        self.nome = (self.nome or "").strip()
+        self.save_normalize_only()
+
+    def save_normalize_only(self):
+        # normalização simples, sem bater no banco
+        self.codigo = (self.codigo or "").strip().upper()
+        self.nome = (self.nome or "").strip()
+
+    def save(self, *args, **kwargs):  # type: ignore[override]
+        self.nome = (self.nome or "").strip()
+
+        # gera código se vazio
+        if not (self.codigo or "").strip():
+            base = _normalize_code(self.nome) or "TIPO"
+
+            code = base
+            i = 2
+            while (
+                TipoEquipamento.objects.filter(categoria=self.categoria, codigo=code)
+                .exclude(pk=self.pk)
+                .exists()
+            ):
+                code = f"{base}_{i}"
+                i += 1
+
+            self.codigo = code
+        else:
+            self.codigo = _normalize_code(self.codigo)
+
+        super().save(*args, **kwargs)
+
+    def __str__(self) -> str:
+        # ex: "PINPAD (PINPAD)" ou "PINPAD (PINPAD_2)"
+        return f"{self.nome} ({self.codigo})"
+
+
+class Loja(models.Model):
+    codigo = models.CharField(max_length=50, unique=True)  # UI: "Java"
+    nome = models.CharField(max_length=120)  # UI: "Nome loja"
+
+    hist = models.CharField(max_length=50, blank=True, default="")
+    endereco = models.CharField(max_length=255, blank=True, default="")
+    bairro = models.CharField(max_length=120, blank=True, default="")
+    cidade = models.CharField(max_length=120, blank=True, default="")
+    uf = models.CharField(max_length=2, blank=True, default="")
+    logomarca = models.CharField(max_length=80, blank=True, default="")
+    telefone = models.CharField(max_length=60, blank=True, default="")
+    ip_banco_12 = models.GenericIPAddressField(null=True, blank=True)
+
+    class Meta:
+        verbose_name = "Loja"
+        verbose_name_plural = "Lojas"
+        indexes = [
+            models.Index(fields=["hist"], name="loja_hist_idx"),
+            models.Index(fields=["uf"], name="loja_uf_idx"),
+        ]
+
+    def clean(self):
+        super().clean()
+        if self.uf and len(self.uf.strip()) != 2:
+            raise ValidationError({"uf": "UF deve ter 2 caracteres."})
+
+    def save(self, *args, **kwargs):  # type: ignore[override]
+        self.codigo = (self.codigo or "").strip()
+        self.nome = (self.nome or "").strip()
+
+        self.hist = (self.hist or "").strip()
+        self.endereco = (self.endereco or "").strip()
+        self.bairro = (self.bairro or "").strip()
+        self.cidade = (self.cidade or "").strip()
+        self.logomarca = (self.logomarca or "").strip().upper()
+        self.telefone = (self.telefone or "").strip()
+
+        if self.uf:
+            self.uf = self.uf.strip().upper()
+
+        super().save(*args, **kwargs)
+
+    def __str__(self) -> str:
+        return f"{self.codigo} - {self.nome}"
+
+
+class Projeto(models.Model):
+    codigo = models.CharField(max_length=50, unique=True, blank=True)
+    nome = models.CharField(max_length=120)
+
+    class Cor(models.TextChoices):
+        SLATE = "SLATE", "Cinza"
+        BLUE = "BLUE", "Azul"
+        EMERALD = "EMERALD", "Verde"
+        VIOLET = "VIOLET", "Roxo"
+        AMBER = "AMBER", "Amarelo"
+        ROSE = "ROSE", "Rosa"
+        CYAN = "CYAN", "Ciano"
+        LIME = "LIME", "Lima"
+
+    cor_slug = models.CharField(
+        max_length=20,
+        choices=Cor.choices,
+        default=Cor.SLATE,
+    )
+
+    class Meta:
+        verbose_name = "Projeto"
+        verbose_name_plural = "Projetos"
+
+    def clean(self):
+        super().clean()
+        self.nome = (self.nome or "").strip()
+
+        if self.pk:
+            old = (
+                Projeto.objects.filter(pk=self.pk)
+                .values_list("codigo", flat=True)
+                .first()
+            )
+            if old is not None and (self.codigo or "") != old:
+                raise ValidationError({"codigo": "Código é imutável após criação."})
+
+    def save(self, *args, **kwargs):  # type: ignore[override]
+        self.nome = (self.nome or "").strip()
+
+        if not (self.codigo or "").strip():
+            from cadastro.services.codes import (
+                generate_code,
+            )  # ✅ import local anti-ciclo
+
+            self.codigo = generate_code("PRO")
+
+        return super().save(*args, **kwargs)
+
+    def __str__(self) -> str:
+        return f"{self.codigo} - {self.nome}"
+
+
+class Subprojeto(models.Model):
+    projeto = models.ForeignKey(
+        Projeto, on_delete=models.CASCADE, related_name="subprojetos"
+    )
+    codigo = models.CharField(max_length=50, unique=True, blank=True)
+    nome = models.CharField(max_length=120)
+
+    class Meta:
+        verbose_name = "Subprojeto"
+        verbose_name_plural = "Subprojetos"
+        # ✅ remove unique_together
+
+    def clean(self):
+        super().clean()
+        self.nome = (self.nome or "").strip()
+
+        # ✅ imutabilidade: não permitir trocar codigo após criação
+        if self.pk:
+            old = (
+                Subprojeto.objects.filter(pk=self.pk)
+                .values_list("codigo", flat=True)
+                .first()
+            )
+            if old is not None and (self.codigo or "") != old:
+                raise ValidationError({"codigo": "Código é imutável após criação."})
+
+    def save(self, *args, **kwargs):  # type: ignore[override]
+        self.nome = (self.nome or "").strip()
+
+        if not (self.codigo or "").strip():
+            from cadastro.services.codes import (
+                generate_code,
+            )  # ✅ import local anti-ciclo
+
+            self.codigo = generate_code("SUB")
+
+        return super().save(*args, **kwargs)
+
+    def __str__(self) -> str:
+        return f"{self.projeto.codigo}/{self.codigo} - {self.nome}"
+
+
+class Kit(models.Model):
+    nome = models.CharField(max_length=120, unique=True)
+
+    class Meta:
+        verbose_name = "Kit"
+        verbose_name_plural = "Kits"
+
+    def __str__(self) -> str:
+        return self.nome
+
+
+class ItemKit(models.Model):
+    kit = models.ForeignKey(Kit, on_delete=models.CASCADE, related_name="itens")
+    equipamento = models.ForeignKey("Equipamento", on_delete=models.PROTECT)
+    tipo = models.ForeignKey("TipoEquipamento", on_delete=models.PROTECT)
+    quantidade = models.PositiveIntegerField()
+    requer_configuracao = models.BooleanField(
+        default=False,
+        help_text="Define se este item exige configuração técnica neste kit.",
+    )
+
+    class Meta:
+        verbose_name = "Item do Kit"
+        verbose_name_plural = "Itens do Kit"
+        unique_together = ("kit", "equipamento", "tipo")
+
+    @property
+    def nome_exibicao(self) -> str:
+        return f"{self.equipamento.nome} {self.tipo.nome}".strip()
+
+    def __str__(self) -> str:
+        return f"{self.nome_exibicao} ({self.quantidade})"

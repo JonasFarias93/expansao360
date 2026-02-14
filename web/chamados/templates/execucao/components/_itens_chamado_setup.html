@@ -1,0 +1,131 @@
+{# web/execucao/templates/execucao/components/_itens_chamado_setup.html #}
+
+<div class="bg-white shadow rounded p-4">
+  <div class="flex items-center justify-between mb-3">
+    <h2 class="font-semibold">Setup — Itens</h2>
+    <div class="text-sm text-gray-500">{{ itens|length }} item(ns)</div>
+  </div>
+
+  <form
+    id="setup-form"
+    method="post"
+    action="{% url 'execucao:chamado_atualizar_itens' chamado.id %}"
+    class="space-y-6"
+  >
+    {% csrf_token %}
+
+    <div class="space-y-4">
+      {% for item in itens %}
+        <div class="border rounded p-3">
+          <div class="flex flex-col gap-1 md:flex-row md:items-center md:justify-between">
+            <div class="font-medium">
+              {{ item.equipamento.nome }} — {{ item.tipo }}
+            </div>
+
+            <div class="text-sm text-gray-600">
+              Qtd: <span class="font-medium">{{ item.quantidade }}</span>
+
+              {% if item.tem_ativo %}
+                <span class="ml-2 inline-flex items-center px-2 py-0.5 text-xs rounded bg-orange-100 text-orange-800 font-medium">
+                  Rastreável
+                </span>
+              {% else %}
+                <span class="ml-2 inline-flex items-center px-2 py-0.5 text-xs rounded bg-sky-100 text-sky-800 font-medium">
+                  Contável
+                </span>
+              {% endif %}
+
+              {% if item.equipamento.configuravel %}
+                <span class="ml-2 inline-flex items-center px-2 py-0.5 text-xs rounded bg-violet-100 text-violet-800 font-medium">
+                  Configurável
+                </span>
+              {% else %}
+                <span class="ml-2 inline-flex items-center px-2 py-0.5 text-xs rounded bg-slate-100 text-slate-600 font-medium">
+                  Não configurável
+                </span>
+              {% endif %}
+            </div>
+          </div>
+
+          {% if item.equipamento.configuravel %}
+            <div class="mt-3 border-t pt-3 space-y-3">
+              <div class="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  class="js-toggle-config rounded border-gray-300 text-violet-600 focus:ring-violet-500"
+                  name="deve_configurar_{{ item.id }}"
+                  data-item-id="{{ item.id }}"
+                  {% if item.deve_configurar %}checked{% endif %}
+                />
+                <div class="text-sm">
+                  <span class="font-medium">Configurar este item</span>
+                  <span class="text-gray-500"> (decisão do chamado)</span>
+                </div>
+              </div>
+
+              {# Conteúdo que aparece quando "Configurar este item" está marcado #}
+              <div
+                id="cfg-box-{{ item.id }}"
+                class="{% if not item.deve_configurar %}hidden{% endif %} rounded-lg border border-slate-200 bg-slate-50 p-3"
+              >
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div>
+                    <label class="block text-[11px] uppercase tracking-wider text-gray-500 font-bold mb-1">
+                      IP
+                    </label>
+                    <input
+                      name="ip_{{ item.id }}"
+                      value="{{ item.ip|default_if_none:'' }}"
+                      class="w-full border rounded px-3 py-2 text-sm"
+                      placeholder="ex: 10.0.0.10"
+                      autocomplete="off"
+                    />
+                    <p class="mt-1 text-xs text-gray-500">
+                      Obrigatório quando o item é configurável e marcado para configurar.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {# Badge quando não marcado #}
+              <div
+                id="cfg-badge-{{ item.id }}"
+                class="{% if item.deve_configurar %}hidden{% endif %}"
+              >
+                <span class="inline-flex items-center px-2 py-1 text-[10px] font-bold uppercase rounded bg-gray-50 text-gray-400 border border-gray-100">
+                  Configuração opcional (não marcada)
+                </span>
+              </div>
+            </div>
+          {% else %}
+            <div class="mt-3">
+              <span class="inline-flex items-center px-2 py-1 text-[10px] font-bold uppercase rounded bg-gray-50 text-gray-400 border border-gray-100">
+                Não configurável (cadastro)
+              </span>
+            </div>
+          {% endif %}
+        </div>
+      {% endfor %}
+    </div>
+
+    {% if not itens %}
+      <div class="text-sm text-gray-600">Nenhum item gerado para este chamado.</div>
+    {% endif %}
+
+    <div class="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-end">
+      <a
+        href="{% url 'execucao:fila' %}"
+        class="inline-flex justify-center rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-900 hover:bg-slate-50"
+      >
+        Voltar para fila
+      </a>
+
+      <button
+        type="submit"
+        class="inline-flex justify-center rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
+      >
+        Salvar setup
+      </button>
+    </div>
+  </form>
+</div>

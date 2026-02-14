@@ -1,0 +1,29 @@
+{# web/execucao/templates/execucao/chamado_setup.html #}
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Chamado — Setup{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'execucao/css/execucao.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+  {# 1) Header do chamado (informativo) #}
+  {% include "execucao/components/_header_chamado.html" with chamado=chamado only %}
+
+  {# 2) Itens do chamado (SETUP) #}
+  {# IMPORTANTE: NÃO usar "only" aqui, senão o csrf_token some #}
+  {% include "execucao/components/_itens_chamado_setup.html" with chamado=chamado itens=itens %}
+
+  {# 3) Box informativo (opcional) #}
+  {% include "execucao/components/_setup_actions.html" with motivos_bloqueio=motivos_bloqueio %}
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'execucao/js/chamado_setup.js' %}"></script>
+{% endblock %}

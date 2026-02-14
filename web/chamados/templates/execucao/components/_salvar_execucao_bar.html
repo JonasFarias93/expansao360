@@ -1,0 +1,48 @@
+{# web/execucao/templates/execucao/components/_salvar_execucao_bar.html #}
+
+<div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+  <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+    <div class="min-w-0">
+      <div class="text-sm font-semibold text-slate-900">Salvar execução</div>
+      <div class="mt-1 text-xs text-slate-500">
+        Salva o progresso atual, recalcula o status e libera a sessão.
+      </div>
+      <div class="mt-2 text-sm text-slate-600">
+        <span id="salvar-status"></span>
+      </div>
+    </div>
+
+    <div class="flex flex-col sm:items-end gap-2">
+      {% if sessao_do_usuario %}
+        <button
+          id="btn-salvar-execucao"
+          type="button"
+          class="btn btn-primary"
+          data-url="{% url 'execucao:chamado_salvar_execucao' chamado.id %}"
+        >
+          Salvar execução
+        </button>
+      {% else %}
+        {# requisito original: visível apenas com sessão ativa. se preferir ocultar de vez, apaga este else inteiro. #}
+        <button
+          type="button"
+          class="btn btn-primary opacity-50 cursor-not-allowed"
+          disabled
+          aria-disabled="true"
+          title="Você precisa estar com a sessão ativa para salvar a execução"
+        >
+          Salvar execução
+        </button>
+      {% endif %}
+
+      <div id="abrir-para-continuar" class="hidden w-full sm:w-auto">
+        <form method="post" action="{% url 'execucao:chamado_abrir' chamado_id=chamado.id %}">
+          {% csrf_token %}
+          <button id="btn-abrir-para-continuar" type="submit" class="btn btn-secondary w-full">
+            Abrir para continuar
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block title %}Projetos — Cadastro{% endblock %}
+
+{% block content %}
+  <div class="max-w-6xl mx-auto space-y-6">
+    {# Header da página #}
+    <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+      <div>
+        <h1 class="text-2xl font-semibold text-slate-900">Projetos</h1>
+        <p class="text-sm text-slate-600 mt-1">
+          Cadastro mestre de projetos.
+        </p>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <a
+          href="{% url 'registry:projeto_create' %}"
+          class="btn btn-primary"
+        >
+          Novo projeto
+        </a>
+      </div>
+    </div>
+
+    {# Card com tabela #}
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="min-w-full text-sm">
+          <thead class="bg-slate-50 text-slate-600">
+            <tr class="border-b border-slate-200">
+              <th class="text-left py-3 px-5 font-semibold">
+                Código
+              </th>
+              <th class="text-left py-3 pr-4 font-semibold">
+                Nome
+              </th>
+            </tr>
+          </thead>
+
+          <tbody class="divide-y divide-slate-100">
+            {% for p in projetos %}
+              <tr class="hover:bg-slate-50">
+                <td class="py-3 px-5 font-semibold text-slate-900">
+                  {{ p.codigo }}
+                </td>
+
+                <td class="py-3 pr-4 text-slate-700">
+                  {{ p.nome }}
+                </td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="2" class="py-10 text-slate-500 text-center">
+                  Nenhum projeto cadastrado.
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+{% endblock %}

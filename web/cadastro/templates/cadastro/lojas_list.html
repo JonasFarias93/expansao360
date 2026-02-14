@@ -1,0 +1,196 @@
+{% extends "base.html" %}
+
+{% block title %}Lojas — Cadastro{% endblock %}
+
+{% block content %}
+  <div class="max-w-6xl mx-auto space-y-6">
+    <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+      <div>
+        <h1 class="text-2xl font-semibold text-slate-900">Lojas</h1>
+        <p class="text-sm text-slate-600 mt-1">Cadastro mestre de lojas.</p>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <a href="{% url 'registry:loja_create' %}" class="btn btn-primary">
+          Nova loja
+        </a>
+      </div>
+    </div>
+
+    {% include "components/_card.html" with title="Lista de lojas" subtitle="Gerencie o cadastro mestre (código, endereço e dados operacionais)." body_class="p-0" content="" %}
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+
+      <!-- Header do card (busca) -->
+      <div class="px-5 pt-4 pb-3 border-b border-slate-200">
+        <form method="get" class="flex flex-wrap items-center gap-2">
+          <input
+            type="text"
+            name="q"
+            value="{{ request.GET.q|default:'' }}"
+            placeholder="Buscar (Java, Histórico, Nome, Cidade/UF...)"
+            class="w-full max-w-md rounded-md border border-slate-300 px-3 py-2 text-sm"
+          />
+
+          <input type="hidden" name="per_page" value="{{ request.GET.per_page|default:'25' }}" />
+
+          <button type="submit" class="rounded-md bg-slate-900 px-3 py-2 text-sm font-semibold text-white">
+            Buscar
+          </button>
+
+          {% if request.GET.q %}
+            <a
+              href="?per_page={{ request.GET.per_page|default:'25' }}"
+              class="text-sm font-medium text-slate-700 hover:text-slate-900"
+            >
+              Limpar
+            </a>
+          {% endif %}
+        </form>
+      </div>
+
+      <!-- Subheader (contador + itens por página) -->
+      <div class="px-5 py-4 border-b border-slate-200 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        <div class="text-sm text-slate-600">
+          {% if page_obj %}
+            Mostrando <span class="font-semibold text-slate-900">{{ page_obj.start_index }}–{{ page_obj.end_index }}</span>
+            de <span class="font-semibold text-slate-900">{{ page_obj.paginator.count }}</span> lojas
+          {% else %}
+            <span class="font-semibold text-slate-900">{{ lojas|length }}</span> lojas
+          {% endif %}
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="text-sm text-slate-600">Itens por página:</span>
+          
+          <a class="btn btn-secondary px-3 py-1.5 text-xs {% if request.GET.per_page == '10' %}!bg-slate-900 !text-white !border-slate-900{% endif %}"
+             href="?per_page=10{% if request.GET.q %}&q={{ request.GET.q|urlencode }}{% endif %}">10</a>
+
+          <a class="btn btn-secondary px-3 py-1.5 text-xs {% if request.GET.per_page == '25' or not request.GET.per_page %}!bg-slate-900 !text-white !border-slate-900{% endif %}"
+             href="?per_page=25{% if request.GET.q %}&q={{ request.GET.q|urlencode }}{% endif %}">25</a>
+
+          <a class="btn btn-secondary px-3 py-1.5 text-xs {% if request.GET.per_page == '50' %}!bg-slate-900 !text-white !border-slate-900{% endif %}"
+             href="?per_page=50{% if request.GET.q %}&q={{ request.GET.q|urlencode }}{% endif %}">50</a>
+
+          <a class="btn btn-secondary px-3 py-1.5 text-xs {% if request.GET.per_page == '100' %}!bg-slate-900 !text-white !border-slate-900{% endif %}"
+             href="?per_page=100{% if request.GET.q %}&q={{ request.GET.q|urlencode }}{% endif %}">100</a>
+
+          <a class="btn btn-secondary px-3 py-1.5 text-xs {% if request.GET.per_page == 'all' %}!bg-slate-900 !text-white !border-slate-900{% endif %}"
+             href="?per_page=all{% if request.GET.q %}&q={{ request.GET.q|urlencode }}{% endif %}">Tudo</a>
+        </div>
+      </div>
+
+      <div class="overflow-x-auto">
+        {% if page_obj and page_obj.object_list %}
+        <table class="min-w-full text-sm">
+          <thead class="bg-slate-50">
+            <tr class="text-left text-slate-600 border-b border-slate-200">
+              <th class="py-3 px-5 font-semibold">Java</th>
+              <th class="py-3 pr-4 font-semibold">Hist.</th>
+              <th class="py-3 pr-4 font-semibold">Nome loja</th>
+              <th class="py-3 pr-4 font-semibold">Endereço</th>
+              <th class="py-3 pr-4 font-semibold">Logomarca</th>
+              <th class="py-3 pr-4 font-semibold">Cidade/UF</th>
+              <th class="py-3 pr-4 font-semibold">Telefone</th>
+              <th class="py-3 pr-4 font-semibold">IP Banco 12</th>
+              <th class="py-3 px-5 text-right font-semibold"></th>
+            </tr>
+          </thead>
+
+          <tbody class="divide-y divide-slate-100">
+            {% for loja in lojas %}
+              <tr class="hover:bg-slate-50">
+                <td class="py-3 px-5 font-semibold text-slate-900">{{ loja.codigo }}</td>
+                <td class="py-3 pr-4 text-slate-700">{{ loja.hist }}</td>
+                <td class="py-3 pr-4 text-slate-900 font-medium">{{ loja.nome }}</td>
+
+                <td class="py-3 pr-4 max-w-md truncate text-slate-700" title="{{ loja.endereco }}">
+                  {{ loja.endereco }}
+                </td>
+
+                <td class="py-3 pr-4 text-slate-700">{{ loja.logomarca }}</td>
+
+                <td class="py-3 pr-4 text-slate-700">
+                  {% if loja.cidade %}{{ loja.cidade }}{% endif %}{% if loja.uf %}<span class="text-slate-400">/</span>{{ loja.uf }}{% endif %}
+                </td>
+
+                <td class="py-3 pr-4 text-slate-700">{{ loja.telefone }}</td>
+
+                <td class="py-3 pr-4 text-slate-700">
+                  {{ loja.ip_banco_12|default_if_none:"" }}
+                </td>
+
+                <td class="py-3 px-5 text-right">
+                  <a href="{% url 'registry:loja_update' loja.pk %}" class="btn btn-ghost px-3 py-1.5 text-xs">
+                    Editar
+                  </a>
+                </td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="9" class="py-10 text-slate-500 text-center">
+                  Nenhuma loja cadastrada.
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+        {% if request.GET.q %}
+          <div class="px-5 py-10 text-center">
+            <div class="text-sm text-slate-600">
+              Nenhuma loja encontrada para
+              <span class="font-semibold text-slate-900">“{{ request.GET.q }}”</span>
+            </div>
+
+            <div class="mt-4">
+              <a
+                href="?per_page={{ request.GET.per_page|default:'25' }}"
+                class="btn btn-secondary"
+              >
+                Limpar filtro
+              </a>
+            </div>
+          </div>
+        {% else %}
+          <div class="px-5 py-10 text-center">
+            <div class="text-sm text-slate-600">
+              Nenhuma loja cadastrada.
+            </div>
+
+            <div class="mt-4">
+              <a href="{% url 'registry:loja_create' %}" class="btn btn-primary">
+                Nova loja
+              </a>
+            </div>
+          </div>
+        {% endif %}
+      {% endif %}
+
+      {% if is_paginated %}
+        <div class="px-5 py-4 border-t border-slate-200 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div class="text-sm text-slate-600">
+            Página <span class="font-semibold text-slate-900">{{ page_obj.number }}</span>
+            de <span class="font-semibold text-slate-900">{{ page_obj.paginator.num_pages }}</span>
+          </div>
+
+          <div class="flex items-center gap-2">
+            {% if page_obj.has_previous %}
+              <a class="btn btn-secondary"
+                 href="?per_page={{ request.GET.per_page|default:'25' }}&q={{ request.GET.q|urlencode }}&page={{ page_obj.previous_page_number }}">
+                Anterior
+              </a>
+            {% endif %}
+
+            {% if page_obj.has_next %}
+              <a class="btn btn-secondary"
+                 href="?per_page={{ request.GET.per_page|default:'25' }}&q={{ request.GET.q|urlencode }}&page={{ page_obj.next_page_number }}">
+                Próxima
+              </a>
+            {% endif %}
+          </div>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+{% endblock %}

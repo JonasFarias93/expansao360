@@ -1,0 +1,36 @@
+{# web/execucao/templates/execucao/components/_setup_actions.html #}
+
+<div class="rounded-xl border border-slate-200 bg-white p-5 space-y-4">
+  <div>
+    <h2 class="text-base font-semibold">Setup</h2>
+    <p class="text-sm text-slate-600">
+      Marque os itens que exigem configuração e informe o IP quando necessário.
+      Ao salvar o setup, o chamado será enviado para a fila operacional.
+    </p>
+  </div>
+
+  {% if motivos_bloqueio %}
+    <div class="rounded-lg border border-amber-200 bg-amber-50 p-4">
+      <p class="text-sm font-medium text-amber-900 mb-2">
+        Pendências identificadas:
+      </p>
+      <ul class="list-disc pl-5 text-sm text-amber-900 space-y-1">
+        {% for m in motivos_bloqueio %}
+          <li>{{ m }}</li>
+        {% endfor %}
+      </ul>
+      <p class="mt-2 text-xs text-amber-800">
+        Corrija os itens acima antes de salvar o setup.
+      </p>
+    </div>
+  {% endif %}
+
+  <div class="flex justify-end">
+    <a
+      href="{% url 'execucao:fila' %}"
+      class="inline-flex justify-center rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-900 hover:bg-slate-50"
+    >
+      Voltar para fila
+    </a>
+  </div>
+</div>

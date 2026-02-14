@@ -1,0 +1,44 @@
+[project]
+name = "expansao360"
+version = "0.4.0"
+requires-python = ">=3.11"
+dependencies = [
+  "typer>=0.12",
+  "rich>=13",
+]
+
+[project.optional-dependencies]
+web = [
+  "Django>=4.2",
+  "python-dotenv>=1.0",
+  'psycopg[binary]>=3.2',
+]
+test = [
+  "pytest>=8",
+  "pytest-django>=4.8",
+  "pytest-cov>=5",
+]
+dev = [
+  "ruff>=0.6",
+  "pre-commit>=3.7",
+  "deptry>=0.16",
+  "pytest-watch>=4.2",
+  "colorama>=0.4",
+]
+
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["expansao360*"]
+exclude = ["web*", "DECISIONS*", "docs*", "tests*", "node_modules*"]
+
+[tool.deptry]
+pep621_dev_dependency_groups = ["dev", "test"]
+ignore = ["DEP002"]
+per_rule_ignores = { "DEP002" = ["Django", "python-dotenv", "psycopg"] }

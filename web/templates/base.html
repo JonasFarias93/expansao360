@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="pt-br">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>{% block title %}EXPANSÃO360{% endblock %}</title>
+
+    {% load static %}
+
+    <!-- Tailwind (CDN) — MVP -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- UI global (tokens + componentes) -->
+    <link rel="stylesheet" href="{% static 'css/ui.css' %}?v=dev1" />
+
+    {% block extra_head %}{% endblock %}
+  </head>
+
+  <body class="bg-slate-100 text-slate-900" class="bg-slate-100 text-slate-900 test-ui-css">
+    <div class="min-h-screen flex">
+      {% include "partials/_sidebar.html" %}
+
+      <div class="flex-1 flex flex-col">
+        {% include "partials/_topbar.html" %}
+
+        <main class="flex-1 p-6">
+          {% include "partials/_messages.html" %}
+          {% block content %}{% endblock %}
+        </main>
+      </div>
+    </div>
+
+    <!-- HTMX (para selects dependentes, etc.) -->
+    <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+
+    {% block extra_js %}{% endblock %}
+  </body>
+</html>
