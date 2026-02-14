@@ -1,4 +1,4 @@
-SHELL := /usr/bin/env bash
+SHELL := bash
 
 .PHONY: help fmt lint test test-py test-js check hooks \
         env-create deps-install deps-install-dev rebuild-clean \
@@ -9,7 +9,7 @@ PYTHON   ?= python
 
 # Preferir CONDA_EXE (CI/setup-miniconda) e cair pro "command -v conda"
 CONDA_EXE_FALLBACK := $(shell command -v conda 2>/dev/null)
-CONDA ?= $(if $(CONDA_EXE),$(CONDA_EXE),$(CONDA_EXE_FALLBACK))
+CONDA ?= $(if $(CONDA_EXE),$(CONDA_EXE),$(if $(CONDA_EXE_FALLBACK),$(CONDA_EXE_FALLBACK),conda))
 
 help:
 	@echo ""
