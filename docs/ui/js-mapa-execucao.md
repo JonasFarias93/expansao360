@@ -80,3 +80,9 @@ Ownership definido
 | chamado_execucao.html | execucao/js/execucao_item_configurado.js | execucao |     ✅ |                      ✅ |            ✅ |
 | chamado_execucao.html | execucao/js/execucao_finalizar.js        | execucao |     ✅ |                      ✅ |            ✅ |
 
+
+
+## Smoke (MT-07)
+- manage.py check: OK
+- findstatic (execucao + chamados): OK
+- Smoke manual (fila/abertura/setup/execução): OK (console limpo / assets 200)
