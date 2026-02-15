@@ -10,28 +10,24 @@ Esta auditoria tem como finalidade:
 2. Organizar a suíte por **camadas arquiteturais e domínios**.
 3. Padronizar **nomenclatura semântica**.
 4. Criar rastreabilidade para refactor controlado.
-5. Elevar a confiabilidade da suíte antes de futuras evoluções.
+5. Elevar a confiabilidade da suíte antes da versão 1.0.0.
 
 ⚠️ Importante:
-Nenhum teste foi auditado ainda.
-Todos são considerados LEGACY até revisão formal.
+Todo teste inicia como **🟡 LEGACY** até revisão formal.
 
 ---
 
 # 📊 Estado Atual da Suíte
 
 Total coletado: **162 testes**
+Fonte oficial: `pytest --collect-only -q`
+
 Status atual:
 
-* 🟡 LEGACY: 162
-* 🟢 KEEP: 0
-* 🔵 REFATORAR: 0
-* 🔴 REMOVER: 0
-
-Fonte:
-
-* `pytest --collect-only -q`
-* Diretórios: `tests/` e `web/*/tests/`
+* 🟡 LEGACY: **154**
+* 🟢 KEEP: **7**
+* 🔵 REFATORAR: **1**
+* 🔴 REMOVER: **0**
 
 ---
 
@@ -57,14 +53,12 @@ Teste válido, mas precisa:
 
 * Renomeação
 * Reorganização de arquivo
-* Melhorar asserts
-* Reduzir fragilidade
-* Ajustar fixtures
+* Melhorar clareza de contrato
+* Reduzir sobreposição
 
 ## 🔴 REMOVER
 
 Teste duplicado, frágil ou de baixo valor.
-(Remover apenas após validação formal.)
 
 ---
 
@@ -125,7 +119,7 @@ Protege:
 Protege:
 
 * Validação real
-* Regras de negócio (não label superficial)
+* Regras de negócio
 
 ### UI / TemplateTags
 
@@ -153,7 +147,7 @@ Protege:
 Evitar:
 
 * Snapshot gigante
-* Teste de estrutura irrelevante
+* Teste estrutural irrelevante
 
 ---
 
@@ -163,13 +157,13 @@ Evitar:
 
 Deve indicar contrato específico.
 
-✅ Correto:
+Exemplos corretos:
 
 * `test_models_user_capability_unique.py`
-* `test_services_import_lojas_idempotencia.py`
-* `test_views_salvar_execucao_permissoes.py`
+* `test_services_execution_session_active.py`
+* `test_views_chamado_take_session.py`
 
-⚠️ Temporário (LEGACY):
+Temporário (LEGACY):
 
 * `test_models.py`
 * `test_forms.py`
@@ -187,18 +181,13 @@ ou
 
 `test_dado_<condicao>_quando_<acao>_entao_<resultado>()`
 
-Exemplos:
-
-* `test_quando_nf_saida_tem_letras_entao_rejeita()`
-* `test_dado_sessao_ativa_quando_outro_usuario_tenta_abrir_entao_bloqueia()`
-
 ---
 
 # 📋 Checklist Mínimo de Qualidade
 
 Todo teste deve:
 
-* Ter contrato claro (nome ou comentário)
+* Ter contrato claro
 * Usar arrange mínimo
 * Ter assert de efeito real
 * Falhar pelo motivo correto
@@ -225,12 +214,11 @@ Opcional:
 * `web/<app>/tests/_base.py`
 
 Regra:
-_base.py não deve criar dados ocultos.
-Dados devem vir de fixtures explícitas.
+`_base.py` não deve criar dados ocultos.
 
 ---
 
-# 🔄 Processo de Auditoria (App por App)
+# 🔄 Processo de Auditoria
 
 Para cada teste:
 
@@ -249,41 +237,32 @@ Para cada teste:
 
 ---
 
-# 📍 Ordem Estratégica de Auditoria
+# 📍 Ordem Estratégica
 
-1. iam
-2. redes
-3. execucao
-4. cadastro
-5. chamados
+1. iam ✅
+2. redes ✅
+3. execucao ✅
+4. cadastro (pendente)
+5. chamados (pendente)
 
 ---
 
-# 📊 Tabela de Tracking
-
-| App      | Arquivo                         | Total | LEGACY | KEEP | REFATORAR | REMOVER |
-| -------- | ------------------------------- | ----- | ------ | ---- | --------- | ------- |
-| iam      | test_models.py                  | ?     | 🟡     | 0    | 0         | 0       |
-| redes    | test_validacao_ip.py            | ?     | 🟡     | 0    | 0         | 0       |
-| execucao | test_execution_session_model.py | ?     | 🟡     | 0    | 0         | 0       |
-| cadastro | test_models.py                  | ?     | 🟡     | 0    | 0         | 0       |
-| chamados | test_models_chamado_basics.py   | ?     | 🟡     | 0    | 0         | 0       |
-
-(Preencher durante auditoria.)
-
-
-
-# 📊 Estado Atual da Suíte
-
-Total coletado: **162 testes**
-Status atual:
-
-* 🟡 LEGACY: 160
-* 🟢 KEEP: 2
-* 🔵 REFATORAR: 0
-* 🔴 REMOVER: 0
-
 # 📊 Tabela de Tracking Atualizada
 
+| App      | Arquivo                                       | Total | LEGACY | KEEP | REFATORAR | REMOVER |
+| -------- | --------------------------------------------- | ----- | ------ | ---- | --------- | ------- |
+| iam      | test_models_user_capability_unique.py         | 1     | 0      | 1    | 0         | 0       |
+| redes    | test_services_validacao_ip_tc.py              | 8     | 0      | 1    | 0         | 0       |
+| redes    | tests.py (vazio removido)                     | 0     | 0      | 0    | 0         | 1       |
+| execucao | test_models_execution_session.py              | 2     | 0      | 1    | 0         | 0       |
+| execucao | test_services_execution_session_active.py     | 5     | 0      | 1    | 0         | 0       |
+| execucao | test_views_chamado_abrir_sessao_exclusiva.py  | 4     | 0      | 1    | 0         | 0       |
+| execucao | test_views_chamado_take_session.py            | 3     | 0      | 1    | 0         | 0       |
+| execucao | test_views_chamado_abrir_permissoes.py        | 1     | 0      | 1    | 0         | 0       |
+| execucao | test_views_chamado_abrir_redirecionamentos.py | 3     | 0      | 0    | 1         | 0       |
+| cadastro | test_models.py                                | ?     | 🟡     | 0    | 0         | 0       |
+| chamados | test_models_chamado_basics.py                 | ?     | 🟡     | 0    | 0         | 0       |
+
+---
+
 Última atualização: 2026-02-15
-Fonte oficial: `pytest --collect-only -q`
