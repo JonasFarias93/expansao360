@@ -70,12 +70,13 @@ Impacto: risco de inicialização em ordem diferente, dependência implícita e 
 
 Ownership definido
 
-| JS                         | App dono | Justificativa curta            |
-| -------------------------- | -------- | ------------------------------ |
-| execucao_fila_operacional.js       | execucao | Fluxo operacional de fila      |
-| execucao_abertura.js       | chamados | Abertura do domínio do chamado |
-| execucao_setup.js           | chamados | Setup estrutural do chamado    |
-| execucao_detalhe.js         | execucao | Tela ativa de execução         |
-| execucao_salvar.js | execucao | Encerramento de sessão         |
-| execucao_finalizar.js       | execucao | Finalização operacional        |
-| execucao_item_configurado.js        | execucao | Controle de itens na execução  |
+| Template              | JS                                       | App dono | Defer | Comentário no template | Header no JS |
+| --------------------- | ---------------------------------------- | -------- | ----: | ---------------------: | -----------: |
+| fila_operacional.html | execucao/js/execucao_fila_operacional.js | execucao |     ✅ |                      ✅ |            ✅ |
+| chamado_abertura.html | chamados/js/chamados_abertura.js         | chamados |     ✅ |                      ✅ |            ✅ |
+| chamado_setup.html    | chamados/js/chamados_setup.js            | chamados |     ✅ |                      ✅ |            ✅ |
+| chamado_execucao.html | execucao/js/execucao_detalhe.js          | execucao |     ✅ |                      ✅ |            ✅ |
+| chamado_execucao.html | execucao/js/execucao_salvar.js           | execucao |     ✅ |                      ✅ |            ✅ |
+| chamado_execucao.html | execucao/js/execucao_item_configurado.js | execucao |     ✅ |                      ✅ |            ✅ |
+| chamado_execucao.html | execucao/js/execucao_finalizar.js        | execucao |     ✅ |                      ✅ |            ✅ |
+

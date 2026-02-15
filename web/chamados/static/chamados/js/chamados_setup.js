@@ -1,5 +1,17 @@
 // web/execucao/static/execucao/js/execucao_setup.js
-
+/**
+ * Usado em:
+ * - web/chamados/templates/execucao/chamado_setup.html
+ *
+ * Responsabilidade:
+ * - Interações da página de setup do chamado (pré-execução).
+ *
+ * Pré-requisitos DOM:
+ * - (preencher) IDs/classes/data-* utilizados no script.
+ *
+ * Observações:
+ * - Carregado via <script defer> no template de página.
+ */
 (function () {
   function toggleBox(itemId, isChecked) {
     const box = document.getElementById(`cfg-box-${itemId}`);
