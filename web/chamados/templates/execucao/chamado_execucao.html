@@ -10,6 +10,11 @@
 {% endblock %}
 
 {% block content %}
+
+  <div id="execution-root"
+     data-has-session="{{ has_session|yesno:'1,0' }}"
+     data-can-edit="{{ can_edit|yesno:'1,0' }}"
+     data-can-finalize="{{ can_finalize|yesno:'1,0' }}">
   <div id="execucao-container" class="max-w-6xl mx-auto space-y-6">
     {# 1) Header do chamado (informativo) #}
     {% include "execucao/components/_header_chamado.html" with chamado=chamado %}

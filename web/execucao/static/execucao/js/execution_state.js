@@ -6,18 +6,30 @@
 (function () {
   "use strict";
 
+  const ROOT_ID = "execution-root";
+
+  function _root() {
+    return document.getElementById(ROOT_ID);
+  }
+
+  function _asBool(value) {
+    // Contract today: "1" | "0"
+    // Accept some future-safe variants too
+    return value === "1" || value === "true" || value === "True";
+  }
+
   /**
    * Reads execution state from DOM dataset.
    * Source of truth: #execution-root data-* attributes
    */
   function getExecutionState() {
-    const root = document.getElementById("execution-root");
+    const root = _root();
     if (!root) return null;
 
     return {
-      hasSession: root.dataset.hasSession === "1",
-      canEdit: root.dataset.canEdit === "1",
-      canFinalize: root.dataset.canFinalize === "1",
+      hasSession: _asBool(root.dataset.hasSession),
+      canEdit: _asBool(root.dataset.canEdit),
+      canFinalize: _asBool(root.dataset.canFinalize),
     };
   }
 
@@ -26,9 +38,17 @@
     const state = getExecutionState();
     if (!state) return;
 
-    // TODO: applyExecutionState(state)
-    console.debug("Execution state loaded:", state);
+    // TODO(MT-71): applyExecutionState(state)
+    if (window.DEBUG_EXECUCAO_STATE === true) {
+      console.debug("[execucao] execution state loaded:", state);
+    }
   }
+
+  // Optional: expose for tests / next tasks
+  window.ExecutionState = {
+    get: getExecutionState,
+    init: initExecutionState,
+  };
 
   document.addEventListener("DOMContentLoaded", initExecutionState);
 })();
