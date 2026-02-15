@@ -9,7 +9,7 @@ from execucao.models import Chamado, ExecutionSession
 from execucao.tests._base import ChamadoBaseTestCase
 
 
-class ChamadoAbrirPermissoesTests(ChamadoBaseTestCase):
+class TestChamadoAbrirPermissoes(ChamadoBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
 
@@ -26,11 +26,14 @@ class ChamadoAbrirPermissoesTests(ChamadoBaseTestCase):
         )
 
         self.url = reverse(
-            "execucao:chamado_abrir", kwargs={"chamado_id": self.chamado.id}
+            "execucao:chamado_abrir",
+            kwargs={"chamado_id": self.chamado.id},
         )
 
     @patch("execucao.views.user_has_capability", return_value=False)
-    def test_sem_perm_editar_retorna_403_e_nao_cria_sessao(self, _mock_cap) -> None:
+    def test_quando_sem_perm_editar_entao_retorna_403_e_nao_cria_sessao(
+        self, _mock_cap
+    ) -> None:
         resp = self.client.post(self.url)
 
         self.assertEqual(resp.status_code, 403)
