@@ -1,0 +1,65 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [develop, main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: expansao360
+          POSTGRES_USER: expansao360
+          POSTGRES_PASSWORD: expansao360
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U expansao360 -d expansao360"
+          --health-interval=5s
+          --health-timeout=3s
+          --health-retries=20
+
+    env:
+      DB_ENGINE: postgres
+      DB_HOST: 127.0.0.1
+      DB_PORT: "5432"
+      DB_NAME: expansao360
+      DB_USER: expansao360
+      DB_PASSWORD: expansao360
+
+      DJANGO_DEBUG: "0"
+      DJANGO_SETTINGS_MODULE: config.settings
+      PYTHONUNBUFFERED: "1"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Conda (environment.yml)
+        uses: conda-incubator/setup-miniconda@v3
+        with:
+          miniforge-variant: Miniforge3
+          auto-update-conda: true
+          use-mamba: true
+          environment-file: environment.yml
+          activate-environment: expansao360
+
+      - name: Install deps (pyproject via Makefile)
+        shell: bash -l {0}
+        run: |
+          make deps-install
+
+      - name: Run migrations
+        shell: bash -l {0}
+        run: |
+          python web/manage.py migrate
+
+      - name: Run tests
+        shell: bash -l {0}
+        run: |
+          make test-py

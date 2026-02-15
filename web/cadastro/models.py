@@ -33,7 +33,11 @@ class Categoria(models.Model):
         super().clean()
         self.nome = (self.nome or "").strip()
         if self.pk:
-            old = self.__class__.objects.filter(pk=self.pk).values_list("codigo", flat=True).first()
+            old = (
+                self.__class__.objects.filter(pk=self.pk)
+                .values_list("codigo", flat=True)
+                .first()
+            )
             if old is not None and (self.codigo or "") != old:
                 raise ValidationError({"codigo": "Código é imutável após criação."})
 
@@ -80,7 +84,11 @@ class Equipamento(models.Model):
 
         # imutabilidade do codigo após criação
         if self.pk:
-            old = Equipamento.objects.filter(pk=self.pk).values_list("codigo", flat=True).first()
+            old = (
+                Equipamento.objects.filter(pk=self.pk)
+                .values_list("codigo", flat=True)
+                .first()
+            )
             if old is not None and (self.codigo or "") != old:
                 raise ValidationError({"codigo": "Código é imutável após criação."})
 
@@ -227,7 +235,11 @@ class Projeto(models.Model):
         self.nome = (self.nome or "").strip()
 
         if self.pk:
-            old = Projeto.objects.filter(pk=self.pk).values_list("codigo", flat=True).first()
+            old = (
+                Projeto.objects.filter(pk=self.pk)
+                .values_list("codigo", flat=True)
+                .first()
+            )
             if old is not None and (self.codigo or "") != old:
                 raise ValidationError({"codigo": "Código é imutável após criação."})
 
@@ -235,7 +247,9 @@ class Projeto(models.Model):
         self.nome = (self.nome or "").strip()
 
         if not (self.codigo or "").strip():
-            from cadastro.services.codes import generate_code  # ✅ import local anti-ciclo
+            from cadastro.services.codes import (
+                generate_code,
+            )  # ✅ import local anti-ciclo
 
             self.codigo = generate_code("PRO")
 
@@ -246,7 +260,9 @@ class Projeto(models.Model):
 
 
 class Subprojeto(models.Model):
-    projeto = models.ForeignKey(Projeto, on_delete=models.CASCADE, related_name="subprojetos")
+    projeto = models.ForeignKey(
+        Projeto, on_delete=models.CASCADE, related_name="subprojetos"
+    )
     codigo = models.CharField(max_length=50, unique=True, blank=True)
     nome = models.CharField(max_length=120)
 
@@ -261,7 +277,11 @@ class Subprojeto(models.Model):
 
         # ✅ imutabilidade: não permitir trocar codigo após criação
         if self.pk:
-            old = Subprojeto.objects.filter(pk=self.pk).values_list("codigo", flat=True).first()
+            old = (
+                Subprojeto.objects.filter(pk=self.pk)
+                .values_list("codigo", flat=True)
+                .first()
+            )
             if old is not None and (self.codigo or "") != old:
                 raise ValidationError({"codigo": "Código é imutável após criação."})
 
@@ -269,7 +289,9 @@ class Subprojeto(models.Model):
         self.nome = (self.nome or "").strip()
 
         if not (self.codigo or "").strip():
-            from cadastro.services.codes import generate_code  # ✅ import local anti-ciclo
+            from cadastro.services.codes import (
+                generate_code,
+            )  # ✅ import local anti-ciclo
 
             self.codigo = generate_code("SUB")
 

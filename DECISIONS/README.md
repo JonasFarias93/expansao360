@@ -34,6 +34,8 @@ que impacta arquitetura, domínio, UI, processo ou governança.
 | ADR-046 | Reorganização do diretório DECISIONS (índice + domínios) | 2026-02-11 | Aceito |
 | ADR-059 | Criar app Django dedicado para o domínio Chamados | 2026-02-11 | Aceito |
 | ADR-060 | Boundary final: chamados (workflow) vs execucao (sessão) | 2026-02-12 | Aceito |
+| ADR-061 | PostgreSQL como banco padrão de desenvolvimento | 2026-02-12 | Aceito |
+| ADR-062 | Fonte de Verdade de Dependências e Rebuild Limpo | 2026-02-13 | Proposto |
 
 ---
 

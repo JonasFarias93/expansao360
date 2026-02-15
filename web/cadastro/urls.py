@@ -40,7 +40,11 @@ urlpatterns = [
         views.tipos_por_equipamento,
         name="ajax_tipos_por_equipamento",
     ),
-    path("api/kits/<int:pk>/itens/", views.KitItensApiView.as_view(), name="api_kit_itens"),
+    path(
+        "api/kits/<int:pk>/itens/",
+        views.KitItensApiView.as_view(),
+        name="api_kit_itens",
+    ),
     # Equipamento
     path(
         "equipamentos/novo/",
@@ -48,7 +52,9 @@ urlpatterns = [
         name="equipamento_create",
     ),
     # Categorias
-    path("categorias/novo/", views.CategoriaCreateView.as_view(), name="categoria_create"),
+    path(
+        "categorias/novo/", views.CategoriaCreateView.as_view(), name="categoria_create"
+    ),
     # ======================
     # EDIÇÃO
     # ======================
@@ -70,7 +76,9 @@ urlpatterns = [
         name="equipamento_update",
     ),
     path(
-        "categorias/<int:pk>/editar/", views.CategoriaUpdateView.as_view(), name="categoria_update"
+        "categorias/<int:pk>/editar/",
+        views.CategoriaUpdateView.as_view(),
+        name="categoria_update",
     ),
     # ======================
     # CATEGORIAS (quick-create)

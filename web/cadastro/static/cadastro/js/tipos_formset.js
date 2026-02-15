@@ -1,5 +1,15 @@
 // web/cadastro/static/cadastro/js/tipos_formset.js
 (function () {
+  // =========================
+  // Helpers
+  // =========================
+
+  // jsdom pode não ter CSS.escape dependendo da versão/config
+  const cssEscape =
+    (typeof CSS !== "undefined" && typeof CSS.escape === "function")
+      ? CSS.escape
+      : (s) => String(s).replace(/["\\]/g, "\\$&");
+
   function buildOptions(items, selectedValue) {
     const opts = ['<option value="">---------</option>'];
 
@@ -22,7 +32,7 @@
   function getTipoSelectFromEquipSelect(equipSelect) {
     // mesmo prefix do formset: troca "-equipamento" por "-tipo"
     const tipoName = equipSelect.name.replace("-equipamento", "-tipo");
-    return document.querySelector(`select[name="${CSS.escape(tipoName)}"]`);
+    return document.querySelector(`select[name="${cssEscape(tipoName)}"]`);
   }
 
   async function hydrateTipoForRow(equipSelect, tiposUrl) {
@@ -51,12 +61,22 @@
     }
   }
 
-  document.addEventListener("DOMContentLoaded", () => {
-    const container = document.getElementById("itens-container");
+  // =========================
+  // Public init (test-friendly)
+  // =========================
+
+  function initTiposFormset(opts = {}) {
+    const container =
+      opts.container || document.getElementById("itens-container");
     if (!container) return;
 
-    const tiposUrl = container.getAttribute("data-tipos-url");
+    const tiposUrl =
+      opts.tiposUrl || container.getAttribute("data-tipos-url");
     if (!tiposUrl) return;
+
+    // evita duplicar listeners se init for chamado mais de 1 vez
+    if (container.dataset.tiposFormsetBound === "1") return;
+    container.dataset.tiposFormsetBound = "1";
 
     // 1) no load: hidrata todas as linhas que já possuem equipamento
     const equips = container.querySelectorAll('select[name$="-equipamento"]');
@@ -72,5 +92,14 @@
 
       hydrateTipoForRow(target, tiposUrl);
     });
+  }
+
+  // expõe no window pra testes
+  window.__cadastro__ = window.__cadastro__ || {};
+  window.__cadastro__.initTiposFormset = initTiposFormset;
+
+  // mantém comportamento atual no browser
+  document.addEventListener("DOMContentLoaded", () => {
+    initTiposFormset();
   });
 })();

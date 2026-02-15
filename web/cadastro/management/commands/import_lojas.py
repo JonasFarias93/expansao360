@@ -84,11 +84,15 @@ def _read_xlsx(path: Path, sheet: str | None = None) -> list[dict[str, str]]:
 
 
 class Command(BaseCommand):
-    help = "Importa lojas (CSV ';' ou Excel XLSX), criando/atualizando por codigo (Java)."
+    help = (
+        "Importa lojas (CSV ';' ou Excel XLSX), criando/atualizando por codigo (Java)."
+    )
 
     def add_arguments(self, parser):
         parser.add_argument("path", type=str, help="Caminho para arquivo .csv ou .xlsx")
-        parser.add_argument("--sheet", type=str, default=None, help="Nome da aba (opcional, XLSX)")
+        parser.add_argument(
+            "--sheet", type=str, default=None, help="Nome da aba (opcional, XLSX)"
+        )
 
     def handle(self, *args, **options):
         path = Path(options["path"])

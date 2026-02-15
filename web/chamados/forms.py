@@ -63,7 +63,9 @@ class ChamadoCreateForm(forms.Form):
         )
         for _name, field in self.fields.items():
             current = (field.widget.attrs.get("class") or "").strip()
-            field.widget.attrs["class"] = f"{current} {base}".strip() if current else base
+            field.widget.attrs["class"] = (
+                f"{current} {base}".strip() if current else base
+            )
 
         # Descobre projeto_id (POST / GET com params / initial)
         projeto_id = None
@@ -82,7 +84,9 @@ class ChamadoCreateForm(forms.Form):
         else:
             self.fields["subprojeto"].queryset = Subprojeto.objects.none()
 
-        self.fields["subprojeto"].help_text = "Selecione o subprojeto do projeto escolhido."
+        self.fields[
+            "subprojeto"
+        ].help_text = "Selecione o subprojeto do projeto escolhido."
 
         # HTMX: carrega subprojetos ao mudar projeto E também ao carregar a página
         self.fields["projeto"].widget.attrs.update(
@@ -166,7 +170,9 @@ class ChamadoColetaConfirmacaoForm(forms.ModelForm):
             "w-full rounded-lg border border-slate-300 px-3 py-2 "
             "focus:outline-none focus:ring-2 focus:ring-slate-900"
         )
-        current = (self.fields["coleta_confirmada"].widget.attrs.get("class") or "").strip()
+        current = (
+            self.fields["coleta_confirmada"].widget.attrs.get("class") or ""
+        ).strip()
         self.fields["coleta_confirmada"].widget.attrs["class"] = (
             f"{current} {base}".strip() if current else base
         )

@@ -1,79 +1,29 @@
+# web/execucao/admin.py
 from django.contrib import admin
-
-from .models import Chamado, InstalacaoItem
-
-
-class InstalacaoItemInline(admin.TabularInline):
-    model = InstalacaoItem
-    extra = 0
-    fields = (
-        "equipamento",
-        "tipo",
-        "quantidade",
-        "tem_ativo",
-        "requer_configuracao",
-        "status_configuracao",
-        "confirmado",
-        "ativo",
-        "numero_serie",
-    )
-    readonly_fields = ("equipamento", "tipo", "quantidade", "tem_ativo")
+from .models import ExecutionSession, ExecutionSessionLog
 
 
-@admin.register(Chamado)
-class ChamadoAdmin(admin.ModelAdmin):
+@admin.register(ExecutionSession)
+class ExecutionSessionAdmin(admin.ModelAdmin):
     list_display = (
-        "id",
-        "protocolo",
-        "contabilidade_numero",
-        "nf_saida_numero",
-        "loja",
-        "projeto",
-        "subprojeto",
-        "kit",
-        "status",
-        "criado_em",
-        "finalizado_em",
-    )
-    list_filter = ("status", "projeto")
-    search_fields = (
-        "protocolo",
-        "contabilidade_numero",
-        "nf_saida_numero",
-        "loja__codigo",
-        "loja__nome",
-        "projeto__codigo",
-        "projeto__nome",
-    )
-
-    def save_model(self, request, obj, form, change):
-        super().save_model(request, obj, form, change)
-        obj.gerar_itens_de_instalacao()
-
-
-@admin.register(InstalacaoItem)
-class InstalacaoItemAdmin(admin.ModelAdmin):
-    list_display = (
-        "id",
         "chamado",
-        "equipamento",
-        "tipo",
-        "quantidade",
-        "tem_ativo",
-        "requer_configuracao",
-        "status_configuracao",
-        "confirmado",
+        "usuario",
+        "started_at",
+        "expires_at",
+        "ended_at",
+        "ended_reason",
     )
-    list_filter = (
-        "tem_ativo",
-        "confirmado",
-        "requer_configuracao",
-        "status_configuracao",
+    list_filter = ("ended_reason",)
+    search_fields = ("chamado__protocolo", "usuario__username")
+
+
+@admin.register(ExecutionSessionLog)
+class ExecutionSessionLogAdmin(admin.ModelAdmin):
+    list_display = (
+        "chamado",
+        "previous_usuario",
+        "new_usuario",
+        "reason",
+        "created_at",
     )
-    search_fields = (
-        "ativo",
-        "numero_serie",
-        "equipamento__codigo",
-        "equipamento__nome",
-        "tipo",
-    )
+    list_filter = ("reason",)

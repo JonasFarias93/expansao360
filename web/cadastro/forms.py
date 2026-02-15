@@ -250,7 +250,9 @@ class ItemKitForm(forms.ModelForm):
         # Caso 1: edição (GET) - instance existente
         # Garante queryset do tipo populado e valor selecionado aparecer no select.
         # ----------------------------
-        if getattr(self.instance, "pk", None) and getattr(self.instance, "equipamento_id", None):
+        if getattr(self.instance, "pk", None) and getattr(
+            self.instance, "equipamento_id", None
+        ):
             equipamento = getattr(self.instance, "equipamento", None)
 
             if equipamento is not None and getattr(equipamento, "categoria_id", None):
@@ -268,12 +270,16 @@ class ItemKitForm(forms.ModelForm):
         # Caso 2: POST (form bound) - usuário selecionou equipamento no form
         # ----------------------------
         if self.data:
-            equipamento_key = f"{self.prefix}-equipamento" if self.prefix else "equipamento"
+            equipamento_key = (
+                f"{self.prefix}-equipamento" if self.prefix else "equipamento"
+            )
             equip_id = self.data.get(equipamento_key)
 
             if equip_id:
                 try:
-                    equip = Equipamento.objects.select_related("categoria").get(id=int(equip_id))
+                    equip = Equipamento.objects.select_related("categoria").get(
+                        id=int(equip_id)
+                    )
                     _set_tipos_por_equipamento(equip)
                 except (ValueError, Equipamento.DoesNotExist):
                     _set_tipos_por_categoria_id(None)
