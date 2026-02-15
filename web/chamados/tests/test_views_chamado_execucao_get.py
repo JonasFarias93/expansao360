@@ -58,4 +58,4 @@ class ChamadoExecucaoGetWebTest(WebAuthBaseTestCase):
 
         self.assertEqual(resp.status_code, 200)
         html = resp.content.decode("utf-8")
-        self.assertIn("execucao/js/chamado_detalhe.js", html)
+        self.assertIn("execucao/js/execucao_detalhe.js", html)
