@@ -7,10 +7,8 @@ from execucao.models import Chamado
 from ._base import WebAuthBaseTestCase
 
 
-class TestChamadoAdicionarEvidenciaView(WebAuthBaseTestCase):
-    def test_quando_post_com_arquivo_pdf_entao_cria_evidencia_para_o_chamado(
-        self,
-    ) -> None:
+class TestChamadoAdicionarEvidenciaPostView(WebAuthBaseTestCase):
+    def test_quando_envia_pdf_entao_cria_evidencia_com_tipo_e_descricao(self) -> None:
         chamado = Chamado.objects.create(
             loja=self.loja,
             projeto=self.projeto,
