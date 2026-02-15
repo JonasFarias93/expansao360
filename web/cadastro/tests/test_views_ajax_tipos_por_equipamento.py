@@ -5,7 +5,7 @@ from cadastro.models import Categoria, Equipamento, TipoEquipamento
 
 
 @pytest.mark.django_db
-def test_ajax_tipos_por_equipamento_retorna_json(client):
+def test_quando_equipamento_valido_entao_ajax_retorna_tipos_da_categoria(client):
     cat = Categoria.objects.create(nome="Monitores")
 
     eq = Equipamento.objects.create(
@@ -15,10 +15,16 @@ def test_ajax_tipos_por_equipamento_retorna_json(client):
     )
 
     t1 = TipoEquipamento.objects.create(
-        categoria=cat, nome="LCD", codigo="LCD", disponivel=True
+        categoria=cat,
+        nome="LCD",
+        codigo="LCD",
+        disponivel=True,
     )
     t2 = TipoEquipamento.objects.create(
-        categoria=cat, nome="Touch", codigo="TOUCH", disponivel=True
+        categoria=cat,
+        nome="Touch",
+        codigo="TOUCH",
+        disponivel=True,
     )
 
     url = reverse("registry:ajax_tipos_por_equipamento")
