@@ -3,7 +3,6 @@
 // Used in: chamado_execucao.html
 // Scope: PR6 Extra — Execution UI consistency
 
-
 (function () {
   "use strict";
 
@@ -17,7 +16,7 @@
 
   function setReadOnly(root, isReadOnly) {
     // Escopo: somente área de execução (root) — consistente com data-skip-readonly
-    root.querySelectorAll("input, select, textarea").forEach((el) => {
+    root.querySelectorAll("input, select, textarea, button").forEach((el) => {
       if (el.closest("[data-skip-readonly]")) return;
       el.disabled = isReadOnly;
     });
@@ -34,7 +33,8 @@
 
     setReadOnly(root, isReadOnly);
 
-    // TODO: aplicar comportamento de botões/ações finais nas próximas MTs
+    // TODO(PR6): ações finais e toggles específicos virão depois
+    // (sem lógica espalhada em outros JS)
   }
 
   function initExecutionState() {
