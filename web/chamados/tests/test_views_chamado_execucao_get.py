@@ -1,4 +1,4 @@
-# web/execucao/tests/test_views_chamado_execucao_get.py
+# web/chamado/tests/test_views_chamado_execucao_get.py
 from __future__ import annotations
 
 from django.urls import reverse
@@ -59,3 +59,31 @@ class ChamadoExecucaoGetWebTest(WebAuthBaseTestCase):
         self.assertEqual(resp.status_code, 200)
         html = resp.content.decode("utf-8")
         self.assertIn("execucao/js/execucao_detalhe.js", html)
+
+    def test_get_execucao_inclui_execution_root_data_attrs_contract(self) -> None:
+        """
+        Contract test (PR6 / ISSUE #76):
+        chamado_execucao.html must expose execution state via data-* attributes
+        in the #execution-root host element.
+        """
+        chamado = Chamado.objects.create(
+            loja=self.loja,
+            projeto=self.projeto,
+            subprojeto=self.sub,
+            kit=self.kit,
+            status=Chamado.Status.ABERTO,
+        )
+
+        url = reverse("execucao:chamado_detalhe", args=[chamado.id])
+        resp = self.client.get(url)
+
+        self.assertEqual(resp.status_code, 200)
+        html = resp.content.decode("utf-8")
+
+        # Host exists
+        self.assertIn('id="execution-root"', html)
+
+        # Contract attrs must be present (presence-only)
+        self.assertIn("data-has-session=", html)
+        self.assertIn("data-can-edit=", html)
+        self.assertIn("data-can-finalize=", html)
