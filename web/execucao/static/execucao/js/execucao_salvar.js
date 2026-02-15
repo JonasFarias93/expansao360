@@ -112,6 +112,7 @@
 
       // Centralização (ISSUE #71): contrato + reaplicar estado via state manager
       syncExecutionContractAfterSave();
+      document.dispatchEvent(new CustomEvent("execucao:mark-items-bipado"));
       requestApplyState();
 
       showAbrirParaContinuar();
