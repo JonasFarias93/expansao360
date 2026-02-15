@@ -3,13 +3,10 @@
 // Used in: chamado_execucao.html
 // Scope: PR6 Extra — Execution UI consistency
 
+
 (function () {
   "use strict";
 
-  /**
-   * Reads execution state from DOM dataset.
-   * Contract source: #execution-root data-* attributes
-   */
   function readExecutionState(root) {
     return {
       hasSession: root.dataset.hasSession === "1",
@@ -18,26 +15,34 @@
     };
   }
 
-  /**
-   * Idempotent state applier (no UI mutation yet).
-   * Safe to call multiple times.
-   */
+  function setReadOnly(root, isReadOnly) {
+    // Escopo: somente área de execução (root) — consistente com data-skip-readonly
+    root.querySelectorAll("input, select, textarea").forEach((el) => {
+      if (el.closest("[data-skip-readonly]")) return;
+      el.disabled = isReadOnly;
+    });
+  }
+
   function applyExecutionState() {
     const root = document.getElementById("execution-root");
     if (!root) return;
 
     const state = readExecutionState(root);
 
-    // Intentionally no DOM mutations in MT-70.4
-    console.debug("[execucao] applyExecutionState (skeleton):", state);
+    // Regra global: sem sessão OU sem permissão de editar => read-only
+    const isReadOnly = !state.hasSession || !state.canEdit;
+
+    setReadOnly(root, isReadOnly);
+
+    // TODO: aplicar comportamento de botões/ações finais nas próximas MTs
   }
 
-  /**
-   * Bootstrap
-   */
   function initExecutionState() {
     applyExecutionState();
   }
 
   document.addEventListener("DOMContentLoaded", initExecutionState);
+
+  // Permite que outros scripts disparem reaplicação sem acoplamento direto
+  document.addEventListener("execucao:apply-state", applyExecutionState);
 })();
