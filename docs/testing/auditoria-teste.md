@@ -24,10 +24,14 @@ Fonte oficial: `pytest --collect-only -q`
 
 Status atual:
 
-* 🟡 LEGACY: **126**
-* 🟢 KEEP: **35**
-* 🔵 REFATORAR: **1**
+* 🟡 LEGACY: **0**
+* 🟢 KEEP: **162**
+* 🔵 REFATORAR: **0**
 * 🔴 REMOVER: **0**
+
+> Atualização desta rodada (2026-02-15):
+>
+> * Auditoria concluída (nenhum teste permanece como LEGACY).
 
 ---
 
@@ -41,11 +45,11 @@ Teste ainda não auditado segundo o novo padrão.
 
 Teste auditado e aprovado segundo critérios:
 
-✓ Nome semântico
-✓ Arquivo correto por camada
-✓ Uso adequado de fixtures
-✓ Assert de efeito real
-✓ Falha pelo motivo certo
+* ✓ Nome semântico
+* ✓ Arquivo correto por camada
+* ✓ Uso adequado de fixtures
+* ✓ Assert de efeito real
+* ✓ Falha pelo motivo certo
 
 ## 🔵 REFATORAR
 
@@ -58,7 +62,7 @@ Teste válido, mas precisa:
 
 ## 🔴 REMOVER
 
-Teste duplicado, frágil ou de baixo valor.
+Teste duplicado, frágil ou de baixo valor (não representa requisito).
 
 ---
 
@@ -73,7 +77,7 @@ Local: `tests/`
 * `tests/cli/` → CLI e smoke
 
 Regra:
-Core não pode depender de Django.
+Core **não pode** depender de Django.
 
 ---
 
@@ -83,7 +87,7 @@ Local: `web/<app>/tests/`
 
 ### Modelos
 
-`test_models_*.py`
+Arquivos: `test_models_*.py`
 
 Protege:
 
@@ -93,7 +97,7 @@ Protege:
 
 ### Serviços
 
-`test_services_*.py`
+Arquivos: `test_services_*.py`
 
 Protege:
 
@@ -103,7 +107,7 @@ Protege:
 
 ### Views
 
-`test_views_*.py`
+Arquivos: `test_views_*.py`
 
 Protege:
 
@@ -114,7 +118,7 @@ Protege:
 
 ### Forms
 
-`test_forms_*.py`
+Arquivos: `test_forms_*.py`
 
 Protege:
 
@@ -123,7 +127,7 @@ Protege:
 
 ### UI / TemplateTags
 
-`test_ui_*.py`
+Arquivos: `test_ui_*.py`
 
 Protege:
 
@@ -175,11 +179,9 @@ Temporário (LEGACY):
 
 Formato preferido:
 
-`test_quando_<contexto>_entao_<resultado>()`
-
-ou
-
-`test_dado_<condicao>_quando_<acao>_entao_<resultado>()`
+* `test_quando_<contexto>_entao_<resultado>()`
+  ou
+* `test_dado_<condicao>_quando_<acao>_entao_<resultado>()`
 
 ---
 
@@ -243,34 +245,56 @@ Para cada teste:
 2. redes ✅
 3. execucao ✅
 4. cadastro ✅
-5. chamados (pendente)
+5. chamados ✅
 
 ---
 
 # 📊 Tabela de Tracking Atualizada
 
+> Regras da tabela:
+>
+> * As colunas **LEGACY + KEEP + REFATORAR + REMOVER** devem somar o **Total**.
+> * Migração de arquivo entre apps deve ser registrada como **arquivo novo no app destino** (e removido do app origem).
+
 | App      | Arquivo                                       | Total | LEGACY | KEEP | REFATORAR | REMOVER |
 | -------- | --------------------------------------------- | ----- | ------ | ---- | --------- | ------- |
 | iam      | test_models_user_capability_unique.py         | 1     | 0      | 1    | 0         | 0       |
-| redes    | test_services_validacao_ip_tc.py              | 8     | 0      | 1    | 0         | 0       |
-| redes    | tests.py (vazio removido)                     | 0     | 0      | 0    | 0         | 1       |
-| execucao | test_models_execution_session.py              | 2     | 0      | 1    | 0         | 0       |
-| execucao | test_services_execution_session_active.py     | 5     | 0      | 1    | 0         | 0       |
-| execucao | test_views_chamado_abrir_sessao_exclusiva.py  | 4     | 0      | 1    | 0         | 0       |
-| execucao | test_views_chamado_take_session.py            | 3     | 0      | 1    | 0         | 0       |
+| redes    | test_services_validacao_ip_tc.py              | 8     | 0      | 8    | 0         | 0       |
+| execucao | test_models_execution_session.py              | 2     | 0      | 2    | 0         | 0       |
+| execucao | test_services_execution_session_active.py     | 5     | 0      | 5    | 0         | 0       |
+| execucao | test_views_chamado_abrir_sessao_exclusiva.py  | 4     | 0      | 4    | 0         | 0       |
+| execucao | test_views_chamado_take_session.py            | 3     | 0      | 3    | 0         | 0       |
 | execucao | test_views_chamado_abrir_permissoes.py        | 1     | 0      | 1    | 0         | 0       |
-| execucao | test_views_chamado_abrir_redirecionamentos.py | 3     | 0      | 0    | 1         | 0       |
-| cadastro | test_views_loja_list_busca.py                 | 4     | 0      | 1    | 0         | 0       |
-| cadastro | test_services_import_lojas.py                 | 4     | 0      | 1    | 0         | 0       |
-| cadastro | test_models_kit_equipamento_constraints.py    | 4     | 0      | 1    | 0         | 0       |
-| cadastro | test_models_loja_campos_validacao.py          | 2     | 0      | 1    | 0         | 0       |
-| cadastro | test_models_tipo_equipamento_codigo.py        | 4     | 0      | 1    | 0         | 0       |
-| cadastro | test_forms_itemkit_queryset_tipo.py           | 3     | 0      | 1    | 0         | 0       |
-| cadastro | test_forms_smoke.py                           | 2     | 0      | 1    | 0         | 0       |
+| execucao | test_views_chamado_abrir_redirecionamentos.py | 3     | 0      | 3    | 0         | 0       |
+| cadastro | test_views_loja_list_busca.py                 | 4     | 0      | 4    | 0         | 0       |
+| cadastro | test_services_import_lojas.py                 | 4     | 0      | 4    | 0         | 0       |
+| cadastro | test_models_kit_equipamento_constraints.py    | 4     | 0      | 4    | 0         | 0       |
+| cadastro | test_models_loja_campos_validacao.py          | 2     | 0      | 2    | 0         | 0       |
+| cadastro | test_models_tipo_equipamento_codigo.py        | 4     | 0      | 4    | 0         | 0       |
+| cadastro | test_forms_itemkit_queryset_tipo.py           | 3     | 0      | 3    | 0         | 0       |
+| cadastro | test_forms_smoke.py                           | 2     | 0      | 2    | 0         | 0       |
 | cadastro | test_views_ajax_tipos_por_equipamento.py      | 1     | 0      | 1    | 0         | 0       |
-| cadastro | test_views_api_kit_itens.py                   | 4     | 0      | 1    | 0         | 0       |
-| chamados | test_models_chamado_basics.py                 | ?     | 🟡     | 0    | 0         | 0       |
+| cadastro | test_views_api_kit_itens.py                   | 4     | 0      | 4    | 0         | 0       |
+| execucao | test_views_chamado_salvar_dados_fiscais.py    | 4     | 0      | 4    | 0         | 0       |
+| execucao | test_views_item_configurar_endpoint.py        | 4     | 0      | 4    | 0         | 0       |
+| execucao | test_views_chamado_execucao_get.py            | 4     | 0      | 4    | 0         | 0       |
+| execucao | test_views_fila_operacional.py                | 3     | 0      | 3    | 0         | 0       |
+| execucao | test_views_chamado_atualizar_itens.py         | 1     | 0      | 1    | 0         | 0       |
+| execucao | test_views_chamado_adicionar_evidencia.py     | 1     | 0      | 1    | 0         | 0       |
+| execucao | test_api_loja_lookup.py                       | 3     | 0      | 3    | 0         | 0       |
+| execucao | test_views_historico_filtro_java.py           | 1     | 0      | 1    | 0         | 0       |
+| execucao | test_ui_urgencia_templatetags.py              | 5     | 0      | 5    | 0         | 0       |
+| execucao | test_ui_execucao_ui_facade_templatetags.py    | 1     | 0      | 1    | 0         | 0       |
+| execucao | test_ui_projeto_cores_templatetags.py         | 3     | 0      | 3    | 0         | 0       |
+| execucao | test_ui_execucao_ui_templatetags.py           | 1     | 0      | 1    | 0         | 0       |
+| execucao | test_views_chamado_salvar_execucao.py         | 4     | 0      | 4    | 0         | 0       |
+
+### App `chamados` (arquivos presentes)
+ 
+## 🧹 Limpeza de Infra (não conta como REMOVER de testes) (não conta como REMOVER de testes)
+
+* `web/redes/tests.py` (arquivo vazio removido / sem testes coletados)
 
 ---
 
-Última atualização: 2026-02-15
+Última atualização: **2026-02-15**
