@@ -20,20 +20,14 @@ BASE_IP = "10.20.30.1"
 
 
 # -------------------------------------------------------------------
-# LEGADO — TC
+# validar_ip_para_tipo — TC (LEGADO)
 # -------------------------------------------------------------------
 
 
 @pytest.mark.parametrize(
-    "ip",
-    [
-        "10.20.30.11",
-        "10.20.30.13",
-        "10.20.30.14",
-        "10.20.30.15",
-    ],
+    "ip", ["10.20.30.11", "10.20.30.13", "10.20.30.14", "10.20.30.15"]
 )
-def test_legado_tc_aceita_ips_validos(ip):
+def test_dado_legado_tc_quando_ip_valido_entao_retorna_ok_info_reason_ok(ip):
     result = validar_ip_para_tipo(PERFIL_LEGADO, BASE_IP, ip, "TC")
 
     assert result.is_valid is True
@@ -41,7 +35,7 @@ def test_legado_tc_aceita_ips_validos(ip):
     assert result.reason == REASON_TC_LEGACY_OK
 
 
-def test_legado_tc_rejeita_134():
+def test_dado_legado_tc_quando_ip_134_entao_rejeita_error_reason_134():
     result = validar_ip_para_tipo(PERFIL_LEGADO, BASE_IP, "10.20.30.134", "TC")
 
     assert result.is_valid is False
@@ -50,19 +44,12 @@ def test_legado_tc_rejeita_134():
 
 
 # -------------------------------------------------------------------
-# SEGMENTADO — TC
+# validar_ip_para_tipo — TC (SEGMENTADO)
 # -------------------------------------------------------------------
 
 
-@pytest.mark.parametrize(
-    "ip",
-    [
-        "10.20.30.134",
-        "10.20.30.135",
-        "10.20.30.200",
-    ],
-)
-def test_segmentado_tc_aceita_134_ou_maior(ip):
+@pytest.mark.parametrize("ip", ["10.20.30.134", "10.20.30.135", "10.20.30.200"])
+def test_dado_segmentado_tc_quando_ip_134_ou_maior_entao_ok(ip):
     result = validar_ip_para_tipo(PERFIL_SEGMENTADO, BASE_IP, ip, "TC")
 
     assert result.is_valid is True
@@ -70,7 +57,7 @@ def test_segmentado_tc_aceita_134_ou_maior(ip):
     assert result.reason == REASON_TC_SEGMENTADO_OK
 
 
-def test_segmentado_tc_rejeita_11():
+def test_dado_segmentado_tc_quando_ip_11_entao_rejeita_error_reason_11():
     result = validar_ip_para_tipo(PERFIL_SEGMENTADO, BASE_IP, "10.20.30.11", "TC")
 
     assert result.is_valid is False
@@ -79,11 +66,11 @@ def test_segmentado_tc_rejeita_11():
 
 
 # -------------------------------------------------------------------
-# REGRA GLOBAL — prefixo da loja
+# Regra global — prefixo da loja
 # -------------------------------------------------------------------
 
 
-def test_prefixo_divergente_retorna_erro_nao_pertence_a_loja():
+def test_quando_prefixo_diverge_entao_rejeita_error_reason_prefix_mismatch():
     result = validar_ip_para_tipo(
         PERFIL_LEGADO,
         BASE_IP,
@@ -97,11 +84,11 @@ def test_prefixo_divergente_retorna_erro_nao_pertence_a_loja():
 
 
 # -------------------------------------------------------------------
-# TYPO WARNING
+# Typo warning — ainda válido, mas WARN
 # -------------------------------------------------------------------
 
 
-def test_typo_warning_111_quando_esperado_11():
+def test_dado_legado_tc_quando_ip_111_entao_warn_valido_com_suggestion():
     result = validar_ip_para_tipo(
         PERFIL_LEGADO,
         BASE_IP,
@@ -116,11 +103,11 @@ def test_typo_warning_111_quando_esperado_11():
 
 
 # -------------------------------------------------------------------
-# CLASSIFICAÇÃO (contrato mínimo)
+# classificar_ip — contrato mínimo
 # -------------------------------------------------------------------
 
 
-def test_classificar_ip_reconhece_tc_legado():
+def test_classificar_ip_quando_tc_legado_entao_probable_tipo_tc_info():
     result = classificar_ip(
         PERFIL_LEGADO,
         BASE_IP,
@@ -131,7 +118,7 @@ def test_classificar_ip_reconhece_tc_legado():
     assert result.severity == Severity.INFO
 
 
-def test_classificar_ip_warning_ainda_classifica_tc():
+def test_classificar_ip_quando_typo_warning_entao_probable_tipo_tc_warn():
     result = classificar_ip(
         PERFIL_LEGADO,
         BASE_IP,
