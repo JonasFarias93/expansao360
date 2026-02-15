@@ -24,8 +24,8 @@ Fonte oficial: `pytest --collect-only -q`
 
 Status atual:
 
-* 🟡 LEGACY: **154**
-* 🟢 KEEP: **7**
+* 🟡 LEGACY: **126**
+* 🟢 KEEP: **35**
 * 🔵 REFATORAR: **1**
 * 🔴 REMOVER: **0**
 
@@ -242,7 +242,7 @@ Para cada teste:
 1. iam ✅
 2. redes ✅
 3. execucao ✅
-4. cadastro (pendente)
+4. cadastro ✅
 5. chamados (pendente)
 
 ---
@@ -260,7 +260,15 @@ Para cada teste:
 | execucao | test_views_chamado_take_session.py            | 3     | 0      | 1    | 0         | 0       |
 | execucao | test_views_chamado_abrir_permissoes.py        | 1     | 0      | 1    | 0         | 0       |
 | execucao | test_views_chamado_abrir_redirecionamentos.py | 3     | 0      | 0    | 1         | 0       |
-| cadastro | test_models.py                                | ?     | 🟡     | 0    | 0         | 0       |
+| cadastro | test_views_loja_list_busca.py                 | 4     | 0      | 1    | 0         | 0       |
+| cadastro | test_services_import_lojas.py                 | 4     | 0      | 1    | 0         | 0       |
+| cadastro | test_models_kit_equipamento_constraints.py    | 4     | 0      | 1    | 0         | 0       |
+| cadastro | test_models_loja_campos_validacao.py          | 2     | 0      | 1    | 0         | 0       |
+| cadastro | test_models_tipo_equipamento_codigo.py        | 4     | 0      | 1    | 0         | 0       |
+| cadastro | test_forms_itemkit_queryset_tipo.py           | 3     | 0      | 1    | 0         | 0       |
+| cadastro | test_forms_smoke.py                           | 2     | 0      | 1    | 0         | 0       |
+| cadastro | test_views_ajax_tipos_por_equipamento.py      | 1     | 0      | 1    | 0         | 0       |
+| cadastro | test_views_api_kit_itens.py                   | 4     | 0      | 1    | 0         | 0       |
 | chamados | test_models_chamado_basics.py                 | ?     | 🟡     | 0    | 0         | 0       |
 
 ---
