@@ -6,49 +6,30 @@
 (function () {
   "use strict";
 
-  const ROOT_ID = "execution-root";
-
-  function _root() {
-    return document.getElementById(ROOT_ID);
-  }
-
-  function _asBool(value) {
-    // Contract today: "1" | "0"
-    // Accept some future-safe variants too
-    return value === "1" || value === "true" || value === "True";
-  }
-
   /**
    * Reads execution state from DOM dataset.
-   * Source of truth: #execution-root data-* attributes
+   * Contract source: #execution-root data-* attributes
    */
-  function getExecutionState() {
-    const root = _root();
-    if (!root) return null;
-
+  function readExecutionState(root) {
     return {
-      hasSession: _asBool(root.dataset.hasSession),
-      canEdit: _asBool(root.dataset.canEdit),
-      canFinalize: _asBool(root.dataset.canFinalize),
+      hasSession: root.dataset.hasSession === "1",
+      canEdit: root.dataset.canEdit === "1",
+      canFinalize: root.dataset.canFinalize === "1",
     };
   }
 
-  // Stub only — logic will be implemented in next micro-task
+  /**
+   * Bootstraps state reading (no UI mutation yet).
+   */
   function initExecutionState() {
-    const state = getExecutionState();
-    if (!state) return;
+    const root = document.getElementById("execution-root");
+    if (!root) return;
 
-    // TODO(MT-71): applyExecutionState(state)
-    if (window.DEBUG_EXECUCAO_STATE === true) {
-      console.debug("[execucao] execution state loaded:", state);
-    }
+    const state = readExecutionState(root);
+
+    // MT-70.3: read only (no UI changes yet)
+    console.debug("[execucao] execution state:", state);
   }
-
-  // Optional: expose for tests / next tasks
-  window.ExecutionState = {
-    get: getExecutionState,
-    init: initExecutionState,
-  };
 
   document.addEventListener("DOMContentLoaded", initExecutionState);
 })();
