@@ -1,10 +1,11 @@
 from django.urls import reverse
+
 from execucao.tests._base import WebAuthBaseTestCase, grant_cap
 
 from cadastro.models import Loja
 
 
-class LojaListBuscaTests(WebAuthBaseTestCase):
+class TestLojaListBuscaView(WebAuthBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
         grant_cap(self.user, "cadastro.visualizar")
@@ -12,7 +13,11 @@ class LojaListBuscaTests(WebAuthBaseTestCase):
         Loja.objects.all().delete()
 
         Loja.objects.create(
-            codigo="01", nome="Loja Paulista", hist="H123", cidade="São Paulo", uf="SP"
+            codigo="01",
+            nome="Loja Paulista",
+            hist="H123",
+            cidade="São Paulo",
+            uf="SP",
         )
         Loja.objects.create(
             codigo="02",
@@ -22,10 +27,14 @@ class LojaListBuscaTests(WebAuthBaseTestCase):
             uf="SP",
         )
         Loja.objects.create(
-            codigo="03", nome="Loja Rio", hist="H000", cidade="Rio de Janeiro", uf="RJ"
+            codigo="03",
+            nome="Loja Rio",
+            hist="H000",
+            cidade="Rio de Janeiro",
+            uf="RJ",
         )
 
-    def test_q_vazio_retorna_lista_padrao(self) -> None:
+    def test_quando_q_vazio_ou_whitespace_entao_retorna_lista_padrao(self) -> None:
         url = reverse("registry:loja_list")
 
         resp_sem_q = self.client.get(url, {"per_page": "25"})
@@ -36,14 +45,17 @@ class LojaListBuscaTests(WebAuthBaseTestCase):
         self.assertEqual(resp_q_vazio.status_code, 200)
         content_q_vazio = resp_q_vazio.content.decode("utf-8")
 
-        # garante que ambos mostram as lojas padrão
         for nome in ["Loja Paulista", "Loja Centro", "Loja Rio"]:
             self.assertIn(nome, content_sem_q)
             self.assertIn(nome, content_q_vazio)
 
-    def test_q_numerico_bate_em_java_ou_hist(self) -> None:
+    def test_quando_q_numerico_entao_filtra_por_codigo_ou_hist_exato(self) -> None:
         Loja.objects.create(
-            codigo="6", nome="Loja Seis", hist="6", cidade="São Paulo", uf="SP"
+            codigo="6",
+            nome="Loja Seis",
+            hist="6",
+            cidade="São Paulo",
+            uf="SP",
         )
 
         url = reverse("registry:loja_list")
@@ -52,14 +64,17 @@ class LojaListBuscaTests(WebAuthBaseTestCase):
         content = resp.content.decode("utf-8")
 
         self.assertIn("Loja Seis", content)
-        # as outras não deveriam aparecer nesse filtro numérico (iexact)
         self.assertNotIn("Loja Paulista", content)
         self.assertNotIn("Loja Centro", content)
         self.assertNotIn("Loja Rio", content)
 
-    def test_q_texto_busca_por_nome(self) -> None:
+    def test_quando_q_texto_entao_busca_por_nome(self) -> None:
         Loja.objects.create(
-            codigo="10", nome="PAULISTA", hist="", cidade="Sao Paulo", uf="SP"
+            codigo="10",
+            nome="PAULISTA",
+            hist="",
+            cidade="Sao Paulo",
+            uf="SP",
         )
 
         url = reverse("registry:loja_list")
@@ -69,8 +84,7 @@ class LojaListBuscaTests(WebAuthBaseTestCase):
 
         self.assertIn("PAULISTA", content)
 
-    def test_pagina_2_com_filtro_funciona(self) -> None:
-        # cria bastante coisa que bate por nome (texto)
+    def test_quando_paginacao_com_filtro_entao_preserva_querystring(self) -> None:
         for i in range(30):
             Loja.objects.create(
                 codigo=f"9{i}",
@@ -85,9 +99,6 @@ class LojaListBuscaTests(WebAuthBaseTestCase):
         self.assertEqual(resp.status_code, 200)
         content = resp.content.decode("utf-8")
 
-        # paginação preserva filtro e per_page nos links
         self.assertIn("q=PAULISTA", content)
         self.assertIn("per_page=10", content)
-
-        # sanity check: página 2 deve ter itens
         self.assertIn("PAULISTA EXTRA", content)
