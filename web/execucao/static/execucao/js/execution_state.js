@@ -130,4 +130,16 @@
     itemEl.dataset.itemEditing = itemEl.dataset.itemEditing === "1" ? "0" : "1";
     document.dispatchEvent(new CustomEvent("execucao:apply-state"));
   });
+  
+    // Test hook (Jest/jsdom only): expose minimal API for DOM tests
+  if (
+    typeof process !== "undefined" &&
+    process.env &&
+    process.env.NODE_ENV === "test"
+  ) {
+    window.__executionState = {
+      applyExecutionState,
+      readExecutionState,
+    };
+  }
 })();

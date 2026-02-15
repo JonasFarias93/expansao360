@@ -1,4 +1,4 @@
-{# web/execucao/templates/execucao/components/_itens_chamado_execucao.html #}
+{# web/chamados/templates/execucao/components/_itens_chamado_execucao.html #}
 
 <div class="bg-white shadow rounded p-4">
   <div class="flex items-center justify-between mb-3">
@@ -27,25 +27,58 @@
 
     <div class="space-y-4">
       {% for item in itens %}
-        <div class="border rounded p-3">
+        <div
+          class="border rounded p-3"
+          data-item-root="1"
+          data-item-id="{{ item.id }}"
+          data-item-bipado="{% if item.tem_ativo %}{% if item.ativo or item.numero_serie %}1{% else %}0{% endif %}{% else %}{% if item.confirmado %}1{% else %}0{% endif %}{% endif %}"
+          data-item-editing="0"
+        >
           <div class="flex flex-col gap-1 md:flex-row md:items-center md:justify-between">
             <div class="font-medium">
               {{ item.equipamento.nome }} — {{ item.tipo }}
             </div>
 
-            <div class="text-sm text-gray-600">
-              Qtd: <span class="font-medium">{{ item.quantidade }}</span>
+            <div class="flex items-center gap-3">
+              <div class="text-sm text-gray-600">
+                Qtd: <span class="font-medium">{{ item.quantidade }}</span>
 
-              {% if item.tem_ativo %}
-                <span class="ml-2 inline-flex items-center px-2 py-0.5 text-xs rounded bg-orange-100 text-orange-800 font-medium">Rastreável</span>
-              {% else %}
-                <span class="ml-2 inline-flex items-center px-2 py-0.5 text-xs rounded bg-sky-100 text-sky-800 font-medium">Contável</span>
-              {% endif %}
+                {% if item.tem_ativo %}
+                  <span class="ml-2 inline-flex items-center px-2 py-0.5 text-xs rounded bg-orange-100 text-orange-800 font-medium">Rastreável</span>
+                {% else %}
+                  <span class="ml-2 inline-flex items-center px-2 py-0.5 text-xs rounded bg-sky-100 text-sky-800 font-medium">Contável</span>
+                {% endif %}
 
-              {% if item.equipamento.configuravel %}
-                <span class="ml-2 inline-flex items-center px-2 py-0.5 text-xs rounded bg-violet-100 text-violet-800 font-medium">Configurável</span>
-              {% else %}
-                <span class="ml-2 inline-flex items-center px-2 py-0.5 text-xs rounded bg-slate-100 text-slate-600 font-medium">Não configurável</span>
+                {% if item.equipamento.configuravel %}
+                  <span class="ml-2 inline-flex items-center px-2 py-0.5 text-xs rounded bg-violet-100 text-violet-800 font-medium">Configurável</span>
+                {% else %}
+                  <span class="ml-2 inline-flex items-center px-2 py-0.5 text-xs rounded bg-slate-100 text-slate-600 font-medium">Não configurável</span>
+                {% endif %}
+              </div>
+
+              {# Edit mode por item: só mostra quando o item está "bipado" #}
+              {% if not chamado.finalizado_em %}
+                {% if item.tem_ativo %}
+                  {% if item.ativo or item.numero_serie %}
+                    <button
+                      type="button"
+                      class="text-xs font-medium text-slate-700 hover:text-slate-900 underline"
+                      data-item-edit-toggle="1"
+                    >
+                      Editar item
+                    </button>
+                  {% endif %}
+                {% else %}
+                  {% if item.confirmado %}
+                    <button
+                      type="button"
+                      class="text-xs font-medium text-slate-700 hover:text-slate-900 underline"
+                      data-item-edit-toggle="1"
+                    >
+                      Editar item
+                    </button>
+                  {% endif %}
+                {% endif %}
               {% endif %}
             </div>
           </div>
@@ -110,7 +143,7 @@
           {% if item.equipamento.configuravel and item.deve_configurar %}
             <div class="mt-3 border-t pt-3">
               <div class="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div>
+                <div data-skip-readonly>
                   <div class="flex items-center justify-between gap-3">
                     <label class="block text-[11px] uppercase tracking-wider text-gray-500 font-bold">
                       IP
@@ -139,7 +172,6 @@
                       </div>
                     {% endif %}
                   </div>
-
 
                   <div class="mt-2 hidden" data-ip-edit="{{ item.id }}">
                     <input
