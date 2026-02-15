@@ -86,3 +86,54 @@ Ownership definido
 - manage.py check: OK
 - findstatic (execucao + chamados): OK
 - Smoke manual (fila/abertura/setup/execução): OK (console limpo / assets 200)
+
+---
+
+## Estado final pós-limpeza (baseline)
+
+### Regras consolidadas
+- Ownership de JS é por app (chamados vs execucao).
+- Somente templates de página carregam JS (componentes/parciais não importam scripts).
+- Todos os scripts externos são carregados com `defer`.
+- Headers de JS e comentários "Depends on" nos templates são obrigatórios.
+
+### Smoke / verificação de assets
+- `python web/manage.py check` ✅
+- `python web/manage.py findstatic ...` ✅ (todos assets resolvem)
+- Smoke manual: fila, abertura, setup, execução/detalhe ✅ (console limpo, assets 200)
+
+---
+
+
+## PR6 — Pré-requisitos e páginas-alvo do execution_state.js
+
+### Onde o state manager deve rodar
+O `execution_state.js` será carregado **apenas em páginas que exibem/alteram estado de execução**.
+
+Páginas-alvo:
+- web/chamados/templates/execucao/chamado_execucao.html
+
+Páginas fora do escopo (por enquanto):
+- fila_operacional.html (pode entrar depois se houver estado/lock no front)
+- chamado_abertura.html (domínio do chamado)
+- chamado_setup.html (domínio do chamado)
+
+### Contrato mínimo esperado (data-*)
+A página de execução/detalhe deve expor um host com dataset:
+
+- `data-has-session="0|1"`
+- `data-can-edit="0|1"`
+- `data-can-finalize="0|1"`
+
+E o JS deve ser idempotente:
+- `applyExecutionState()` pode ser chamado múltiplas vezes sem efeitos colaterais.
+
+### Lista de scripts na página (ordem recomendada, todos com defer)
+- execucao/js/execution_state.js (novo - PR6)
+- execucao/js/execucao_detalhe.js
+- execucao/js/execucao_item_configurado.js
+- execucao/js/execucao_salvar.js
+- execucao/js/execucao_finalizar.js
+
+Observação:
+- A PR6 deve remover qualquer lógica de “read-only global” espalhada e centralizar em `execution_state.js`.
