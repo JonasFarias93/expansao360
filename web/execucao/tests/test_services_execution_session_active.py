@@ -13,7 +13,7 @@ from execucao.services.execution_session import (
 from execucao.tests._base import WebAuthBaseTestCase
 
 
-class ExecutionSessionActiveRuleTests(WebAuthBaseTestCase):
+class TestExecutionSessionActiveService(WebAuthBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
         self.chamado = Chamado.objects.create(
@@ -24,10 +24,10 @@ class ExecutionSessionActiveRuleTests(WebAuthBaseTestCase):
             status=Chamado.Status.ABERTO,
         )
 
-    def test_get_active_session_retorna_none_quando_nao_existe(self) -> None:
+    def test_quando_nao_existe_sessao_ativa_entao_get_retorna_none(self) -> None:
         assert get_active_session(chamado=self.chamado) is None
 
-    def test_get_active_session_ignora_encerrada(self) -> None:
+    def test_quando_sessao_encerrada_entao_get_retorna_none(self) -> None:
         ExecutionSession.objects.create(
             chamado=self.chamado,
             usuario=self.user,
@@ -36,7 +36,7 @@ class ExecutionSessionActiveRuleTests(WebAuthBaseTestCase):
         )
         assert get_active_session(chamado=self.chamado) is None
 
-    def test_get_active_session_ignora_expirada(self) -> None:
+    def test_quando_sessao_expirada_entao_get_retorna_none(self) -> None:
         ExecutionSession.objects.create(
             chamado=self.chamado,
             usuario=self.user,
@@ -44,13 +44,14 @@ class ExecutionSessionActiveRuleTests(WebAuthBaseTestCase):
         )
         assert get_active_session(chamado=self.chamado) is None
 
-    def test_create_active_session_cria_quando_nao_existe_ativa(self) -> None:
+    def test_quando_nao_existe_ativa_entao_create_cria_e_get_retorna(self) -> None:
         s = create_active_session(chamado=self.chamado, user=self.user)
+
         assert s.chamado_id == self.chamado.id
         assert s.usuario_id == self.user.id
         assert get_active_session(chamado=self.chamado).id == s.id
 
-    def test_create_active_session_bloqueia_quando_ja_existe_ativa(self) -> None:
+    def test_quando_ja_existe_ativa_entao_create_dispara_conflict_error(self) -> None:
         create_active_session(chamado=self.chamado, user=self.user)
 
         with self.assertRaises(ActiveSessionConflictError):
