@@ -3,6 +3,7 @@ from __future__ import annotations
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 from django.utils import timezone
+
 from iam.execucao_capabilities import CAP_EXECUCAO_CHAMADO_EDITAR
 from iam.models import Capability, UserCapability
 
@@ -10,7 +11,7 @@ from execucao.models import Chamado, ExecutionSession
 from execucao.tests._base import WebAuthBaseTestCase
 
 
-class ExecutionSessionContractsTests(WebAuthBaseTestCase):
+class TestChamadoAbrirSessaoExclusiva(WebAuthBaseTestCase):
     """
     Contratos mínimos da sessão exclusiva ao abrir chamado:
 
@@ -41,16 +42,14 @@ class ExecutionSessionContractsTests(WebAuthBaseTestCase):
         User = get_user_model()
         self.user_b = User.objects.create_user(username="u2", password="x")
 
-        # Ambos precisam da cap de editar para exercitar os contratos de sessão
         cap, _ = Capability.objects.get_or_create(code=CAP_EXECUCAO_CHAMADO_EDITAR)
         UserCapability.objects.get_or_create(user=self.user, capability=cap)
         UserCapability.objects.get_or_create(user=self.user_b, capability=cap)
 
-        # client B autenticado
         self.client_b = self.client.__class__()
         self.client_b.force_login(self.user_b)
 
-    def test_tecnico_a_abre_cria_sessao(self) -> None:
+    def test_quando_tecnico_a_abre_entao_cria_sessao(self) -> None:
         resp = self.client.post(self.url_abrir)
 
         self.assertEqual(resp.status_code, 302)
@@ -60,26 +59,25 @@ class ExecutionSessionContractsTests(WebAuthBaseTestCase):
         self.assertEqual(s.usuario_id, self.user.id)
         self.assertIsNone(s.ended_at)
 
-    def test_tecnico_a_abre_de_novo_reentra(self) -> None:
+    def test_quando_tecnico_a_abre_novamente_entao_reentra_sem_criar_nova(self) -> None:
         self.client.post(self.url_abrir)
         self.assertEqual(ExecutionSession.objects.count(), 1)
 
         resp = self.client.post(self.url_abrir)
         self.assertEqual(resp.status_code, 302)
 
-        # reentra: não cria outra
         self.assertEqual(ExecutionSession.objects.count(), 1)
 
         s = ExecutionSession.objects.get(chamado=self.chamado)
         self.assertEqual(s.usuario_id, self.user.id)
         self.assertIsNone(s.ended_at)
 
-    def test_tecnico_b_tenta_abrir_bloqueia(self) -> None:
-        # A cria sessão
+    def test_quando_tecnico_b_tenta_com_sessao_ativa_entao_bloqueia_sem_criar_nova(
+        self,
+    ) -> None:
         self.client.post(self.url_abrir)
         self.assertEqual(ExecutionSession.objects.count(), 1)
 
-        # B tenta abrir -> deve bloquear (não cria nova)
         resp = self.client_b.post(self.url_abrir)
         self.assertEqual(resp.status_code, 302)
 
@@ -87,17 +85,14 @@ class ExecutionSessionContractsTests(WebAuthBaseTestCase):
         s = ExecutionSession.objects.get(chamado=self.chamado)
         self.assertEqual(s.usuario_id, self.user.id)
 
-    def test_sessao_encerrada_manual_tecnico_b_consegue_abrir(self) -> None:
-        # A cria sessão
+    def test_quando_sessao_encerrada_entao_tecnico_b_consegue_criar_nova(self) -> None:
         self.client.post(self.url_abrir)
         s = ExecutionSession.objects.get(chamado=self.chamado)
 
-        # encerra manualmente no teste (simula finalizar/encerrar)
         s.ended_at = timezone.now()
         s.ended_reason = ExecutionSession.EndReason.FINALIZADO
         s.save(update_fields=["ended_at", "ended_reason"])
 
-        # B tenta abrir -> agora deve criar uma nova sessão
         resp = self.client_b.post(self.url_abrir)
         self.assertEqual(resp.status_code, 302)
 
