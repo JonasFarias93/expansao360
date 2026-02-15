@@ -5,8 +5,8 @@ from django.test import TestCase
 from django.urls import reverse
 
 
-class LojaLookupPorCodigoApiTests(TestCase):
-    def test_lookup_existente_retorna_payload_minimo(self) -> None:
+class TestApiLojaLookupPorCodigo(TestCase):
+    def test_quando_codigo_existe_entao_retorna_payload_minimo(self) -> None:
         loja = Loja.objects.create(codigo="3500", nome="BROOKLIN NOVO")
 
         url = reverse("execucao:api_loja_lookup")
@@ -18,13 +18,13 @@ class LojaLookupPorCodigoApiTests(TestCase):
             {"id": loja.id, "codigo": "3500", "nome": "BROOKLIN NOVO"},
         )
 
-    def test_lookup_inexistente_retorna_404(self) -> None:
+    def test_quando_codigo_nao_existe_entao_retorna_404(self) -> None:
         url = reverse("execucao:api_loja_lookup")
         resp = self.client.get(url, {"codigo": "9999"})
 
         self.assertEqual(resp.status_code, 404)
 
-    def test_lookup_invalido_retorna_400(self) -> None:
+    def test_quando_codigo_invalido_ou_ausente_entao_retorna_400(self) -> None:
         url = reverse("execucao:api_loja_lookup")
 
         resp1 = self.client.get(url, {"codigo": ""})
