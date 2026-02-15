@@ -1,3 +1,19 @@
+/**
+ * Usado em:
+ * - web/chamados/templates/execucao/chamado_execucao.html
+ *
+ * Responsabilidade:
+ * - Interações e estado de itens configurados na tela de execução (ex: habilitar/desabilitar inputs do item, eventos do item).
+ *
+ * Pré-requisitos DOM:
+ * - (preencher) seletor/atributos que identificam itens e campos.
+ *
+ * Observações:
+ * - Carregado via <script defer> no template de página.
+ */
+
+
+
 (function () {
   function getCookie(name) {
     const value = `; ${document.cookie}`;

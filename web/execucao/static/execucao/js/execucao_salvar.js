@@ -1,4 +1,21 @@
 // web/execucao/static/execucao/js/execucao_salvar.js
+/**
+ * Usado em:
+ * - web/chamados/templates/execucao/chamado_execucao.html
+ *
+ * Responsabilidade:
+ * - Enviar POST de "Salvar execução" via AJAX e atualizar feedback de UI (status "Salvo...").
+ * - NÃO deve gerenciar estado global de tela (isso será centralizado pelo state manager na PR6).
+ *
+ * Pré-requisitos DOM:
+ * - IDs: btn-salvar-execucao, salvar-status (opcional), execucao-container (opcional), abrir-para-continuar (opcional)
+ * - data-attrs: data-url em #btn-salvar-execucao
+ * - Cookie: csrftoken
+ *
+ * Observações:
+ * - Carregado via <script defer> no template de página.
+ * - Não deve ser importado por componentes/parciais.
+ */
 (function () {
   const btn = document.getElementById("btn-salvar-execucao");
   if (!btn) return;

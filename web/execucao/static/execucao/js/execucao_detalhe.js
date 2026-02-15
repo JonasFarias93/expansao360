@@ -1,3 +1,17 @@
+/**
+ * Usado em:
+ * - web/chamados/templates/execucao/chamado_execucao.html
+ *
+ * Responsabilidade:
+ * - Comportamentos da tela de execução/detalhe (UI de detalhe, inicialização da página, binds principais).
+ *
+ * Pré-requisitos DOM:
+ * - (preencher) IDs/classes/data-* utilizados no script.
+ *
+ * Observações:
+ * - Carregado via <script defer> no template de página.
+ */
+
 // =====================================
 // Itens de Execução — UI helpers
 // (sem dependências)

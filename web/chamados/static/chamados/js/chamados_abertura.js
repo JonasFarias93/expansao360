@@ -1,5 +1,18 @@
 /* web/execucao/static/execucao/js/execucao_abertura.js */
-
+/**
+ * Usado em:
+ * - web/chamados/templates/execucao/chamado_abertura.html
+ *
+ * Responsabilidade:
+ * - Interações da página de abertura do chamado (validações, ações do formulário, UX do fluxo de abertura).
+ *
+ * Pré-requisitos DOM:
+ * - (preencher) IDs/classes/data-* utilizados no script.
+ *
+ * Observações:
+ * - Carregado via <script defer> no template de página.
+ * - Não deve ser importado por componentes/parciais.
+ */
 (function () {
   function initLojaLookup() {
     const inputCodigo = document.getElementById("id_loja_codigo");
