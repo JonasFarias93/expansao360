@@ -278,21 +278,12 @@ Para cada teste:
 Total coletado: **162 testes**
 Status atual:
 
-* 🟡 LEGACY: 161
-* 🟢 KEEP: 1
+* 🟡 LEGACY: 160
+* 🟢 KEEP: 2
 * 🔵 REFATORAR: 0
 * 🔴 REMOVER: 0
 
 # 📊 Tabela de Tracking Atualizada
-
-| App      | Arquivo                         | Total | LEGACY | KEEP | REFATORAR | REMOVER |
-| -------- | ------------------------------- | ----- | ------ | ---- | --------- | ------- |
-| iam      | test_models_user_capability_unique.py| 1     | 0     | 1     | 0         | 0       |
-| redes    | test_validacao_ip.py            | ?     | 🟡     | 0    | 0         | 0       |
-| execucao | test_execution_session_model.py | ?     | 🟡     | 0    | 0         | 0       |
-| cadastro | test_models.py                  | ?     | 🟡     | 0    | 0         | 0       |
-| chamados | test_models_chamado_basics.py   | ?     | 🟡     | 0    | 0         | 0       |
----
 
 Última atualização: 2026-02-15
 Fonte oficial: `pytest --collect-only -q`
