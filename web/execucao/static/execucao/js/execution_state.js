@@ -19,16 +19,24 @@
   }
 
   /**
-   * Bootstraps state reading (no UI mutation yet).
+   * Idempotent state applier (no UI mutation yet).
+   * Safe to call multiple times.
    */
-  function initExecutionState() {
+  function applyExecutionState() {
     const root = document.getElementById("execution-root");
     if (!root) return;
 
     const state = readExecutionState(root);
 
-    // MT-70.3: read only (no UI changes yet)
-    console.debug("[execucao] execution state:", state);
+    // Intentionally no DOM mutations in MT-70.4
+    console.debug("[execucao] applyExecutionState (skeleton):", state);
+  }
+
+  /**
+   * Bootstrap
+   */
+  function initExecutionState() {
+    applyExecutionState();
   }
 
   document.addEventListener("DOMContentLoaded", initExecutionState);
