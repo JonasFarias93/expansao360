@@ -7,12 +7,12 @@ from execucao.models import Chamado
 from ._base import WebAuthBaseTestCase, grant_cap
 
 
-class TestFilaOperacionalView(WebAuthBaseTestCase):
+class TestFilaOperacionalGetView(WebAuthBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
         grant_cap(self.user, "execucao.chamado.visualizar")
 
-    def _make_chamado(self, *, prioridade, status) -> Chamado:
+    def _criar_chamado(self, *, prioridade: str, status: str) -> Chamado:
         return Chamado.objects.create(
             loja=self.loja,
             projeto=self.projeto,
@@ -23,21 +23,27 @@ class TestFilaOperacionalView(WebAuthBaseTestCase):
             criado_em=timezone.now(),
         )
 
-    def test_fila_operacional_counts(self) -> None:
+    def test_quando_renderiza_fila_entao_counts_considera_apenas_chamados_na_fila(
+        self,
+    ) -> None:
         # Na fila
-        self._make_chamado(
-            prioridade=Chamado.Prioridade.CRITICA, status=Chamado.Status.ABERTO
+        self._criar_chamado(
+            prioridade=Chamado.Prioridade.CRITICA,
+            status=Chamado.Status.ABERTO,
         )
-        self._make_chamado(
-            prioridade=Chamado.Prioridade.CRITICA, status=Chamado.Status.EM_EXECUCAO
+        self._criar_chamado(
+            prioridade=Chamado.Prioridade.CRITICA,
+            status=Chamado.Status.EM_EXECUCAO,
         )
-        self._make_chamado(
-            prioridade=Chamado.Prioridade.ALTA, status=Chamado.Status.ABERTO
+        self._criar_chamado(
+            prioridade=Chamado.Prioridade.ALTA,
+            status=Chamado.Status.ABERTO,
         )
 
         # Fora da fila
-        self._make_chamado(
-            prioridade=Chamado.Prioridade.BAIXA, status=Chamado.Status.FINALIZADO
+        self._criar_chamado(
+            prioridade=Chamado.Prioridade.BAIXA,
+            status=Chamado.Status.FINALIZADO,
         )
 
         resp = self.client.get(reverse("execucao:fila"))
@@ -50,12 +56,16 @@ class TestFilaOperacionalView(WebAuthBaseTestCase):
         self.assertEqual(counts["medio"], 0)
         self.assertEqual(counts["baixo"], 0)
 
-    def test_fila_operacional_filtra_por_prioridade(self) -> None:
-        crit = self._make_chamado(
-            prioridade=Chamado.Prioridade.CRITICA, status=Chamado.Status.ABERTO
+    def test_quando_prio_filtrada_entao_retorna_apenas_prioridade_selecionada(
+        self,
+    ) -> None:
+        crit = self._criar_chamado(
+            prioridade=Chamado.Prioridade.CRITICA,
+            status=Chamado.Status.ABERTO,
         )
-        self._make_chamado(
-            prioridade=Chamado.Prioridade.ALTA, status=Chamado.Status.ABERTO
+        self._criar_chamado(
+            prioridade=Chamado.Prioridade.ALTA,
+            status=Chamado.Status.ABERTO,
         )
 
         resp = self.client.get(reverse("execucao:fila") + "?prio=CRITICO")
@@ -66,12 +76,16 @@ class TestFilaOperacionalView(WebAuthBaseTestCase):
         self.assertEqual(rows[0]["chamado"].id, crit.id)
         self.assertEqual(resp.context["prio_selected"], "CRITICO")
 
-    def test_fila_operacional_prio_invalida_ignorada(self) -> None:
-        self._make_chamado(
-            prioridade=Chamado.Prioridade.CRITICA, status=Chamado.Status.ABERTO
+    def test_quando_prio_invalida_entao_ignora_filtro_e_prio_selected_e_none(
+        self,
+    ) -> None:
+        self._criar_chamado(
+            prioridade=Chamado.Prioridade.CRITICA,
+            status=Chamado.Status.ABERTO,
         )
-        self._make_chamado(
-            prioridade=Chamado.Prioridade.ALTA, status=Chamado.Status.ABERTO
+        self._criar_chamado(
+            prioridade=Chamado.Prioridade.ALTA,
+            status=Chamado.Status.ABERTO,
         )
 
         resp = self.client.get(reverse("execucao:fila") + "?prio=QUALQUERCOISA")
