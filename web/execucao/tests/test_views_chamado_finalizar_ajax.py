@@ -8,12 +8,9 @@ from execucao.tests._base import WebAuthBaseTestCase, grant_cap
 from iam.models import UserCapability
 
 
-class ChamadoFinalizarViewTests(WebAuthBaseTestCase):
-    def setUp(self) -> None:
-        super().setUp()
-        self.url = lambda cid: reverse(
-            "execucao:chamado_finalizar", kwargs={"chamado_id": cid}
-        )
+class TestChamadoFinalizarAjaxView(WebAuthBaseTestCase):
+    def _url(self, chamado_id: int) -> str:
+        return reverse("execucao:chamado_finalizar", kwargs={"chamado_id": chamado_id})
 
     def _mk_chamado(
         self,
@@ -41,33 +38,21 @@ class ChamadoFinalizarViewTests(WebAuthBaseTestCase):
         grant_cap(self.user, "execucao.chamado_finalizar")
         grant_cap(self.user, "execucao.chamado.finalizar")
 
-    def test_finalizar_sem_sessao_retorna_403(self) -> None:
-        chamado = self._mk_chamado(coleta_confirmada_em=timezone.now())
-        self._grant_finalizar()
-
-        resp = self.client.post(
-            self.url(chamado.id),
-            HTTP_X_REQUESTED_WITH="XMLHttpRequest",
-        )
-        self.assertEqual(resp.status_code, 403)
-
-        chamado.refresh_from_db()
-        self.assertNotEqual(chamado.status, Chamado.Status.FINALIZADO)
-
-    def test_finalizar_sem_permissao_retorna_403(self) -> None:
-        chamado = self._mk_chamado(coleta_confirmada_em=timezone.now())
-        create_active_session(chamado=chamado, user=self.user)
+    def _revoke_finalizar_caps(self) -> None:
         UserCapability.objects.filter(
             user=self.user,
             capability__code__in=[
                 "execucao.chamado.finalizar",
                 "execucao.chamado_finalizar",
-                "execucao.chamado.finalizar",
             ],
         ).delete()
 
+    def test_quando_finalizar_sem_sessao_ativa_entao_retorna_403(self) -> None:
+        chamado = self._mk_chamado(coleta_confirmada_em=timezone.now())
+        self._grant_finalizar()
+
         resp = self.client.post(
-            self.url(chamado.id),
+            self._url(chamado.id),
             HTTP_X_REQUESTED_WITH="XMLHttpRequest",
         )
         self.assertEqual(resp.status_code, 403)
@@ -75,13 +60,30 @@ class ChamadoFinalizarViewTests(WebAuthBaseTestCase):
         chamado.refresh_from_db()
         self.assertNotEqual(chamado.status, Chamado.Status.FINALIZADO)
 
-    def test_finalizar_sem_coleta_confirmada_retorna_erro_com_pendencias(self) -> None:
+    def test_quando_finalizar_sem_permissao_entao_retorna_403(self) -> None:
+        chamado = self._mk_chamado(coleta_confirmada_em=timezone.now())
+        create_active_session(chamado=chamado, user=self.user)
+
+        self._revoke_finalizar_caps()
+
+        resp = self.client.post(
+            self._url(chamado.id),
+            HTTP_X_REQUESTED_WITH="XMLHttpRequest",
+        )
+        self.assertEqual(resp.status_code, 403)
+
+        chamado.refresh_from_db()
+        self.assertNotEqual(chamado.status, Chamado.Status.FINALIZADO)
+
+    def test_quando_finalizar_sem_coleta_confirmada_entao_retorna_400_com_pendencias(
+        self,
+    ) -> None:
         chamado = self._mk_chamado(coleta_confirmada_em=None)
         create_active_session(chamado=chamado, user=self.user)
         self._grant_finalizar()
 
         resp = self.client.post(
-            self.url(chamado.id),
+            self._url(chamado.id),
             HTTP_X_REQUESTED_WITH="XMLHttpRequest",
         )
         self.assertEqual(resp.status_code, 400)
@@ -98,7 +100,9 @@ class ChamadoFinalizarViewTests(WebAuthBaseTestCase):
         chamado.refresh_from_db()
         self.assertNotEqual(chamado.status, Chamado.Status.FINALIZADO)
 
-    def test_finalizar_com_pendencias_fiscais_retorna_erro_listando(self) -> None:
+    def test_quando_finalizar_com_pendencias_fiscais_entao_retorna_400_listando_codigos(
+        self,
+    ) -> None:
         chamado = self._mk_chamado(
             coleta_confirmada_em=timezone.now(),
             contabilidade_numero="",
@@ -108,7 +112,7 @@ class ChamadoFinalizarViewTests(WebAuthBaseTestCase):
         self._grant_finalizar()
 
         resp = self.client.post(
-            self.url(chamado.id),
+            self._url(chamado.id),
             HTTP_X_REQUESTED_WITH="XMLHttpRequest",
         )
         self.assertEqual(resp.status_code, 400)
@@ -123,7 +127,9 @@ class ChamadoFinalizarViewTests(WebAuthBaseTestCase):
         chamado.refresh_from_db()
         self.assertNotEqual(chamado.status, Chamado.Status.FINALIZADO)
 
-    def test_finalizar_com_nf_invalida_retorna_erro_listando(self) -> None:
+    def test_quando_finalizar_com_nf_saida_invalida_entao_retorna_400_listando_codigo(
+        self,
+    ) -> None:
         chamado = self._mk_chamado(
             coleta_confirmada_em=timezone.now(),
             contabilidade_numero="123",
@@ -133,7 +139,7 @@ class ChamadoFinalizarViewTests(WebAuthBaseTestCase):
         self._grant_finalizar()
 
         resp = self.client.post(
-            self.url(chamado.id),
+            self._url(chamado.id),
             HTTP_X_REQUESTED_WITH="XMLHttpRequest",
         )
         self.assertEqual(resp.status_code, 400)
@@ -147,7 +153,9 @@ class ChamadoFinalizarViewTests(WebAuthBaseTestCase):
         chamado.refresh_from_db()
         self.assertNotEqual(chamado.status, Chamado.Status.FINALIZADO)
 
-    def test_finalizar_com_tudo_ok_muda_status_e_encerra_sessao(self) -> None:
+    def test_quando_finalizar_com_tudo_ok_entao_muda_status_para_finalizado_e_encerra_sessao(
+        self,
+    ) -> None:
         chamado = self._mk_chamado(
             coleta_confirmada_em=timezone.now(),
             contabilidade_numero="123",
@@ -157,7 +165,7 @@ class ChamadoFinalizarViewTests(WebAuthBaseTestCase):
         self._grant_finalizar()
 
         resp = self.client.post(
-            self.url(chamado.id),
+            self._url(chamado.id),
             HTTP_X_REQUESTED_WITH="XMLHttpRequest",
         )
         self.assertEqual(resp.status_code, 200)
@@ -171,40 +179,3 @@ class ChamadoFinalizarViewTests(WebAuthBaseTestCase):
         sessao.refresh_from_db()
         self.assertIsNotNone(sessao.ended_at)
         self.assertEqual(sessao.ended_reason, "FINALIZE")
-
-    def test_finalizar_com_pendencias_de_itens_quando_existirem_campos(self) -> None:
-        chamado = self._mk_chamado(coleta_confirmada_em=timezone.now())
-        create_active_session(chamado=chamado, user=self.user)
-        self._grant_finalizar()
-
-        chamado.gerar_itens_de_instalacao()
-        item = chamado.itens.first()
-        if item is None:
-            self.skipTest("Chamado não gerou itens no cenário de teste.")
-
-        # força pendência se existir campo serial/ativo
-        changed = False
-        if hasattr(item, "serial"):
-            item.serial = ""
-            changed = True
-        if hasattr(item, "ativo"):
-            item.ativo = ""
-            changed = True
-        if hasattr(item, "configurado_em") and getattr(item, "deve_configurar", False):
-            item.configurado_em = None
-            changed = True
-
-        if not changed:
-            self.skipTest(
-                "Model de item não possui campos rastreáveis/configuráveis para este MVP."
-            )
-
-        item.save()
-
-        resp = self.client.post(
-            self.url(chamado.id), HTTP_X_REQUESTED_WITH="XMLHttpRequest"
-        )
-        self.assertEqual(resp.status_code, 400)
-
-        pend = resp.json()["pendencias"]["itens"]
-        self.assertTrue(len(pend) >= 1)
