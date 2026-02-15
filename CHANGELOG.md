@@ -4,6 +4,79 @@ Todas as mudanças relevantes do projeto são documentadas neste arquivo.
 O versionamento segue o padrão **SemVer**.
 
 ---
+## v0.4.1 - 2026-02-14
+
+### Changed
+- Reset estrutural de migrations após split definitivo
+- Remoção de duplicidade de templatetags
+- Alinhamento de admin ao boundary de domínio
+
+### Internal
+- Boundary final: chamados = domínio / execucao = sessão/fila
+- pytest 160 passed / 1 skipped
+- manage.py check limpo
+---
+
+## [v0.4.0] — 2026-02-13
+
+### Infra consolidada — Postgres como padrão
+
+Este release consolida a base de infraestrutura do projeto, oficializando
+**PostgreSQL como banco padrão** e garantindo reprodutibilidade via
+docker-compose e CI.
+
+---
+
+### 🐘 Database
+
+* PostgreSQL definido como banco oficial do projeto
+* Configuração baseada em variáveis de ambiente (`DB_ENGINE`, `DB_*`)
+* `.env.example` atualizado com contrato mínimo obrigatório
+* docker-compose validado com healthcheck de Postgres
+
+---
+
+### ⚙️ Infra / Dev Experience
+
+* Novo target `make compose-smoke`
+  - Sobe Postgres
+  - Aguarda healthcheck
+  - Executa migrations
+  - Executa pytest
+* Padronização do fluxo local via `.env`
+* Pipeline CI ajustado para usar Postgres de forma obrigatória
+
+---
+
+### 🧪 Quality Gate
+
+* Teste PG-01: CI falha se banco não for Postgres
+* Garantia de conexão real com vendor `postgresql`
+* Pipeline validando instalação limpa + testes verdes
+
+---
+
+### 🔄 Changed
+
+* Postgres deixa de ser “fase futura” e passa a ser padrão oficial
+* Removido fallback implícito para SQLite no ambiente principal
+
+---
+
+### ⛔ Não incluso nesta versão
+
+* Refatoração final de templatetags duplicadas (warnings W003)
+* Split estrutural definitivo no banco (FKs → chamados.Chamado)
+
+---
+
+### Próximo passo
+
+* Limpeza de duplicidade de templatetags
+* Ajustes finais do split
+* Preparação estrutural para v1.0.0
+
+---
 
 ## [v0.3.6] — 2026-02-08
 

@@ -8,7 +8,8 @@ Fontes de verdade:
 * Código em `web/`
 * Testes automatizados (`tests/` e `web/*/tests/`)
 * ADRs em `DECISIONS/`
-* Ambiente definido em `environment.yml`
+* Dependências Python definidas em `pyproject.toml` (ADR-062)
+* Base do ambiente Conda (python/libs nativas) em `environment.yml` (ADR-062)
 
 > Regra: todo requisito aqui descrito deve ser verificável por teste automatizado,
 > inspeção objetiva do código ou validação operacional reproduzível.
@@ -69,7 +70,7 @@ Critério de aceitação:
 Fonte:
 
 * `web/execucao/models.py`
-* `test_models_chamado_itens.py`
+* `web/execucao/tests/`
 
 ---
 
@@ -248,7 +249,7 @@ O projeto deve usar:
 
 Verificação:
 
-* Suíte executável via comando único
+* Suíte executável via comando único (`make test-py`)
 
 ---
 
@@ -262,6 +263,24 @@ O projeto deve testar JavaScript crítico com:
 Verificação:
 
 * Testes presentes em `web/**/__tests__/`
+
+---
+
+## RNF-05 — Auditoria de Dependências Python
+
+O projeto deve possuir auditoria automatizada para detectar:
+
+* Dependências declaradas e não utilizadas
+* Imports utilizados sem dependência declarada
+
+Ferramenta adotada:
+
+* `deptry`
+
+Verificação:
+
+* Execução via `make deps-check`
+* Falhas devem ser corrigidas antes de merge
 
 ---
 
@@ -288,19 +307,26 @@ Verificação:
 
 ---
 
-# 5. Baseline de Dependências (confirmadas por documentação interna)
+# 5. Baseline de Dependências
 
-Dependências principais:
-
-Python:
+Dependências principais (runtime Python):
 
 * Django
+* python-dotenv
+
+Dependências de teste (extra `[test]` no `pyproject.toml`):
+
 * pytest
 * pytest-django
 * pytest-cov
+* psycopg[binary]
+
+Ferramentas de desenvolvimento (extra `[dev]` no `pyproject.toml`):
+
 * ruff
 * black
 * pre-commit
+* deptry
 
 JS (dev):
 
@@ -309,7 +335,14 @@ JS (dev):
 
 Fonte definitiva:
 
-* `environment.yml`
+* Python: `pyproject.toml`
+* Base Conda: `environment.yml`
+* JS: `package.json` / `package-lock.json`
+
+Snapshots (artefatos gerados, não fonte de verdade):
+
+* `docs/deps/environment.snapshot.yml`
+* `docs/deps/pip-freeze.snapshot.txt`
 
 ---
 
@@ -332,5 +365,5 @@ Se um requisito mudar:
 
 ---
 
-Última revisão: 2026-02-11
-Fonte: Código real em `web/` + testes automatizados + `environment.yml`
+**Última revisão:** 2026-02-13
+**Fonte:** Código real em `web/` + testes automatizados + `pyproject.toml` + `environment.yml`

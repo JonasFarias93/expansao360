@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 
-from expansao360.domain.models import OperationMount
+from ...domain.models import OperationMount
 
 
 class OperationRepository(ABC):

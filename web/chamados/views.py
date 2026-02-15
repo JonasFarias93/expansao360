@@ -139,8 +139,12 @@ class ChamadoCreateView(CapabilityRequiredMixin, View):
             # e só vira ABERTO após "Salvar setup".
             status=Chamado.Status.EM_ABERTURA,
             tipo=Chamado.Tipo.ENVIO,
-            ticket_externo_sistema=(form.cleaned_data.get("ticket_externo_sistema") or "").strip(),
-            ticket_externo_id=(form.cleaned_data.get("ticket_externo_id") or "").strip(),
+            ticket_externo_sistema=(
+                form.cleaned_data.get("ticket_externo_sistema") or ""
+            ).strip(),
+            ticket_externo_id=(
+                form.cleaned_data.get("ticket_externo_id") or ""
+            ).strip(),
             prioridade=prioridade,
         )
 
@@ -317,7 +321,9 @@ class ChamadoFilaView(CapabilityRequiredMixin, TemplateView):
 
         ctx["projects_reset_url"] = self._url_with_query(projeto=None)
 
-        proj_rows = base_qs.values("projeto_id").annotate(count=Count("id")).order_by("-count")
+        proj_rows = (
+            base_qs.values("projeto_id").annotate(count=Count("id")).order_by("-count")
+        )
 
         proj_ids = [r["projeto_id"] for r in proj_rows if r["projeto_id"] is not None]
         proj_map = Projeto.objects.in_bulk(proj_ids)
@@ -374,11 +380,15 @@ class ChamadoFilaView(CapabilityRequiredMixin, TemplateView):
             cfg = [i for i in itens if i.deve_configurar]
 
             bipados = sum(
-                1 for i in rastreaveis if (i.ativo or "").strip() and (i.numero_serie or "").strip()
+                1
+                for i in rastreaveis
+                if (i.ativo or "").strip() and (i.numero_serie or "").strip()
             )
             checados = sum(1 for i in contaveis if i.confirmado)
             cfg_done = sum(
-                1 for i in cfg if i.status_configuracao == StatusConfiguracao.CONFIGURADO and i.ip
+                1
+                for i in cfg
+                if i.status_configuracao == StatusConfiguracao.CONFIGURADO and i.ip
             )
 
             rows.append(
@@ -437,7 +447,11 @@ class HistoricoView(CapabilityRequiredMixin, TemplateView):
         q = (self.request.GET.get("q") or "").strip()
         java = (self.request.GET.get("java") or "").strip()
 
-        chamados = Chamado.objects.all().select_related("loja", "projeto").order_by("-criado_em")
+        chamados = (
+            Chamado.objects.all()
+            .select_related("loja", "projeto")
+            .order_by("-criado_em")
+        )
 
         # Filtro dedicado: Java (código da loja)
         if java:
@@ -500,7 +514,8 @@ class ChamadoExecucaoView(CapabilityRequiredMixin, TemplateView):
         # - permissão IAM
         # - sessão ativa do próprio usuário no chamado
         can_edit_dados_fiscais = (
-            user_has_capability(self.request.user, CAP_EXECUCAO_CHAMADO_EDITAR) and sessao_ativa
+            user_has_capability(self.request.user, CAP_EXECUCAO_CHAMADO_EDITAR)
+            and sessao_ativa
         )
 
         # -----------------------------------------
@@ -517,11 +532,13 @@ class ChamadoExecucaoView(CapabilityRequiredMixin, TemplateView):
         # Ações finais (sessão + IAM)
         # -----------------------------------------
         can_confirmar_coleta = (
-            user_has_capability(self.request.user, CAP_EXECUCAO_CHAMADO_EDITAR) and sessao_ativa
+            user_has_capability(self.request.user, CAP_EXECUCAO_CHAMADO_EDITAR)
+            and sessao_ativa
         )
 
         can_finalizar = (
-            user_has_capability(self.request.user, CAP_EXECUCAO_CHAMADO_FINALIZAR) and sessao_ativa
+            user_has_capability(self.request.user, CAP_EXECUCAO_CHAMADO_FINALIZAR)
+            and sessao_ativa
         )
 
         # Mostra a seção “Ações finais” se tiver pelo menos uma permissão de ação
@@ -535,7 +552,17 @@ class ChamadoExecucaoView(CapabilityRequiredMixin, TemplateView):
             and gate_nf_ok
         )
 
+        # TODO(PR6 Extra): preencher regra real de finalização com gates
         pode_finalizar = False
+
+        # -----------------------------------------
+        # Execution UI state (PR6 Extra) — data-* contract
+        # -----------------------------------------
+        has_session = bool(sessao_ativa)
+        # "can_edit" aqui é o modo editável da página de execução (não é "editar dados fiscais")
+        can_edit = bool(sessao_ativa and chamado.status != Chamado.Status.FINALIZADO)
+        # "can_finalize" representa o estado efetivo do botão (capability + sessão + gates)
+        can_finalize = bool(pode_finalizar)
 
         # -----------------------------------------
         # Itens / progresso
@@ -588,6 +615,10 @@ class ChamadoExecucaoView(CapabilityRequiredMixin, TemplateView):
                 "can_execute_actions": can_execute_actions,
                 "pode_confirmar_coleta": pode_confirmar_coleta,
                 "pode_finalizar": pode_finalizar,
+                # execution state contract
+                "has_session": has_session,
+                "can_edit": can_edit,
+                "can_finalize": can_finalize,
             }
         )
         return ctx
@@ -600,7 +631,9 @@ class ChamadoInformarContabilView(CapabilityRequiredMixin, View):
     required_capability = "execucao.chamado.editar_referencias"
 
     @transaction.atomic
-    def post(self, request: HttpRequest, chamado_id: int, *args, **kwargs) -> HttpResponse:
+    def post(
+        self, request: HttpRequest, chamado_id: int, *args, **kwargs
+    ) -> HttpResponse:
         chamado = get_object_or_404(Chamado, pk=chamado_id)
         chamado.gerar_itens_de_instalacao()
 
@@ -609,7 +642,9 @@ class ChamadoInformarContabilView(CapabilityRequiredMixin, View):
             return redirect("execucao:chamado_detalhe", chamado_id=chamado.id)
 
         if chamado.tipo != Chamado.Tipo.ENVIO:
-            messages.error(request, "Ação disponível apenas para chamados do tipo ENVIO.")
+            messages.error(
+                request, "Ação disponível apenas para chamados do tipo ENVIO."
+            )
             return redirect("execucao:chamado_detalhe", chamado_id=chamado.id)
 
         if not chamado.pode_liberar_nf():
@@ -643,7 +678,9 @@ class ChamadoInformarNFSaidaView(CapabilityRequiredMixin, View):
     required_capability = "execucao.chamado.editar_referencias"
 
     @transaction.atomic
-    def post(self, request: HttpRequest, chamado_id: int, *args, **kwargs) -> HttpResponse:
+    def post(
+        self, request: HttpRequest, chamado_id: int, *args, **kwargs
+    ) -> HttpResponse:
         chamado = get_object_or_404(Chamado, pk=chamado_id)
 
         if chamado.status == Chamado.Status.FINALIZADO:
@@ -651,7 +688,9 @@ class ChamadoInformarNFSaidaView(CapabilityRequiredMixin, View):
             return redirect("execucao:chamado_detalhe", chamado_id=chamado.id)
 
         if chamado.tipo != Chamado.Tipo.ENVIO:
-            messages.error(request, "Ação disponível apenas para chamados do tipo ENVIO.")
+            messages.error(
+                request, "Ação disponível apenas para chamados do tipo ENVIO."
+            )
             return redirect("execucao:chamado_detalhe", chamado_id=chamado.id)
 
         if not (chamado.contabilidade_numero or "").strip():
@@ -681,7 +720,9 @@ class ChamadoConfirmarColetaView(CapabilityRequiredMixin, View):
     required_capability = "execucao.chamado.confirmar_coleta"
 
     @transaction.atomic
-    def post(self, request: HttpRequest, chamado_id: int, *args, **kwargs) -> HttpResponse:
+    def post(
+        self, request: HttpRequest, chamado_id: int, *args, **kwargs
+    ) -> HttpResponse:
         chamado = (
             Chamado.objects.select_for_update()
             .select_related("loja", "projeto", "subprojeto", "kit")
@@ -693,11 +734,15 @@ class ChamadoConfirmarColetaView(CapabilityRequiredMixin, View):
             return redirect("execucao:chamado_detalhe", chamado_id=chamado.id)
 
         if chamado.tipo != Chamado.Tipo.ENVIO:
-            messages.error(request, "Ação disponível apenas para chamados do tipo ENVIO.")
+            messages.error(
+                request, "Ação disponível apenas para chamados do tipo ENVIO."
+            )
             return redirect("execucao:chamado_detalhe", chamado_id=chamado.id)
 
         if not (chamado.nf_saida_numero or "").strip():
-            messages.error(request, "Informe a NF de saída antes de confirmar a coleta.")
+            messages.error(
+                request, "Informe a NF de saída antes de confirmar a coleta."
+            )
             return redirect("execucao:chamado_detalhe", chamado_id=chamado.id)
 
         if chamado.coleta_confirmada_em is not None:
@@ -706,7 +751,9 @@ class ChamadoConfirmarColetaView(CapabilityRequiredMixin, View):
 
         chamado.coleta_confirmada = True
         chamado.coleta_confirmada_em = timezone.now()
-        chamado.coleta_confirmada_por = request.user if request.user.is_authenticated else None
+        chamado.coleta_confirmada_por = (
+            request.user if request.user.is_authenticated else None
+        )
 
         try:
             chamado.full_clean()
@@ -715,7 +762,11 @@ class ChamadoConfirmarColetaView(CapabilityRequiredMixin, View):
             return redirect("execucao:chamado_detalhe", chamado_id=chamado.id)
 
         chamado.save(
-            update_fields=["coleta_confirmada", "coleta_confirmada_em", "coleta_confirmada_por"]
+            update_fields=[
+                "coleta_confirmada",
+                "coleta_confirmada_em",
+                "coleta_confirmada_por",
+            ]
         )
         messages.success(request, "Coleta confirmada.")
         return redirect("execucao:chamado_detalhe", chamado_id=chamado.id)
@@ -728,11 +779,15 @@ class ChamadoAtualizarItensView(CapabilityRequiredMixin, View):
     required_capability = "execucao.chamado.editar_itens"
 
     @transaction.atomic
-    def post(self, request: HttpRequest, chamado_id: int, *args, **kwargs) -> HttpResponse:
+    def post(
+        self, request: HttpRequest, chamado_id: int, *args, **kwargs
+    ) -> HttpResponse:
         chamado = get_object_or_404(Chamado, pk=chamado_id)
 
         if chamado.status == Chamado.Status.FINALIZADO:
-            messages.warning(request, "Chamado já está finalizado. Não é possível editar itens.")
+            messages.warning(
+                request, "Chamado já está finalizado. Não é possível editar itens."
+            )
             return redirect("execucao:chamado_detalhe", chamado_id=chamado.id)
 
         chamado.gerar_itens_de_instalacao()
@@ -821,7 +876,9 @@ class ChamadoFinalizarView(CapabilityRequiredMixin, View):
     required_capability = CAP_EXECUCAO_CHAMADO_FINALIZAR
 
     @transaction.atomic
-    def post(self, request: HttpRequest, chamado_id: int, *args, **kwargs) -> HttpResponse:
+    def post(
+        self, request: HttpRequest, chamado_id: int, *args, **kwargs
+    ) -> HttpResponse:
         chamado = get_object_or_404(
             Chamado.objects.select_for_update().select_related(
                 "loja", "projeto", "subprojeto", "kit"
@@ -866,10 +923,13 @@ class ChamadoFinalizarView(CapabilityRequiredMixin, View):
             for p in result.coleta:
                 messages.error(request, f"Coleta: {p.message}")
             for it in result.itens[:20]:  # evita spam
-                messages.error(request, f"Item {it.item_id} ({it.equipamento}): {it.message}")
+                messages.error(
+                    request, f"Item {it.item_id} ({it.equipamento}): {it.message}"
+                )
             if len(result.itens) > 20:
                 messages.error(
-                    request, f"... e mais {len(result.itens) - 20} pendência(s) de itens."
+                    request,
+                    f"... e mais {len(result.itens) - 20} pendência(s) de itens.",
                 )
 
             return redirect("execucao:chamado_detalhe", chamado_id=chamado.id)
@@ -920,7 +980,9 @@ def _registrar_log_finalizacao(*, chamado: Chamado, user) -> None:
 class ChamadoAdicionarEvidenciaView(CapabilityRequiredMixin, View):
     required_capability = "execucao.evidencia.upload"
 
-    def post(self, request: HttpRequest, chamado_id: int, *args, **kwargs) -> HttpResponse:
+    def post(
+        self, request: HttpRequest, chamado_id: int, *args, **kwargs
+    ) -> HttpResponse:
         chamado = get_object_or_404(Chamado, pk=chamado_id)
 
         tipo = (request.POST.get("tipo") or "").strip()
@@ -961,7 +1023,9 @@ class EvidenciaRemoverView(CapabilityRequiredMixin, View):
         chamado = get_object_or_404(Chamado, pk=chamado_id)
 
         if chamado.finalizado_em:
-            messages.error(request, "Chamado finalizado. Não é possível remover evidências.")
+            messages.error(
+                request, "Chamado finalizado. Não é possível remover evidências."
+            )
             return redirect("execucao:chamado_detalhe", chamado_id=chamado.id)
 
         ev = get_object_or_404(EvidenciaChamado, pk=evidencia_id, chamado_id=chamado.id)
@@ -989,7 +1053,9 @@ class ItemSetStatusConfiguracaoView(CapabilityRequiredMixin, View):
         chamado = get_object_or_404(Chamado, pk=chamado_id)
 
         if chamado.finalizado_em:
-            messages.error(request, "Chamado finalizado. Não é possível alterar status.")
+            messages.error(
+                request, "Chamado finalizado. Não é possível alterar status."
+            )
             return redirect("execucao:chamado_detalhe", chamado_id=chamado.id)
 
         item = get_object_or_404(InstalacaoItem, pk=item_id, chamado=chamado)
@@ -1009,7 +1075,9 @@ class ItemSetStatusConfiguracaoView(CapabilityRequiredMixin, View):
             and status != StatusConfiguracao.CONFIGURADO
         ):
             if not motivo:
-                messages.error(request, "Informe um motivo para voltar um item já configurado.")
+                messages.error(
+                    request, "Informe um motivo para voltar um item já configurado."
+                )
                 return redirect("execucao:chamado_detalhe", chamado_id=chamado.id)
 
         if status == status_atual:
@@ -1077,7 +1145,9 @@ class ChamadoSalvarDadosFiscaisView(View):
     required_capability = "execucao.chamado_editar"
 
     @transaction.atomic
-    def post(self, request: HttpRequest, chamado_id: int, *args, **kwargs) -> HttpResponse:
+    def post(
+        self, request: HttpRequest, chamado_id: int, *args, **kwargs
+    ) -> HttpResponse:
         chamado = get_object_or_404(Chamado, pk=chamado_id)
 
         # 1) IAM -> 403
@@ -1086,7 +1156,9 @@ class ChamadoSalvarDadosFiscaisView(View):
 
         # 2) Sessão ativa do próprio usuário -> 403
         if not usuario_tem_sessao_ativa_no_chamado(user=request.user, chamado=chamado):
-            return HttpResponseForbidden("Sessão ativa é obrigatória para editar este chamado.")
+            return HttpResponseForbidden(
+                "Sessão ativa é obrigatória para editar este chamado."
+            )
 
         form = ChamadoDadosFiscaisForm(request.POST, instance=chamado)
         if not form.is_valid():

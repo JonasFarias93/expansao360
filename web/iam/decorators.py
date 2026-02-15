@@ -23,7 +23,9 @@ def capability_required(code: str, *, redirect_to="execucao:historico"):
         @wraps(view_func)
         def _wrapped(request, *args, **kwargs):
             if not user_has_capability(request.user, code):
-                messages.error(request, "Você não tem permissão para executar esta ação.")
+                messages.error(
+                    request, "Você não tem permissão para executar esta ação."
+                )
                 return redirect(redirect_to)
             return view_func(request, *args, **kwargs)
 

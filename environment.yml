@@ -4,16 +4,3 @@ channels:
 dependencies:
   - python=3.11
   - pip
-  - pytest
-  - ruff
-  - black
-  - pre-commit
-  - pip:
-  - pytest-cov
-  - typer
-  - rich
-  - django
-
-          
-
-

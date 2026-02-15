@@ -7,8 +7,8 @@ from pathlib import Path
 from rich import print
 import typer
 
-from expansao360.application.use_cases import register_location, register_mount
-from expansao360.infrastructure.file_repositories import (
+from .application.use_cases import register_location, register_mount
+from .infrastructure.file_repositories import (
     FileLocationRepository,
     FileOperationRepository,
 )
@@ -86,4 +86,6 @@ def mount_list() -> None:
         raise typer.Exit(code=0)
 
     for op in items:
-        print(f"- {op.registry_location_id} | {op.performed_by} | {op.performed_at.isoformat()}")
+        print(
+            f"- {op.registry_location_id} | {op.performed_by} | {op.performed_at.isoformat()}"
+        )

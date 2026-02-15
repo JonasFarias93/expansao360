@@ -87,3 +87,9 @@ web/db.sqlite3.bak
 data/
 
 .tmp/
+
+# =========================
+# Dependency snapshots (generated)
+# =========================
+_env_dump.yml
+_pip_dump.txt
