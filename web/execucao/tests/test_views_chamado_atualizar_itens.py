@@ -7,8 +7,8 @@ from execucao.models import Chamado, InstalacaoItem
 from ._base import WebAuthBaseTestCase
 
 
-class TestChamadoAtualizarItensStatusView(WebAuthBaseTestCase):
-    def test_quando_post_confirmando_item_entao_status_vira_em_execucao_e_item_fica_confirmado(
+class TestChamadoAtualizarItensPostView(WebAuthBaseTestCase):
+    def test_quando_confirma_item_entao_marca_confirmado_e_promove_para_em_execucao(
         self,
     ) -> None:
         equipamento = Equipamento.objects.create(
