@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-from cadastro.models import Projeto
-from django.db.models import Case, Count, IntegerField, Value, When
+from django.db.models import Case, IntegerField, Value, When
 from django.http import QueryDict
 from django.utils import timezone
 from django.views.generic import TemplateView
@@ -9,7 +8,7 @@ from execucao.models import ExecutionSession
 from iam.decorators import user_has_capability
 from iam.execucao_capabilities import CAP_EXECUCAO_SESSAO_TOMAR
 from iam.mixins import CapabilityRequiredMixin
-from chamados.selectors.fila import fila_base_queryset, fila_counts
+from chamados.selectors.fila import fila_base_queryset, fila_counts, fila_projects
 from ..models import Chamado, StatusConfiguracao
 
 
@@ -82,35 +81,11 @@ class ChamadoFilaView(CapabilityRequiredMixin, TemplateView):
 
         ctx["projects_reset_url"] = self._url_with_query(projeto=None)
 
-        proj_rows = (
-            base_qs.values("projeto_id").annotate(count=Count("id")).order_by("-count")
+        ctx["projects"] = fila_projects(
+            base_qs,
+            projeto_selected=projeto_id,
+            url_builder=lambda pid: self._url_with_query(projeto=pid),
         )
-
-        proj_ids = [r["projeto_id"] for r in proj_rows if r["projeto_id"] is not None]
-        proj_map = Projeto.objects.in_bulk(proj_ids)
-
-        projects: list[dict[str, object]] = []
-        for r in proj_rows:
-            pid = r["projeto_id"]
-            if pid is None:
-                continue
-
-            proj = proj_map.get(pid)
-            if not proj:
-                continue
-
-            projects.append(
-                {
-                    "id": pid,
-                    "projeto": proj,
-                    "nome": proj.nome,
-                    "count": r["count"],
-                    "url": self._url_with_query(projeto=pid),
-                    "active": projeto_id == pid,
-                }
-            )
-
-        ctx["projects"] = projects
 
         chamados = qs.annotate(
             status_rank=Case(
