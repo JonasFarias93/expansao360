@@ -112,7 +112,7 @@
                 <label class="block text-[11px] uppercase tracking-wider text-gray-500 font-bold mb-1">Ativo</label>
                 <input
                   name="ativo_{{ item.id }}"
-                  value="{{ item.ativo|default_if_none:'' }}"
+                  value="{{ item.ativo }}"
                   class="w-full border rounded px-3 py-2 text-sm"
                   {% if chamado.finalizado_em %}disabled{% endif %}
                 />
@@ -121,7 +121,7 @@
                 <label class="block text-[11px] uppercase tracking-wider text-gray-500 font-bold mb-1">Número de Série</label>
                 <input
                   name="serie_{{ item.id }}"
-                  value="{{ item.numero_serie|default_if_none:'' }}"
+                  value="{{ item.numero_serie }}"
                   class="w-full border rounded px-3 py-2 text-sm"
                   {% if chamado.finalizado_em %}disabled{% endif %}
                 />

@@ -1184,6 +1184,32 @@ class ChamadoSalvarExecucaoView(CapabilityRequiredMixin, View):
         if not usuario_tem_sessao_ativa_no_chamado(user=request.user, chamado=chamado):
             raise PermissionDenied
 
+        # Persistir itens (ativo/serie/confirmado) quando enviados no payload
+        itens = list(chamado.itens.all())
+        for item in itens:
+            changed_fields: list[str] = []
+
+            key_ativo = f"ativo_{item.id}"
+            key_serie = f"serie_{item.id}"
+            key_conf = f"confirmado_{item.id}"
+
+            if key_ativo in request.POST:
+                item.ativo = (request.POST.get(key_ativo) or "").strip()
+                changed_fields.append("ativo")
+
+            if key_serie in request.POST:
+                item.numero_serie = (request.POST.get(key_serie) or "").strip()
+                changed_fields.append("numero_serie")
+
+            # checkbox: se a chave existir, consideramos confirmado=True
+            # (se não existir, não mexe - evita desconfirmar por ausência)
+            if key_conf in request.POST:
+                item.confirmado = True
+                changed_fields.append("confirmado")
+
+            if changed_fields:
+                item.save(update_fields=changed_fields)
+
         # Persistir fiscais (PR3) com o mesmo form (django way)
         form = ChamadoDadosFiscaisForm(request.POST, instance=chamado)
         if form.is_valid():
@@ -1216,6 +1242,3 @@ class ChamadoSalvarExecucaoView(CapabilityRequiredMixin, View):
             )
 
         return redirect("execucao:chamado_detalhe", chamado_id=chamado.id)
-
-
-# Create your views here.
