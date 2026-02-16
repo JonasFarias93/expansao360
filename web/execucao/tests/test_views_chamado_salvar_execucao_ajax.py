@@ -14,7 +14,7 @@ class TestChamadoSalvarExecucaoAjaxView(WebAuthBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
         self._url = lambda cid: reverse(
-            "execucao:chamado_salvar_execucao", kwargs={"chamado_id": cid}
+            "execucao:chamado_salvar_execucao_ajax", kwargs={"chamado_id": cid}
         )
 
         self.chamado = Chamado.objects.create(
