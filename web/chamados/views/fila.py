@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from cadastro.models import Projeto
-from django.db.models import Case, Count, IntegerField, Q, Value, When
+from django.db.models import Case, Count, IntegerField, Value, When
 from django.http import QueryDict
 from django.utils import timezone
 from django.views.generic import TemplateView
@@ -9,7 +9,7 @@ from execucao.models import ExecutionSession
 from iam.decorators import user_has_capability
 from iam.execucao_capabilities import CAP_EXECUCAO_SESSAO_TOMAR
 from iam.mixins import CapabilityRequiredMixin
-
+from chamados.selectors.fila import fila_base_queryset, fila_counts
 from ..models import Chamado, StatusConfiguracao
 
 
@@ -44,26 +44,8 @@ class ChamadoFilaView(CapabilityRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
 
-        base_qs = (
-            Chamado.objects.filter(
-                status__in=[
-                    Chamado.Status.ABERTO,
-                    Chamado.Status.EM_EXECUCAO,
-                    Chamado.Status.AGUARDANDO_NF,
-                    Chamado.Status.AGUARDANDO_COLETA,
-                ]
-            )
-            .select_related("loja", "projeto", "subprojeto", "kit")
-            .prefetch_related("itens")
-        )
-
-        counts = base_qs.aggregate(
-            total=Count("id"),
-            critico=Count("id", filter=Q(prioridade=Chamado.Prioridade.CRITICA)),
-            alto=Count("id", filter=Q(prioridade=Chamado.Prioridade.ALTA)),
-            medio=Count("id", filter=Q(prioridade=Chamado.Prioridade.MEDIA)),
-            baixo=Count("id", filter=Q(prioridade=Chamado.Prioridade.BAIXA)),
-        )
+        base_qs = fila_base_queryset()
+        counts = fila_counts(base_qs)
 
         prio_key = (self.request.GET.get("prio") or "").strip().upper()
         prio_value = self.PRIO_MAP.get(prio_key)
