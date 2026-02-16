@@ -209,3 +209,52 @@ class TestChamadoSalvarExecucaoAjaxView(WebAuthBaseTestCase):
         self.assertEqual(str(chamado.status), str(Chamado.Status.EM_CONFIGURACAO))
 
         self.assertIsNone(get_active_session(chamado=chamado))
+
+    def test_quando_post_envia_ativo_serie_e_confirmado_entao_persiste_itens_e_encerra_sessao(
+        self,
+    ) -> None:
+        kit = self._setup_kit_com_itens_gate_nf()
+
+        chamado = Chamado.objects.create(
+            loja=self.loja,
+            projeto=self.projeto,
+            subprojeto=self.sub,
+            kit=kit,
+            status=Chamado.Status.EM_EXECUCAO,
+            tipo=Chamado.Tipo.ENVIO,
+        )
+        self._ensure_itens_gerados(chamado)
+
+        rastreaveis = list(chamado.itens.filter(tem_ativo=True).order_by("id"))
+        contaveis = list(chamado.itens.filter(tem_ativo=False).order_by("id"))
+        self.assertGreaterEqual(len(rastreaveis), 1)
+        self.assertGreaterEqual(len(contaveis), 1)
+
+        item_rastreavel = rastreaveis[0]
+        item_contavel = contaveis[0]
+
+        create_active_session(chamado=chamado, user=self.user)
+
+        resp = self.client.post(
+            self._url(chamado.id),
+            data={
+                "contabilidade_numero": "",
+                "nf_saida_numero": "",
+                f"ativo_{item_rastreavel.id}": "ATV-999",
+                f"serie_{item_rastreavel.id}": "SN-999",
+                f"confirmado_{item_contavel.id}": "on",
+            },
+            HTTP_X_REQUESTED_WITH="XMLHttpRequest",
+        )
+        self.assertEqual(resp.status_code, 200)
+
+        # sessão encerra (isso deve passar hoje)
+        self.assertIsNone(get_active_session(chamado=chamado))
+
+        # persistência dos itens (isso deve FALHAR hoje e guiar a MT-02/MT-03 backend)
+        item_rastreavel.refresh_from_db()
+        self.assertEqual(item_rastreavel.ativo, "ATV-999")
+        self.assertEqual(item_rastreavel.numero_serie, "SN-999")
+
+        item_contavel.refresh_from_db()
+        self.assertIs(item_contavel.confirmado, True)
