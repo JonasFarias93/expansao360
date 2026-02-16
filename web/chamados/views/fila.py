@@ -8,8 +8,10 @@ from execucao.models import ExecutionSession
 from iam.decorators import user_has_capability
 from iam.execucao_capabilities import CAP_EXECUCAO_SESSAO_TOMAR
 from iam.mixins import CapabilityRequiredMixin
+
 from chamados.selectors.fila import fila_base_queryset, fila_counts, fila_projects
-from ..models import Chamado, StatusConfiguracao
+from chamados.selectors.fila_rows import build_fila_rows
+from ..models import Chamado
 
 
 class ChamadoFilaView(CapabilityRequiredMixin, TemplateView):
@@ -107,37 +109,7 @@ class ChamadoFilaView(CapabilityRequiredMixin, TemplateView):
             ),
         ).order_by("status_rank", "prio_rank", "criado_em")
 
-        rows: list[dict[str, object]] = []
-        for ch in chamados:
-            itens = list(ch.itens.all())
-            rastreaveis = [i for i in itens if i.tem_ativo]
-            contaveis = [i for i in itens if not i.tem_ativo]
-            cfg = [i for i in itens if i.deve_configurar]
-
-            bipados = sum(
-                1
-                for i in rastreaveis
-                if (i.ativo or "").strip() and (i.numero_serie or "").strip()
-            )
-            checados = sum(1 for i in contaveis if i.confirmado)
-            cfg_done = sum(
-                1
-                for i in cfg
-                if i.status_configuracao == StatusConfiguracao.CONFIGURADO and i.ip
-            )
-
-            rows.append(
-                {
-                    "chamado": ch,
-                    "pode_liberar_nf": ch.pode_liberar_nf(),
-                    "bipados": bipados,
-                    "bip_total": len(rastreaveis),
-                    "checados": checados,
-                    "check_total": len(contaveis),
-                    "cfg_done": cfg_done,
-                    "cfg_total": len(cfg),
-                }
-            )
+        rows = build_fila_rows(chamados)
 
         ctx["chamados"] = rows
         ctx["rows"] = rows
