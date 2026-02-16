@@ -92,7 +92,7 @@ urlpatterns = [
     path(
         "chamados/<int:chamado_id>/salvar/",
         chamados_views.ChamadoSalvarExecucaoView.as_view(),
-        name="chamado_salvar_execucao",
+        name="chamado_salvar_execucao_ajax",
     ),
     path(
         "itens/<int:item_id>/configurar/",

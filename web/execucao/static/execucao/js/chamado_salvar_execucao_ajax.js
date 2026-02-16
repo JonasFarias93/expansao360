@@ -43,9 +43,9 @@
   }
 
   function collectPayload() {
-    // Persistimos fiscais aqui porque o endpoint aceita isso.
-    // Itens já são persistidos no fluxo atual (inputs salvam em endpoints próprios),
-    // então o "Salvar execução" consolida status + encerra sessão.
+    // Contrato do payload:
+    // - Sempre: contabilidade_numero, nf_saida_numero
+    // - Quando existirem inputs de itens no DOM: ativo_<id>, serie_<id>, confirmado_<id> (se marcado)
     const cont =
       document.querySelector('input[name="contabilidade_numero"]')?.value ?? "";
     const nf =
@@ -54,6 +54,34 @@
     const formData = new FormData();
     formData.append("contabilidade_numero", cont);
     formData.append("nf_saida_numero", nf);
+
+    // Itens rastreáveis (Ativo / Série)
+    document.querySelectorAll('input[name^="ativo_"]').forEach((el) => {
+      const name = el.getAttribute("name");
+      if (!name) return;
+      formData.append(name, el.value ?? "");
+    });
+
+    document.querySelectorAll('input[name^="serie_"]').forEach((el) => {
+      const name = el.getAttribute("name");
+      if (!name) return;
+      formData.append(name, el.value ?? "");
+    });
+
+    // Itens contáveis (Confirmado) — enviar somente se marcado
+    document.querySelectorAll('input[name^="confirmado_"]').forEach((el) => {
+      const name = el.getAttribute("name");
+      if (!name) return;
+
+      if (el.type === "checkbox" || el.type === "radio") {
+        if (!el.checked) return;
+        formData.append(name, el.value || "on");
+        return;
+      }
+
+      formData.append(name, el.value ?? "");
+    });
+
     return formData;
   }
 
