@@ -1,5 +1,5 @@
 from __future__ import annotations
-
+import os
 from django.contrib import messages
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect
@@ -26,6 +26,7 @@ class ChamadoAdicionarEvidenciaView(CapabilityRequiredMixin, View):
         tipo = (request.POST.get("tipo") or "").strip()
         descricao = (request.POST.get("descricao") or "").strip()
         arquivo = request.FILES.get("arquivo")
+        nome_arquivo = os.path.basename(arquivo.name) if arquivo else ""
 
         if not arquivo:
             messages.error(request, "Selecione um arquivo para anexar.")
@@ -38,9 +39,10 @@ class ChamadoAdicionarEvidenciaView(CapabilityRequiredMixin, View):
 
         EvidenciaChamado.objects.create(
             chamado=chamado,
-            tipo=tipo,
+            tipo=request.POST.get("tipo"),
             descricao=descricao,
             arquivo=arquivo,
+            nome_arquivo=nome_arquivo,
         )
 
         messages.success(request, "Evidência anexada com sucesso.")

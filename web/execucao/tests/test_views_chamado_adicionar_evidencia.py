@@ -3,7 +3,8 @@ from execucao.services.execution_session import create_active_session
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.urls import reverse
 from execucao.models import Chamado
-
+from django.test import Client, RequestFactory
+from django.middleware.csrf import get_token
 from ._base import WebAuthBaseTestCase
 
 
@@ -55,10 +56,8 @@ class TestChamadoAdicionarEvidenciaPostView(WebAuthBaseTestCase):
             tipo=Chamado.Tipo.ENVIO,
         )
 
-        # sessão ativa (pré-condição do contrato)
         create_active_session(chamado=chamado, user=self.user)
 
-        # 1) salvar execução (AJAX) - hoje isso encerra a sessão => bug que queremos capturar
         url_salvar = reverse(
             "execucao:chamado_salvar_execucao_ajax", kwargs={"chamado_id": chamado.id}
         )
@@ -69,7 +68,6 @@ class TestChamadoAdicionarEvidenciaPostView(WebAuthBaseTestCase):
         )
         self.assertEqual(resp1.status_code, 200)
 
-        # 2) anexar evidência (multipart)
         url_evid = reverse("execucao:chamado_adicionar_evidencia", args=[chamado.id])
 
         arquivo = SimpleUploadedFile(
@@ -89,8 +87,53 @@ class TestChamadoAdicionarEvidenciaPostView(WebAuthBaseTestCase):
             },
         )
 
-        # normal do endpoint: redirect após criar
         self.assertEqual(resp2.status_code, 302)
 
         chamado.refresh_from_db()
         self.assertEqual(chamado.evidencias.count(), before + 1)
+
+
+class TestChamadoAdicionarEvidenciaNomeArquivo(WebAuthBaseTestCase):
+    def test_quando_anexa_evidencia_entao_persiste_nome_arquivo(self) -> None:
+        chamado = Chamado.objects.create(
+            loja=self.loja,
+            projeto=self.projeto,
+            subprojeto=self.sub,
+            kit=self.kit,
+        )
+
+        url_post = reverse("execucao:chamado_adicionar_evidencia", args=[chamado.id])
+
+        client = Client(enforce_csrf_checks=True)
+        client.force_login(self.user)
+
+        rf = RequestFactory()
+        req = rf.get("/")
+        csrf_token = get_token(req)
+        client.cookies["csrftoken"] = csrf_token
+
+        upload = SimpleUploadedFile(
+            "nf_saida.pdf",
+            b"%PDF-1.4 dummy",
+            content_type="application/pdf",
+        )
+
+        resp = client.post(
+            url_post,
+            data={
+                "csrfmiddlewaretoken": csrf_token,
+                "tipo": "CARTA_CONTEUDO",
+                "descricao": "",
+                "arquivo": upload,
+            },
+            HTTP_X_CSRFTOKEN=csrf_token,
+        )
+
+        self.assertEqual(resp.status_code, 302)
+
+        chamado.refresh_from_db()
+        self.assertEqual(chamado.evidencias.count(), 1)
+        evidencia = chamado.evidencias.first()
+        assert evidencia is not None
+
+        self.assertEqual(evidencia.nome_arquivo, "nf_saida.pdf")

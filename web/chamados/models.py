@@ -492,6 +492,7 @@ class EvidenciaChamado(models.Model):
         Chamado, on_delete=models.CASCADE, related_name="evidencias"
     )
     tipo = models.CharField(max_length=30, choices=Tipo.choices)
+    nome_arquivo = models.CharField(max_length=255, blank=True, default="")
     arquivo = models.FileField(upload_to="execucao/evidencias/")
     descricao = models.CharField(max_length=255, blank=True, default="")
     criado_em = models.DateTimeField(auto_now_add=True)
