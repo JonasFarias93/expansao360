@@ -7,29 +7,14 @@ from django.http import HttpRequest, HttpResponse, HttpResponseForbidden, JsonRe
 from django.shortcuts import get_object_or_404, redirect
 from django.utils import timezone
 from django.views import View
+
 from execucao.services.execution_session import get_active_session
 from iam.execucao_capabilities import CAP_EXECUCAO_CHAMADO_FINALIZAR
 from iam.mixins import CapabilityRequiredMixin
 
 from chamados.services.finalizacao import validar_finalizacao
-
+from ._helpers import _is_ajax, _push_validation_error_messages
 from ..models import Chamado
-
-
-def _push_validation_error_messages(request: HttpRequest, exc: ValidationError) -> None:
-    """
-    Normaliza ValidationError para mensagens no Django messages framework.
-    - ValidationError pode vir com .messages (lista)
-    - ou .message_dict (dict campo -> lista msgs)
-    """
-    if hasattr(exc, "message_dict") and getattr(exc, "message_dict", None):
-        for _field, msgs in exc.message_dict.items():  # type: ignore[attr-defined]
-            for msg in msgs:
-                messages.error(request, msg)
-        return
-
-    for msg in getattr(exc, "messages", [str(exc)]):
-        messages.error(request, msg)
 
 
 class ChamadoInformarContabilView(CapabilityRequiredMixin, View):
@@ -253,13 +238,7 @@ class ChamadoFinalizarView(CapabilityRequiredMixin, View):
         return redirect("execucao:chamado_detalhe", chamado_id=chamado.id)
 
 
-def _is_ajax(request: HttpRequest) -> bool:
-    return request.headers.get("X-Requested-With") == "XMLHttpRequest"
-
-
 def _registrar_log_finalizacao(*, chamado: Chamado, user) -> None:
     fn = getattr(chamado, "registrar_log", None)
     if callable(fn):
         fn(f"Finalizado por {user}.")
-        return
-    return
