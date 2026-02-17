@@ -91,9 +91,15 @@
 
     {# RIGHT: ações rápidas #}
     <div class="flex flex-col sm:flex-row lg:flex-col gap-2 lg:min-w-[220px]">
-      <a href="{% url 'execucao:fila' %}" class="btn btn-secondary text-center">
-        Voltar
-      </a>
+      <form
+          method="post"
+          action="{% url 'execucao:chamado_encerrar_sessao' chamado_id=chamado.id %}?next={% url 'execucao:fila' %}"
+        >
+          {% csrf_token %}
+          <button type="submit" class="btn btn-secondary w-full text-center">
+            Voltar
+          </button>
+        </form>
 
       {% if chamado.finalizado_em %}
         <div class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-2 text-sm text-slate-600 text-center">
