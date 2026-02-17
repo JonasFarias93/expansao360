@@ -75,7 +75,10 @@
       <div class="text-sm text-slate-500">{{ evidencias|length }} arquivo(s)</div>
     </div>
 
-    {% include "execucao/components/_evidencias_chamado.html" with chamado=chamado evidencias=evidencias evidencia_tipos=evidencia_tipos only %}
+    {# wrapper com data-skip-readonly para o JS não desabilitar upload/remover evidências #}
+    <div data-skip-readonly>
+      {% include "execucao/components/_evidencias_chamado.html" with chamado=chamado evidencias=evidencias evidencia_tipos=evidencia_tipos only %}
+    </div>
   </div>
 
   {# ============================ Ações finais ============================ #}

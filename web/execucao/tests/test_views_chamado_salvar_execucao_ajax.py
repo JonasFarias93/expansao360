@@ -258,3 +258,29 @@ class TestChamadoSalvarExecucaoAjaxView(WebAuthBaseTestCase):
 
         item_contavel.refresh_from_db()
         self.assertIs(item_contavel.confirmado, True)
+
+    def test_quando_salvar_execucao_com_sessao_ativa_entao_nao_encerra_sessao(
+        self,
+    ) -> None:
+        create_active_session(chamado=self.chamado, user=self.user)
+
+        resp = self.client.post(
+            self._url(self.chamado.id),
+            data={"contabilidade_numero": "", "nf_saida_numero": ""},
+            HTTP_X_REQUESTED_WITH="XMLHttpRequest",
+        )
+        self.assertEqual(resp.status_code, 200)
+
+        # ✅ novo contrato: salvar NÃO encerra sessão
+        active = get_active_session(chamado=self.chamado)
+        self.assertIsNotNone(active)
+
+        # opcional: sanity extra, garantindo que não registrou SAVE como encerramento
+        last = (
+            ExecutionSession.objects.filter(chamado=self.chamado)
+            .order_by("-started_at")
+            .first()
+        )
+        self.assertIsNotNone(last)
+        assert last is not None
+        self.assertIsNone(last.ended_at)

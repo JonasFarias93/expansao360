@@ -5,6 +5,18 @@
 (function () {
   "use strict";
 
+  function shouldSkipReadOnly(el) {
+    return !!el?.closest?.("[data-skip-readonly]");
+  }
+
+  function isHiddenInput(el) {
+    if (!el) return false;
+    const tag = (el.tagName || "").toLowerCase();
+    if (tag !== "input") return false;
+    const type = (el.getAttribute("type") || "").toLowerCase();
+    return type === "hidden";
+  }
+
   function readExecutionState(root) {
     return {
       hasSession: root.dataset.hasSession === "1",
@@ -31,7 +43,9 @@
     if (!isGlobalReadOnly) return;
 
     root.querySelectorAll("input, textarea, select").forEach((el) => {
-      if (el.closest("[data-skip-readonly]")) return;
+      if (shouldSkipReadOnly(el)) return;
+      // ✅ nunca mexer em hidden (CSRF e outros contratos)
+      if (isHiddenInput(el)) return;
 
       const filled = isFilledInput(el);
 
@@ -47,7 +61,7 @@
 
     // Botões sempre desabilitados sem sessão
     root.querySelectorAll("button").forEach((btn) => {
-      if (btn.closest("[data-skip-readonly]")) return;
+      if (shouldSkipReadOnly(btn)) return;
       btn.disabled = true;
     });
   }
@@ -55,6 +69,10 @@
   function applyFullLock(root, isReadOnly) {
     if (!isReadOnly) {
       root.querySelectorAll("input, textarea, select, button").forEach((el) => {
+        if (shouldSkipReadOnly(el)) return;
+        // ✅ hidden nunca deve ser alterado
+        if (isHiddenInput(el)) return;
+
         el.disabled = false;
         el.readOnly = false;
       });
@@ -90,12 +108,15 @@
 
       const itemReadOnly = isBipado && !isEditing;
 
-      itemEl.querySelectorAll("input, select, textarea, button").forEach((el) => {
-        if (el.closest("[data-skip-readonly]")) return;
-        if (el.matches("[data-item-edit-toggle]")) return;
+      itemEl
+        .querySelectorAll("input, select, textarea, button")
+        .forEach((el) => {
+          if (shouldSkipReadOnly(el)) return;
+          if (isHiddenInput(el)) return; // ✅ proteger CSRF/hidden dentro de item
+          if (el.matches("[data-item-edit-toggle]")) return;
 
-        el.disabled = itemReadOnly;
-      });
+          el.disabled = itemReadOnly;
+        });
 
       const toggleBtn = itemEl.querySelector("[data-item-edit-toggle]");
       if (toggleBtn) {

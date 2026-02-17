@@ -12,6 +12,12 @@ from ..models import Chamado, EvidenciaChamado
 class ChamadoAdicionarEvidenciaView(CapabilityRequiredMixin, View):
     required_capability = "execucao.evidencia.upload"
 
+    def get(
+        self, request: HttpRequest, chamado_id: int, *args, **kwargs
+    ) -> HttpResponse:
+        get_object_or_404(Chamado, pk=chamado_id)
+        return redirect("chamados:chamado_detalhe", chamado_id=chamado_id)
+
     def post(
         self, request: HttpRequest, chamado_id: int, *args, **kwargs
     ) -> HttpResponse:

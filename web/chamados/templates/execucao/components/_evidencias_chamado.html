@@ -11,7 +11,7 @@
     <form
       method="post"
       enctype="multipart/form-data"
-      action="{% url 'execucao:chamado_adicionar_evidencia' chamado.id %}"
+      action="{% url 'chamados:chamado_adicionar_evidencia' chamado.id %}"
       class="mb-6 border-b pb-6"
     >
       {% csrf_token %}
@@ -98,7 +98,7 @@
               {% if not chamado.finalizado_em %}
                 <form
                   method="post"
-                  action="{% url 'execucao:evidencia_remover' chamado.id ev.id %}"
+                  action="{% url 'chamados:evidencia_remover' chamado.id ev.id %}"
                   onsubmit="return confirm('Excluir esta evidência?')"
                 >
                   {% csrf_token %}
