@@ -9,9 +9,10 @@ from django.utils import timezone
 from django.views import View
 from django.views.generic import TemplateView
 from execucao.services.execution_session import (
-    end_session_save,
     usuario_tem_sessao_ativa_no_chamado,
+    end_session_exit,
 )
+from django.utils.http import url_has_allowed_host_and_scheme
 from iam.decorators import user_has_capability
 from iam.execucao_capabilities import (
     CAP_EXECUCAO_CHAMADO_EDITAR,
@@ -144,12 +145,17 @@ class ChamadoSalvarExecucaoView(CapabilityRequiredMixin, View):
     required_capability = "execucao.chamado_editar"
 
     @transaction.atomic
-    def post(self, request, chamado_id: int, *args, **kwargs):
+    def post(
+        self, request: HttpRequest, chamado_id: int, *args, **kwargs
+    ) -> HttpResponse:
         chamado = get_object_or_404(Chamado, pk=chamado_id)
+
+        is_ajax = request.headers.get("x-requested-with") == "XMLHttpRequest"
 
         if not usuario_tem_sessao_ativa_no_chamado(user=request.user, chamado=chamado):
             raise PermissionDenied
 
+        # 1) Persistir itens (se houver campos no POST)
         itens = list(chamado.itens.all())
         for item in itens:
             changed_fields: list[str] = []
@@ -173,25 +179,32 @@ class ChamadoSalvarExecucaoView(CapabilityRequiredMixin, View):
             if changed_fields:
                 item.save(update_fields=changed_fields)
 
+        # 2) Persistir dados fiscais
         form = ChamadoDadosFiscaisForm(request.POST, instance=chamado)
         if form.is_valid():
             form.save()
         else:
+            if is_ajax:
+                return JsonResponse(
+                    {"ok": False, "error": "dados_fiscais_invalidos"},
+                    status=400,
+                )
             messages.error(request, "Dados fiscais inválidos. Verifique os campos.")
             return redirect("execucao:chamado_detalhe", chamado_id=chamado.id)
 
+        # 3) Recalcular status do chamado (sem encerrar sessão)
         novo_status = recalcular_status(chamado)
         if novo_status != chamado.status:
             chamado.status = novo_status
             chamado.save(update_fields=["status"])
 
-        end_session_save(chamado=chamado, actor=request.user)
+        # (Encerramento acontece em Voltar/Sair/Finalizar/Timeout)
 
         hora = timezone.localtime().strftime("%H:%M")
         msg = f"Salvo por {request.user} às {hora}"
         messages.success(request, msg)
 
-        if request.headers.get("x-requested-with") == "XMLHttpRequest":
+        if is_ajax:
             return JsonResponse(
                 {
                     "ok": True,
@@ -199,5 +212,36 @@ class ChamadoSalvarExecucaoView(CapabilityRequiredMixin, View):
                     "message": msg,
                 }
             )
+
+        return redirect("execucao:chamado_detalhe", chamado_id=chamado.id)
+
+
+class ChamadoEncerrarSessaoView(CapabilityRequiredMixin, View):
+    required_capability = "execucao.chamado_editar"
+
+    @transaction.atomic
+    def post(
+        self, request: HttpRequest, chamado_id: int, *args, **kwargs
+    ) -> HttpResponse:
+        chamado = get_object_or_404(Chamado, pk=chamado_id)
+        is_ajax = request.headers.get("x-requested-with") == "XMLHttpRequest"
+
+        ended = end_session_exit(chamado=chamado, actor=request.user)
+
+        if is_ajax:
+            return JsonResponse({"ok": True, "ended": bool(ended)})
+
+        if ended:
+            messages.success(request, "Sessão encerrada.")
+        else:
+            messages.info(request, "Nenhuma sessão ativa para encerrar.")
+
+        next_url = request.GET.get("next")
+        if next_url and url_has_allowed_host_and_scheme(
+            next_url,
+            allowed_hosts={request.get_host()},
+            require_https=request.is_secure(),
+        ):
+            return redirect(next_url)
 
         return redirect("execucao:chamado_detalhe", chamado_id=chamado.id)

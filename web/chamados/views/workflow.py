@@ -15,6 +15,7 @@ from iam.mixins import CapabilityRequiredMixin
 from chamados.services.finalizacao import validar_finalizacao
 from ._helpers import _is_ajax, _push_validation_error_messages
 from ..models import Chamado
+from execucao.models import ExecutionSession
 
 
 class ChamadoInformarContabilView(CapabilityRequiredMixin, View):
@@ -221,8 +222,7 @@ class ChamadoFinalizarView(CapabilityRequiredMixin, View):
 
         chamado.status = Chamado.Status.FINALIZADO
 
-        sessao.ended_at = timezone.now()
-        sessao.ended_reason = "FINALIZE"
+        sessao.end(reason=ExecutionSession.EndReason.FINALIZADO)
         sessao.save(update_fields=["ended_at", "ended_reason"])
 
         chamado.save(update_fields=["status"])

@@ -141,3 +141,34 @@ def end_session_save(*, chamado: Chamado, actor) -> ExecutionSession:
     active.end(reason=ExecutionSession.EndReason.SAVE)
     active.save(update_fields=["ended_at", "ended_reason"])
     return active
+
+
+@transaction.atomic
+def end_session_exit(*, chamado: Chamado, actor) -> ExecutionSession | None:
+    """
+    Encerra a sessão ativa do chamado por saída planejada (Voltar/Sair).
+
+    - Exige que o actor seja o dono da sessão ativa.
+    - Idempotente: se não houver sessão ativa, retorna None.
+    """
+    now = timezone.now()
+
+    active = (
+        ExecutionSession.objects.select_for_update()
+        .filter(
+            chamado=chamado,
+            ended_at__isnull=True,
+            expires_at__gt=now,
+        )
+        .order_by("-started_at")
+        .first()
+    )
+    if active is None:
+        return None
+
+    if active.usuario_id != actor.id:
+        raise PermissionDenied
+
+    active.end(reason=ExecutionSession.EndReason.USER_EXIT)
+    active.save(update_fields=["ended_at", "ended_reason"])
+    return active
