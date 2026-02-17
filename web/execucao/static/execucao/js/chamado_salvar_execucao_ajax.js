@@ -1,4 +1,4 @@
-// web/execucao/static/execucao/js/execucao_salvar.js
+// web/execucao/static/execucao/js/chamado_salvar_execucao_ajax.js
 /**
  * Usado em:
  * - web/chamados/templates/execucao/chamado_execucao.html
@@ -15,6 +15,11 @@
  * Observações:
  * - Carregado via <script defer> no template de página.
  * - Não deve ser importado por componentes/parciais.
+ *
+ * Contrato (ATUALIZADO):
+ * - Salvar execução NÃO encerra sessão.
+ * - Portanto este arquivo não deve forçar data-has-session/data-can-edit para "0".
+ * - O state manager é o único responsável por aplicar read-only/global lock baseado no contrato real do DOM.
  */
 (function () {
   const btn = document.getElementById("btn-salvar-execucao");
@@ -22,6 +27,7 @@
 
   const statusEl = document.getElementById("salvar-status");
   const url = btn.dataset.url;
+  if (!url) return;
 
   const LABEL_DEFAULT = btn.textContent?.trim() || "Salvar execução";
 
@@ -43,9 +49,6 @@
   }
 
   function collectPayload() {
-    // Contrato do payload:
-    // - Sempre: contabilidade_numero, nf_saida_numero
-    // - Quando existirem inputs de itens no DOM: ativo_<id>, serie_<id>, confirmado_<id> (se marcado)
     const cont =
       document.querySelector('input[name="contabilidade_numero"]')?.value ?? "";
     const nf =
@@ -87,9 +90,7 @@
 
   async function doSave() {
     const csrf = getCookie("csrftoken");
-    if (!csrf) {
-      throw new Error("CSRF token ausente.");
-    }
+    if (!csrf) throw new Error("CSRF token ausente.");
 
     const resp = await fetch(url, {
       method: "POST",
@@ -101,7 +102,6 @@
     });
 
     if (!resp.ok) {
-      // 403 => sem sessão/cap, 400 => form inválido etc.
       throw new Error(`Falha ao salvar (${resp.status})`);
     }
 
@@ -112,14 +112,8 @@
     return data;
   }
 
-  function syncExecutionContractAfterSave() {
-    // Após salvar, a sessão é encerrada -> UI deve virar read-only.
-    const root = document.getElementById("execution-root");
-    if (!root) return;
-
-    root.dataset.hasSession = "0";
-    root.dataset.canEdit = "0";
-    // canFinalize mantém como está (gates podem permitir ações finais em próximas MTs)
+  function syncExecutionContractAfterSave(data) {
+    void data;
   }
 
   function requestApplyState() {
@@ -136,10 +130,10 @@
 
       const hhmm = data.saved_at || "";
       btn.textContent = LABEL_DEFAULT;
+      btn.disabled = false; // ✅ permite salvar múltiplas vezes
       setStatus(hhmm ? `Salvo às ${hhmm}` : "Salvo");
 
-      // Centralização (ISSUE #71): contrato + reaplicar estado via state manager
-      syncExecutionContractAfterSave();
+      syncExecutionContractAfterSave(data);
       document.dispatchEvent(new CustomEvent("execucao:mark-items-bipado"));
       requestApplyState();
 
