@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 from django.utils import timezone
+
+from cadastro.models import Categoria, Equipamento, TipoEquipamento
+from chamados.models import InstalacaoItem
+from chamados.services.finalizacao import validar_finalizacao
 from execucao.models import Chamado
 from execucao.tests._base import ChamadoBaseTestCase
-
-from chamados.services.finalizacao import validar_finalizacao
 
 
 class TestValidarFinalizacaoService(ChamadoBaseTestCase):
@@ -74,3 +76,74 @@ class TestValidarFinalizacaoService(ChamadoBaseTestCase):
 
         self.assertFalse(res.ok)
         self.assertTrue(any(p.code == "FISCAL_NF_SAIDA_INVALIDA" for p in res.fiscais))
+
+
+class TestFinalizacaoNaoExigirAtivoParaHub(ChamadoBaseTestCase):
+    def test_quando_equipamento_nao_tem_ativo_entao_nao_cria_pendencia_de_ativo_nem_serial(
+        self,
+    ) -> None:
+        cat = Categoria.objects.create(nome="Informatica")
+        TipoEquipamento.objects.create(categoria=cat, nome="PERIF")
+
+        hub = Equipamento.objects.create(
+            codigo="03",
+            nome="HUb",
+            categoria=cat,
+            tem_ativo=False,
+        )
+
+        ch = Chamado.objects.create(
+            loja=self.loja,
+            projeto=self.projeto,
+            subprojeto=self.sub,
+            kit=self.kit,
+            protocolo="T1",
+            tipo=Chamado.Tipo.ENVIO,
+            status=Chamado.Status.EM_ABERTURA,
+            coleta_confirmada_em=timezone.now(),
+        )
+
+        InstalacaoItem.objects.create(
+            chamado=ch,
+            equipamento=hub,
+            tipo="periferico (PERIFERICO)",
+            quantidade=1,
+            tem_ativo=False,
+            ativo="",
+            numero_serie="",
+        )
+
+        res = validar_finalizacao(ch)
+        msgs = [p.message for p in res.itens]
+
+        self.assertNotIn("Item rastreável exige ATIVO preenchido.", msgs)
+        self.assertNotIn("Item rastreável exige SERIAL preenchido.", msgs)
+
+        def test_quando_equipamento_tem_ativo_entao_exige_ativo_e_numero_serie(
+            self,
+        ) -> None:
+            cat = Categoria.objects.create(nome="Informatica")
+            TipoEquipamento.objects.create(categoria=cat, nome="TC")
+            eq = Equipamento.objects.create(
+                codigo="X", nome="Rastreavel", categoria=cat, tem_ativo=True
+            )
+
+            ch = self._mk_chamado(
+                coleta_confirmada_em=timezone.now(),
+                contabilidade_numero="1",
+                nf_saida_numero="2",
+            )
+            InstalacaoItem.objects.create(
+                chamado=ch,
+                equipamento=eq,
+                tipo="tc (TC)",
+                quantidade=1,
+                tem_ativo=True,
+                ativo="",
+                numero_serie="",
+            )
+
+            res = validar_finalizacao(ch)
+            msgs = [p.message for p in res.itens]
+            self.assertIn("Item rastreável exige ATIVO preenchido.", msgs)
+            self.assertIn("Item rastreável exige SERIAL preenchido.", msgs)

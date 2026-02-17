@@ -113,12 +113,11 @@ def validar_finalizacao(chamado: Chamado) -> ValidacaoFinalizacao:
     # Itens
     # MVP:
     # - configuráveis: se deve_configurar=True, exige configurado_em (quando existir)
-    # - rastreáveis: se tiver campos (ativo/serial), valida o que existir
-    #   (sem “inventar” regra; valida apenas se o item expõe o campo)
+    # - rastreáveis: equipamento.tem_ativo=True => exige ativo + número de série
+    #   (não inferir rastreável por "hasattr(ativo)" porque o campo existe no model)
     # -------------
     for item in _iter_itens(chamado):
-        pendencias_item = _validar_item_mvp(item)
-        itens.extend(pendencias_item)
+        itens.extend(_validar_item_mvp(item))
 
     return ValidacaoFinalizacao(
         fiscais=fiscais,
@@ -132,11 +131,8 @@ def validar_finalizacao(chamado: Chamado) -> ValidacaoFinalizacao:
 # =========================
 def _exige_nf_saida(chamado: Chamado) -> bool:
     # MVP: ENVIO exige NF.
-    # Se no seu domínio existir chamado.exige_nf_saida() ou algo assim,
-    # troque aqui (centralizado).
     if getattr(chamado, "tipo", None) == Chamado.Tipo.ENVIO:
         return True
-    # fallback: se existir método de domínio
     fn = getattr(chamado, "exige_nf_saida", None)
     if callable(fn):
         return bool(fn())
@@ -175,6 +171,19 @@ def _label_equipamento(item: object) -> str:
     return str(eq)
 
 
+def _is_rastreavel(item: object) -> bool:
+    """
+    Fonte de verdade:
+    - equipamento.tem_ativo (regra de domínio)
+    Fallback:
+    - item.tem_ativo (snapshot) para casos legados/antigos
+    """
+    eq = getattr(item, "equipamento", None)
+    if eq is not None:
+        return bool(getattr(eq, "tem_ativo", False))
+    return bool(getattr(item, "tem_ativo", False))
+
+
 def _validar_item_mvp(item: object) -> list[PendenciaItem]:
     pend: list[PendenciaItem] = []
 
@@ -203,31 +212,34 @@ def _validar_item_mvp(item: object) -> list[PendenciaItem]:
                 # sem regra disponível => não inventa (MVP)
                 pass
 
-    # rastreáveis (valida apenas se o campo existir no item)
-    if hasattr(item, "ativo"):
-        ativo = (getattr(item, "ativo", "") or "").strip()
-        if not ativo:
-            pend.append(
-                PendenciaItem(
-                    item_id=item_id,
-                    equipamento=equipamento,
-                    code="ITEM_FALTA_ATIVO",
-                    message="Item rastreável exige ATIVO preenchido.",
-                    field="ativo",
+    # rastreáveis (exige ativo + número de série)
+    if _is_rastreavel(item):
+        # ATIVO
+        if hasattr(item, "ativo"):
+            ativo = (getattr(item, "ativo", "") or "").strip()
+            if not ativo:
+                pend.append(
+                    PendenciaItem(
+                        item_id=item_id,
+                        equipamento=equipamento,
+                        code="ITEM_FALTA_ATIVO",
+                        message="Item rastreável exige ATIVO preenchido.",
+                        field="ativo",
+                    )
                 )
-            )
 
-    if hasattr(item, "serial"):
-        serial = (getattr(item, "serial", "") or "").strip()
-        if not serial:
-            pend.append(
-                PendenciaItem(
-                    item_id=item_id,
-                    equipamento=equipamento,
-                    code="ITEM_FALTA_SERIAL",
-                    message="Item rastreável exige SERIAL preenchido.",
-                    field="serial",
+        # SERIAL (campo correto do projeto: numero_serie)
+        if hasattr(item, "numero_serie"):
+            numero_serie = (getattr(item, "numero_serie", "") or "").strip()
+            if not numero_serie:
+                pend.append(
+                    PendenciaItem(
+                        item_id=item_id,
+                        equipamento=equipamento,
+                        code="ITEM_FALTA_SERIAL",
+                        message="Item rastreável exige SERIAL preenchido.",
+                        field="numero_serie",
+                    )
                 )
-            )
 
     return pend
