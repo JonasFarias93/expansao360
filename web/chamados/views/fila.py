@@ -4,12 +4,16 @@ from django.db.models import Case, IntegerField, Value, When
 from django.http import QueryDict
 from django.utils import timezone
 from django.views.generic import TemplateView
-from execucao.models import ExecutionSession
 from iam.decorators import user_has_capability
 from iam.execucao_capabilities import CAP_EXECUCAO_SESSAO_TOMAR
 from iam.mixins import CapabilityRequiredMixin
 
-from chamados.selectors.fila import fila_base_queryset, fila_counts, fila_projects
+from chamados.selectors.fila import (
+    fila_base_queryset,
+    fila_counts,
+    fila_projects,
+    get_active_sessions_by_chamado,
+)
 from chamados.selectors.fila_rows import build_fila_rows
 from ..models import Chamado
 
@@ -116,24 +120,11 @@ class ChamadoFilaView(CapabilityRequiredMixin, TemplateView):
 
         chamado_ids = [r["chamado"].id for r in rows]
 
-        active_sessions_by_chamado: dict[int, ExecutionSession] = {}
-        if chamado_ids:
-            now = timezone.now()
-            qs_sessions = (
-                ExecutionSession.objects.filter(
-                    chamado_id__in=chamado_ids,
-                    ended_at__isnull=True,
-                    expires_at__gt=now,
-                )
-                .select_related("usuario")
-                .order_by("chamado_id", "-started_at")
-            )
-
-            for s in qs_sessions:
-                if s.chamado_id not in active_sessions_by_chamado:
-                    active_sessions_by_chamado[s.chamado_id] = s
-
-        ctx["execucao_active_sessions_by_chamado"] = active_sessions_by_chamado
+        now = timezone.now()
+        ctx["execucao_active_sessions_by_chamado"] = get_active_sessions_by_chamado(
+            chamado_ids,
+            now=now,
+        )
         ctx["can_take_session"] = user_has_capability(
             self.request.user,
             CAP_EXECUCAO_SESSAO_TOMAR,

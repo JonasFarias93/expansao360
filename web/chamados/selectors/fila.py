@@ -2,6 +2,9 @@ from __future__ import annotations
 from collections.abc import Callable
 from django.db.models import Count, Q, QuerySet
 
+from collections.abc import Iterable
+
+from execucao.models import ExecutionSession
 from cadastro.models import Projeto
 from ..models import Chamado
 
@@ -73,3 +76,39 @@ def fila_projects(
         )
 
     return projects
+
+
+def get_active_sessions_by_chamado(
+    chamado_ids: Iterable[int],
+    *,
+    now,
+) -> dict[int, ExecutionSession]:
+    """
+    Retorna a sessão ativa mais recente por chamado.
+
+    Regra de "ativa":
+    - ended_at IS NULL
+    - expires_at > now
+
+    Mais recente:
+    - maior started_at (desc)
+    """
+    ids = [int(i) for i in chamado_ids if i is not None]
+    if not ids:
+        return {}
+
+    qs = (
+        ExecutionSession.objects.filter(
+            chamado_id__in=ids,
+            ended_at__isnull=True,
+            expires_at__gt=now,
+        )
+        .select_related("usuario")
+        .order_by("chamado_id", "-started_at")
+    )
+
+    out: dict[int, ExecutionSession] = {}
+    for s in qs:
+        if s.chamado_id not in out:
+            out[s.chamado_id] = s
+    return out
