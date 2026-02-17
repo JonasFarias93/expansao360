@@ -16,28 +16,18 @@ def _is_ajax(request: HttpRequest) -> bool:
 
 
 def _push_validation_error_messages(request: HttpRequest, error: Any) -> None:
-    """
-    Normaliza mensagens de erro para django.contrib.messages.
-
-    Aceita:
-    - ValidationError (com error_dict / error_list / messages)
-    - string / qualquer coisa convertível para string (fallback)
-    """
     if isinstance(error, ValidationError):
-        # error_dict: {field: [msgs]}
         if getattr(error, "error_dict", None):
-            for field, errs in error.error_dict.items():
+            for _field, errs in error.error_dict.items():
                 for e in errs:
-                    messages.error(request, f"{field}: {e}")
+                    messages.error(request, str(e))
             return
 
-        # error_list: [errs]
         if getattr(error, "error_list", None):
             for e in error.error_list:
                 messages.error(request, str(e))
             return
 
-        # messages: [str]
         if getattr(error, "messages", None):
             for msg in error.messages:
                 messages.error(request, str(msg))
@@ -46,14 +36,13 @@ def _push_validation_error_messages(request: HttpRequest, error: Any) -> None:
         messages.error(request, str(error))
         return
 
-    # dict-like / list-like cases (bem tolerante, sem forçar contrato novo)
     if isinstance(error, dict):
-        for k, v in error.items():
+        for _, v in error.items():
             if isinstance(v, (list, tuple, set)):
                 for item in v:
-                    messages.error(request, f"{k}: {item}")
+                    messages.error(request, str(item))
             else:
-                messages.error(request, f"{k}: {v}")
+                messages.error(request, str(v))
         return
 
     if isinstance(error, (list, tuple, set)):
