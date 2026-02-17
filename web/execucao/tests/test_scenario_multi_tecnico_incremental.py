@@ -5,10 +5,13 @@ from django.contrib.auth import get_user_model
 from django.urls import reverse
 from execucao.models import Chamado
 from execucao.services.execution_session import (
+    ActiveSessionConflictError,
     create_active_session,
     get_active_session,
+    take_session,
 )
 from execucao.tests._base import WebAuthBaseTestCase
+from iam.execucao_capabilities import CAP_EXECUCAO_SESSAO_TOMAR
 from iam.models import Capability, UserCapability
 
 User = get_user_model()
@@ -20,8 +23,8 @@ class TestCenarioMultiTecnicoIncremental(WebAuthBaseTestCase):
             "execucao:chamado_salvar_execucao_ajax", kwargs={"chamado_id": cid}
         )
 
-    def _grant_edit_capability(self, user) -> None:
-        cap, _ = Capability.objects.get_or_create(code="execucao.chamado_editar")
+    def _grant_capability(self, user, code: str) -> None:
+        cap, _ = Capability.objects.get_or_create(code=code)
         UserCapability.objects.get_or_create(user=user, capability=cap)
 
     def _kit_gate_nf(self) -> Kit:
@@ -63,12 +66,12 @@ class TestCenarioMultiTecnicoIncremental(WebAuthBaseTestCase):
     def test_tecnico_a_salva_parcial_e_tecnico_b_completa_sem_perder_dados(
         self,
     ) -> None:
-        # técnico B
         user_b = User.objects.create_user(username="tec_b", password="123")
 
-        # Garantir capability para A e B (o foco do teste é fluxo incremental, não IAM)
-        self._grant_edit_capability(self.user)
-        self._grant_edit_capability(user_b)
+        self._grant_capability(self.user, "execucao.chamado_editar")
+        self._grant_capability(user_b, "execucao.chamado_editar")
+
+        self._grant_capability(user_b, CAP_EXECUCAO_SESSAO_TOMAR)
 
         kit = self._kit_gate_nf()
         chamado = Chamado.objects.create(
@@ -93,42 +96,55 @@ class TestCenarioMultiTecnicoIncremental(WebAuthBaseTestCase):
                 "contabilidade_numero": "",
                 "nf_saida_numero": "",
                 f"ativo_{item_r.id}": "ATV-A",
-                # serie não enviada (parcial)
-                # contável não confirmado ainda
             },
             HTTP_X_REQUESTED_WITH="XMLHttpRequest",
         )
         self.assertEqual(resp_a.status_code, 200)
-        self.assertIsNone(get_active_session(chamado=chamado))
+
+        active_after_a = get_active_session(chamado=chamado)
+        self.assertIsNotNone(active_after_a)
+        assert active_after_a is not None
+        self.assertEqual(active_after_a.usuario_id, self.user.id)
 
         item_r.refresh_from_db()
         item_c.refresh_from_db()
         self.assertEqual(item_r.ativo, "ATV-A")
-        self.assertEqual(item_r.numero_serie, "")  # ainda vazio
+        self.assertEqual(item_r.numero_serie, "")
         self.assertIs(item_c.confirmado, False)
 
         # ========== Técnico B completa ==========
         self.client.force_login(user_b)
-        create_active_session(chamado=chamado, user=user_b)
+
+        with self.assertRaises(ActiveSessionConflictError):
+            create_active_session(chamado=chamado, user=user_b)
+
+        take_session(chamado=chamado, actor=user_b)
+
+        active_now = get_active_session(chamado=chamado)
+        self.assertIsNotNone(active_now)
+        assert active_now is not None
+        self.assertEqual(active_now.usuario_id, user_b.id)
 
         resp_b = self.client.post(
             self._url(chamado.id),
             data={
                 "contabilidade_numero": "",
                 "nf_saida_numero": "",
-                # não reenviar ativo (não pode apagar/alterar sem querer)
                 f"serie_{item_r.id}": "SN-B",
                 f"confirmado_{item_c.id}": "on",
             },
             HTTP_X_REQUESTED_WITH="XMLHttpRequest",
         )
         self.assertEqual(resp_b.status_code, 200)
-        self.assertIsNone(get_active_session(chamado=chamado))
+
+        active_after_b = get_active_session(chamado=chamado)
+        self.assertIsNotNone(active_after_b)
+        assert active_after_b is not None
+        self.assertEqual(active_after_b.usuario_id, user_b.id)
 
         item_r.refresh_from_db()
         item_c.refresh_from_db()
 
-        # garante que ativo do A foi preservado
         self.assertEqual(item_r.ativo, "ATV-A")
         self.assertEqual(item_r.numero_serie, "SN-B")
         self.assertIs(item_c.confirmado, True)
