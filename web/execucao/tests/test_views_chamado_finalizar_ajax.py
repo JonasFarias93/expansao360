@@ -6,6 +6,8 @@ from execucao.models import Chamado
 from execucao.services.execution_session import create_active_session
 from execucao.tests._base import WebAuthBaseTestCase, grant_cap
 from iam.models import UserCapability
+from execucao.models import ExecutionSession
+from execucao.services.execution_session import get_active_session
 
 
 class TestChamadoFinalizarAjaxView(WebAuthBaseTestCase):
@@ -178,4 +180,17 @@ class TestChamadoFinalizarAjaxView(WebAuthBaseTestCase):
 
         sessao.refresh_from_db()
         self.assertIsNotNone(sessao.ended_at)
-        self.assertEqual(sessao.ended_reason, "FINALIZE")
+        self.assertEqual(sessao.ended_reason, ExecutionSession.EndReason.FINALIZADO)
+
+        self.assertIsNone(get_active_session(chamado=chamado))
+
+        salvar_url = reverse(
+            "execucao:chamado_salvar_execucao_ajax",
+            kwargs={"chamado_id": chamado.id},
+        )
+        resp2 = self.client.post(
+            salvar_url,
+            data={"contabilidade_numero": "123", "nf_saida_numero": "999"},
+            HTTP_X_REQUESTED_WITH="XMLHttpRequest",
+        )
+        self.assertEqual(resp2.status_code, 403)
