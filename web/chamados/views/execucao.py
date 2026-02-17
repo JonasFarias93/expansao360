@@ -6,13 +6,9 @@ from django.db import transaction
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.utils import timezone
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.views import View
 from django.views.generic import TemplateView
-from execucao.services.execution_session import (
-    usuario_tem_sessao_ativa_no_chamado,
-    end_session_exit,
-)
-from django.utils.http import url_has_allowed_host_and_scheme
 from iam.decorators import user_has_capability
 from iam.execucao_capabilities import (
     CAP_EXECUCAO_CHAMADO_EDITAR,
@@ -21,6 +17,10 @@ from iam.execucao_capabilities import (
 from iam.mixins import CapabilityRequiredMixin
 
 from chamados.services.chamado_status import recalcular_status
+from execucao.services.execution_session import (
+    end_session_exit,
+    usuario_tem_sessao_ativa_no_chamado,
+)
 
 from ..forms import ChamadoDadosFiscaisForm
 from ..models import Chamado, EvidenciaChamado, StatusConfiguracao
@@ -53,17 +53,17 @@ class ChamadoExecucaoView(CapabilityRequiredMixin, TemplateView):
             chamado=chamado,
         )
 
-        can_edit_dados_fiscais = (
-            user_has_capability(self.request.user, CAP_EXECUCAO_CHAMADO_EDITAR)
-            and sessao_ativa
-        )
-
         is_envio = chamado.tipo == Chamado.Tipo.ENVIO
         is_retorno = chamado.tipo == Chamado.Tipo.RETORNO
 
         gate_contabil_ok = bool((chamado.contabilidade_numero or "").strip())
         gate_nf_ok = bool((chamado.nf_saida_numero or "").strip())
         gate_coleta_ok = chamado.coleta_confirmada_em is not None
+
+        can_edit_dados_fiscais = (
+            user_has_capability(self.request.user, CAP_EXECUCAO_CHAMADO_EDITAR)
+            and sessao_ativa
+        )
 
         can_confirmar_coleta = (
             user_has_capability(self.request.user, CAP_EXECUCAO_CHAMADO_EDITAR)
@@ -76,20 +76,6 @@ class ChamadoExecucaoView(CapabilityRequiredMixin, TemplateView):
         )
 
         can_execute_actions = bool(can_confirmar_coleta or can_finalizar)
-
-        pode_confirmar_coleta = (
-            can_confirmar_coleta
-            and is_envio
-            and chamado.status != Chamado.Status.FINALIZADO
-            and not gate_coleta_ok
-            and gate_nf_ok
-        )
-
-        pode_finalizar = False
-
-        has_session = bool(sessao_ativa)
-        can_edit = bool(sessao_ativa and chamado.status != Chamado.Status.FINALIZADO)
-        can_finalize = bool(pode_finalizar)
 
         chamado.gerar_itens_de_instalacao()
         itens_qs = chamado.itens.select_related("equipamento").all().order_by("id")
@@ -105,6 +91,28 @@ class ChamadoExecucaoView(CapabilityRequiredMixin, TemplateView):
             .count()
         )
         config_pct = int((config_done * 100) / config_total) if config_total else 0
+
+        pode_confirmar_coleta = (
+            can_confirmar_coleta
+            and is_envio
+            and chamado.status != Chamado.Status.FINALIZADO
+            and not gate_coleta_ok
+            and gate_nf_ok
+        )
+
+        pode_finalizar = (
+            can_finalizar
+            and is_envio
+            and chamado.status != Chamado.Status.FINALIZADO
+            and gate_contabil_ok
+            and gate_nf_ok
+            and gate_coleta_ok
+            and (config_total == config_done)
+        )
+
+        has_session = bool(sessao_ativa)
+        can_edit = bool(sessao_ativa and chamado.status != Chamado.Status.FINALIZADO)
+        can_finalize = bool(pode_finalizar)
 
         evidencias = EvidenciaChamado.objects.filter(chamado=chamado).order_by(
             "-criado_em",
@@ -155,7 +163,6 @@ class ChamadoSalvarExecucaoView(CapabilityRequiredMixin, View):
         if not usuario_tem_sessao_ativa_no_chamado(user=request.user, chamado=chamado):
             raise PermissionDenied
 
-        # 1) Persistir itens (se houver campos no POST)
         itens = list(chamado.itens.all())
         for item in itens:
             changed_fields: list[str] = []
@@ -179,7 +186,6 @@ class ChamadoSalvarExecucaoView(CapabilityRequiredMixin, View):
             if changed_fields:
                 item.save(update_fields=changed_fields)
 
-        # 2) Persistir dados fiscais
         form = ChamadoDadosFiscaisForm(request.POST, instance=chamado)
         if form.is_valid():
             form.save()
@@ -192,13 +198,10 @@ class ChamadoSalvarExecucaoView(CapabilityRequiredMixin, View):
             messages.error(request, "Dados fiscais inválidos. Verifique os campos.")
             return redirect("execucao:chamado_detalhe", chamado_id=chamado.id)
 
-        # 3) Recalcular status do chamado (sem encerrar sessão)
         novo_status = recalcular_status(chamado)
         if novo_status != chamado.status:
             chamado.status = novo_status
             chamado.save(update_fields=["status"])
-
-        # (Encerramento acontece em Voltar/Sair/Finalizar/Timeout)
 
         hora = timezone.localtime().strftime("%H:%M")
         msg = f"Salvo por {request.user} às {hora}"

@@ -2,8 +2,9 @@ from __future__ import annotations
 from cadastro.models import Categoria, Equipamento, ItemKit, Kit, TipoEquipamento
 from django.urls import reverse
 from execucao.models import Chamado
-
+from execucao.services.execution_session import create_active_session
 from ._base import WebAuthBaseTestCase, grant_cap
+from django.utils import timezone
 
 
 class TestChamadoDetalheGetView(WebAuthBaseTestCase):
@@ -133,3 +134,38 @@ class TestChamadoDetalheGetView(WebAuthBaseTestCase):
 
         self.assertIn(f'name="serie_{item.id}"', html)
         self.assertIn('value="SN-REENTRADA"', html)
+
+    def test_quando_gates_ok_entao_can_finalize_1_e_btn_finalizar_habilitado(
+        self,
+    ) -> None:
+        chamado = Chamado.objects.create(
+            loja=self.loja,
+            projeto=self.projeto,
+            subprojeto=self.sub,
+            kit=self.kit,
+            status=Chamado.Status.ABERTO,
+            tipo=Chamado.Tipo.ENVIO,
+        )
+
+        # sessão ativa costuma ser pré-condição do "modo execução"
+        create_active_session(chamado=chamado, user=self.user)
+
+        # pré-requisitos típicos
+        chamado.contabilidade_numero = "14141414"
+        chamado.nf_saida_numero = "14141414"
+        chamado.coleta_confirmada_em = timezone.now()
+        chamado.save()
+
+        url = reverse("execucao:chamado_detalhe", args=[chamado.id])
+        resp = self.client.get(url)
+
+        self.assertEqual(resp.status_code, 200)
+        html = resp.content.decode("utf-8")
+
+        # contrato do state manager
+        self.assertIn('data-can-finalize="1"', html)
+
+        # botão habilitado (sem disabled)
+        self.assertIn('id="btn-finalizar-chamado"', html)
+        self.assertNotIn('id="btn-finalizar-chamado" disabled', html)
+        self.assertNotIn('id="btn-finalizar-chamado"\n            disabled', html)
