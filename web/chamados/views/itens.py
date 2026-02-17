@@ -8,6 +8,7 @@ from django.utils import timezone
 from django.views import View
 from execucao.services.execution_session import usuario_tem_sessao_ativa_no_chamado
 from iam.mixins import CapabilityRequiredMixin
+from chamados.services.itens_update import atualizar_itens
 
 from ..models import (
     Chamado,
@@ -26,81 +27,12 @@ class ChamadoAtualizarItensView(CapabilityRequiredMixin, View):
     ) -> HttpResponse:
         chamado = get_object_or_404(Chamado, pk=chamado_id)
 
-        if chamado.status == Chamado.Status.FINALIZADO:
-            messages.warning(
-                request, "Chamado já está finalizado. Não é possível editar itens."
-            )
-            return redirect("execucao:chamado_detalhe", chamado_id=chamado.id)
+        result = atualizar_itens(chamado=chamado, post_data=request.POST)
 
-        chamado.gerar_itens_de_instalacao()
+        for m in result.messages:
+            getattr(messages, m.level)(request, m.text)
 
-        itens = list(chamado.itens.select_related("equipamento").all())
-        if not itens:
-            messages.warning(request, "Este chamado não possui itens para atualizar.")
-            return redirect("execucao:chamado_detalhe", chamado_id=chamado.id)
-
-        if chamado.status == Chamado.Status.EM_ABERTURA:
-            for item in itens:
-                update_fields: list[str] = []
-
-                deve_configurar = request.POST.get(f"deve_configurar_{item.id}") == "on"
-                ip_raw = (request.POST.get(f"ip_{item.id}") or "").strip()
-
-                if not item.equipamento.configuravel:
-                    deve_configurar = False
-                    ip_raw = ""
-
-                if deve_configurar and not ip_raw:
-                    messages.error(
-                        request,
-                        f"Informe o IP do item '{item.equipamento.nome}' (configuração marcada).",
-                    )
-                    return redirect("execucao:chamado_setup", chamado_id=chamado.id)
-
-                item.deve_configurar = deve_configurar
-                item.ip = ip_raw or None
-                update_fields += ["deve_configurar", "ip"]
-                item.save(update_fields=update_fields)
-
-            chamado.status = Chamado.Status.ABERTO
-            chamado.save(update_fields=["status"])
-
-            messages.success(
-                request,
-                "Setup salvo. Chamado promovido para ABERTO e enviado para a fila.",
-            )
-            return redirect("execucao:fila")
-
-        for item in itens:
-            update_fields: list[str] = []
-
-            deve_configurar = request.POST.get(f"deve_configurar_{item.id}") == "on"
-            ip_raw = (request.POST.get(f"ip_{item.id}") or "").strip()
-
-            if not item.equipamento.configuravel:
-                deve_configurar = False
-                ip_raw = ""
-
-            item.deve_configurar = deve_configurar
-            item.ip = ip_raw or None
-            update_fields += ["deve_configurar", "ip"]
-
-            if item.tem_ativo:
-                item.ativo = (request.POST.get(f"ativo_{item.id}") or "").strip()
-                item.numero_serie = (request.POST.get(f"serie_{item.id}") or "").strip()
-                update_fields += ["ativo", "numero_serie"]
-            else:
-                item.confirmado = request.POST.get(f"confirmado_{item.id}") == "on"
-                update_fields += ["confirmado"]
-
-            item.save(update_fields=update_fields)
-
-        if chamado.status == Chamado.Status.ABERTO:
-            chamado.status = Chamado.Status.EM_EXECUCAO
-            chamado.save(update_fields=["status"])
-
-        messages.success(request, "Itens atualizados com sucesso.")
-        return redirect("execucao:chamado_detalhe", chamado_id=chamado.id)
+        return redirect(result.redirect_name, **result.redirect_kwargs)
 
 
 class ItemSetStatusConfiguracaoView(CapabilityRequiredMixin, View):
