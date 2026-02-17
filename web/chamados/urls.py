@@ -4,6 +4,9 @@ from execucao import views as execucao_views
 
 from chamados import views as chamados_views
 from chamados.api_views import loja_lookup_por_codigo
+from chamados.views.execucao import (
+    ChamadoEncerrarSessaoView,
+)
 
 app_name = "chamados"
 
@@ -98,6 +101,11 @@ urlpatterns = [
         "itens/<int:item_id>/configurar/",
         chamados_views.ItemMarcarConfiguradoView.as_view(),
         name="item_configurar",
+    ),
+    path(
+        "chamados/<int:chamado_id>/encerrar-sessao/",
+        ChamadoEncerrarSessaoView.as_view(),
+        name="chamado_encerrar_sessao",
     ),
     # ======================
     # EVIDÊNCIAS

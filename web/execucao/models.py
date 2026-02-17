@@ -44,6 +44,7 @@ class ExecutionSession(models.Model):
         OUTRO = "OUTRO", "Outro"
         ADMIN_TAKE = "ADMIN_TAKE", "Admin tomou a sessão"
         SAVE = "SAVE", "Salvar execução"
+        USER_EXIT = "USER_EXIT", "Usuário saiu da execução"
 
     chamado = models.ForeignKey(
         Chamado,
