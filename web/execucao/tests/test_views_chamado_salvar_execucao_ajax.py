@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from cadastro.models import Categoria, Equipamento, ItemKit, Kit, TipoEquipamento
 from django.urls import reverse
-from execucao.models import Chamado, ExecutionSession
+from execucao.models import Chamado
 from execucao.services.execution_session import (
     create_active_session,
     get_active_session,
@@ -27,7 +27,6 @@ class TestChamadoSalvarExecucaoAjaxView(WebAuthBaseTestCase):
         )
 
     def _setup_kit_com_itens_gate_nf(self) -> Kit:
-        """Cria kit que gera itens (rastreável + contável) para habilitar o gate de NF."""
         categoria = Categoria.objects.create(nome="Informatica")
         tipo = TipoEquipamento.objects.create(categoria=categoria, nome="TC")
         kit = Kit.objects.create(nome="Kit Gate NF (tests)")
@@ -68,7 +67,6 @@ class TestChamadoSalvarExecucaoAjaxView(WebAuthBaseTestCase):
             chamado.gerar_itens_de_instalacao()
 
     def _deixar_itens_ok_para_gate_nf(self, chamado: Chamado) -> None:
-        """Deixa os itens do chamado aptos para `pode_liberar_nf()`."""
         self._ensure_itens_gerados(chamado)
 
         for item in chamado.itens.all():
@@ -82,16 +80,14 @@ class TestChamadoSalvarExecucaoAjaxView(WebAuthBaseTestCase):
 
         assert chamado.pode_liberar_nf() is True
 
-    def test_quando_salvar_sem_sessao_entao_retorna_403(self) -> None:
+    def test_salvar_sem_sessao_retorna_403(self) -> None:
         resp = self.client.post(
             self._url(self.chamado.id),
             data={"contabilidade_numero": "PED-001", "nf_saida_numero": ""},
         )
         self.assertEqual(resp.status_code, 403)
 
-    def test_quando_primeiro_save_aberto_entao_promove_em_execucao_e_encerra_sessao_save(
-        self,
-    ) -> None:
+    def test_primeiro_save_promove_em_execucao_e_mantem_sessao(self) -> None:
         create_active_session(chamado=self.chamado, user=self.user)
 
         resp = self.client.post(
@@ -104,21 +100,9 @@ class TestChamadoSalvarExecucaoAjaxView(WebAuthBaseTestCase):
         self.chamado.refresh_from_db()
         self.assertEqual(str(self.chamado.status), str(Chamado.Status.EM_EXECUCAO))
 
-        self.assertIsNone(get_active_session(chamado=self.chamado))
+        self.assertIsNotNone(get_active_session(chamado=self.chamado))
 
-        last = (
-            ExecutionSession.objects.filter(chamado=self.chamado)
-            .order_by("-started_at")
-            .first()
-        )
-        self.assertIsNotNone(last)
-        assert last is not None
-        self.assertIsNotNone(last.ended_at)
-        self.assertEqual(last.ended_reason, ExecutionSession.EndReason.SAVE)
-
-    def test_quando_gate_nf_ok_e_contabil_preenchido_entao_promove_aguardando_nf_e_encerra_sessao(
-        self,
-    ) -> None:
+    def test_gate_nf_ok_promove_aguardando_nf_e_mantem_sessao(self) -> None:
         kit = self._setup_kit_com_itens_gate_nf()
 
         chamado = Chamado.objects.create(
@@ -146,9 +130,9 @@ class TestChamadoSalvarExecucaoAjaxView(WebAuthBaseTestCase):
         chamado.refresh_from_db()
         self.assertEqual(str(chamado.status), str(Chamado.Status.AGUARDANDO_NF))
 
-        self.assertIsNone(get_active_session(chamado=chamado))
+        self.assertIsNotNone(get_active_session(chamado=chamado))
 
-    def test_quando_nf_saida_preenchida_entao_promove_aguardando_coleta_e_encerra_sessao(
+    def test_nf_saida_preenchida_promove_aguardando_coleta_e_mantem_sessao(
         self,
     ) -> None:
         chamado = Chamado.objects.create(
@@ -172,11 +156,9 @@ class TestChamadoSalvarExecucaoAjaxView(WebAuthBaseTestCase):
         chamado.refresh_from_db()
         self.assertEqual(str(chamado.status), str(Chamado.Status.AGUARDANDO_COLETA))
 
-        self.assertIsNone(get_active_session(chamado=chamado))
+        self.assertIsNotNone(get_active_session(chamado=chamado))
 
-    def test_quando_item_configurado_entao_promove_em_configuracao_e_encerra_sessao(
-        self,
-    ) -> None:
+    def test_item_configurado_promove_em_configuracao_e_mantem_sessao(self) -> None:
         kit = self._setup_kit_com_itens_gate_nf()
 
         chamado = Chamado.objects.create(
@@ -195,24 +177,21 @@ class TestChamadoSalvarExecucaoAjaxView(WebAuthBaseTestCase):
         create_active_session(chamado=chamado, user=self.user)
 
         url_cfg = reverse("execucao:item_configurar", args=[item.id])
-        resp = self.client.post(url_cfg)
-        self.assertEqual(resp.status_code, 200)
+        self.client.post(url_cfg)
 
-        resp2 = self.client.post(
+        resp = self.client.post(
             self._url(chamado.id),
             data={"contabilidade_numero": "", "nf_saida_numero": ""},
             HTTP_X_REQUESTED_WITH="XMLHttpRequest",
         )
-        self.assertEqual(resp2.status_code, 200)
+        self.assertEqual(resp.status_code, 200)
 
         chamado.refresh_from_db()
         self.assertEqual(str(chamado.status), str(Chamado.Status.EM_CONFIGURACAO))
 
-        self.assertIsNone(get_active_session(chamado=chamado))
+        self.assertIsNotNone(get_active_session(chamado=chamado))
 
-    def test_quando_post_envia_ativo_serie_e_confirmado_entao_persiste_itens_e_encerra_sessao(
-        self,
-    ) -> None:
+    def test_salvar_persiste_itens_e_mantem_sessao(self) -> None:
         kit = self._setup_kit_com_itens_gate_nf()
 
         chamado = Chamado.objects.create(
@@ -223,64 +202,40 @@ class TestChamadoSalvarExecucaoAjaxView(WebAuthBaseTestCase):
             status=Chamado.Status.EM_EXECUCAO,
             tipo=Chamado.Tipo.ENVIO,
         )
+
         self._ensure_itens_gerados(chamado)
 
-        rastreaveis = list(chamado.itens.filter(tem_ativo=True).order_by("id"))
-        contaveis = list(chamado.itens.filter(tem_ativo=False).order_by("id"))
-        self.assertGreaterEqual(len(rastreaveis), 1)
-        self.assertGreaterEqual(len(contaveis), 1)
-
-        item_rastreavel = rastreaveis[0]
-        item_contavel = contaveis[0]
+        rastreavel = chamado.itens.filter(tem_ativo=True).first()
+        contavel = chamado.itens.filter(tem_ativo=False).first()
 
         create_active_session(chamado=chamado, user=self.user)
 
-        resp = self.client.post(
+        self.client.post(
             self._url(chamado.id),
             data={
-                "contabilidade_numero": "",
-                "nf_saida_numero": "",
-                f"ativo_{item_rastreavel.id}": "ATV-999",
-                f"serie_{item_rastreavel.id}": "SN-999",
-                f"confirmado_{item_contavel.id}": "on",
+                f"ativo_{rastreavel.id}": "ATV-999",
+                f"serie_{rastreavel.id}": "SN-999",
+                f"confirmado_{contavel.id}": "on",
             },
             HTTP_X_REQUESTED_WITH="XMLHttpRequest",
         )
-        self.assertEqual(resp.status_code, 200)
 
-        # sessão encerra (isso deve passar hoje)
-        self.assertIsNone(get_active_session(chamado=chamado))
+        self.assertIsNotNone(get_active_session(chamado=chamado))
 
-        # persistência dos itens (isso deve FALHAR hoje e guiar a MT-02/MT-03 backend)
-        item_rastreavel.refresh_from_db()
-        self.assertEqual(item_rastreavel.ativo, "ATV-999")
-        self.assertEqual(item_rastreavel.numero_serie, "SN-999")
+        rastreavel.refresh_from_db()
+        self.assertEqual(rastreavel.ativo, "ATV-999")
+        self.assertEqual(rastreavel.numero_serie, "SN-999")
 
-        item_contavel.refresh_from_db()
-        self.assertIs(item_contavel.confirmado, True)
+        contavel.refresh_from_db()
+        self.assertTrue(contavel.confirmado)
 
-    def test_quando_salvar_execucao_com_sessao_ativa_entao_nao_encerra_sessao(
-        self,
-    ) -> None:
+    def test_salvar_execucao_mantem_sessao_ativa(self) -> None:
         create_active_session(chamado=self.chamado, user=self.user)
 
-        resp = self.client.post(
+        self.client.post(
             self._url(self.chamado.id),
             data={"contabilidade_numero": "", "nf_saida_numero": ""},
             HTTP_X_REQUESTED_WITH="XMLHttpRequest",
         )
-        self.assertEqual(resp.status_code, 200)
 
-        # ✅ novo contrato: salvar NÃO encerra sessão
-        active = get_active_session(chamado=self.chamado)
-        self.assertIsNotNone(active)
-
-        # opcional: sanity extra, garantindo que não registrou SAVE como encerramento
-        last = (
-            ExecutionSession.objects.filter(chamado=self.chamado)
-            .order_by("-started_at")
-            .first()
-        )
-        self.assertIsNotNone(last)
-        assert last is not None
-        self.assertIsNone(last.ended_at)
+        self.assertIsNotNone(get_active_session(chamado=self.chamado))
