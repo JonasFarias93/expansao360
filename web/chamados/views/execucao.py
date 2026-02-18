@@ -17,6 +17,7 @@ from iam.execucao_capabilities import (
 from iam.mixins import CapabilityRequiredMixin
 
 from chamados.services.chamado_status import recalcular_status
+from chamados.services.finalizacao import validar_finalizacao
 from execucao.services.execution_session import (
     end_session_exit,
     usuario_tem_sessao_ativa_no_chamado,
@@ -100,14 +101,12 @@ class ChamadoExecucaoView(CapabilityRequiredMixin, TemplateView):
             and gate_nf_ok
         )
 
+        validacao_finalizacao = validar_finalizacao(chamado)
+
         pode_finalizar = (
             can_finalizar
-            and is_envio
             and chamado.status != Chamado.Status.FINALIZADO
-            and gate_contabil_ok
-            and gate_nf_ok
-            and gate_coleta_ok
-            and (config_total == config_done)
+            and validacao_finalizacao.ok
         )
 
         has_session = bool(sessao_ativa)
@@ -144,6 +143,8 @@ class ChamadoExecucaoView(CapabilityRequiredMixin, TemplateView):
                 "has_session": has_session,
                 "can_edit": can_edit,
                 "can_finalize": can_finalize,
+                # útil para UI/debug futuro (opcional, mas seguro)
+                "validacao_finalizacao": validacao_finalizacao,
             }
         )
         return ctx
