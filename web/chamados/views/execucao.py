@@ -93,6 +93,7 @@ class ChamadoExecucaoView(CapabilityRequiredMixin, TemplateView):
         )
         config_pct = int((config_done * 100) / config_total) if config_total else 0
 
+        # Mantém o gate de confirmar coleta como regra de UI (fluxo de ENVIO)
         pode_confirmar_coleta = (
             can_confirmar_coleta
             and is_envio
@@ -101,8 +102,12 @@ class ChamadoExecucaoView(CapabilityRequiredMixin, TemplateView):
             and gate_nf_ok
         )
 
+        # ✅ Fonte única para "pode finalizar": mesma regra do endpoint AJAX (service)
         validacao_finalizacao = validar_finalizacao(chamado)
 
+        # IMPORTANTE:
+        # - Não duplicar regras fiscais/config/coleta aqui, para não divergir do service.
+        # - A UI habilita "Finalizar" quando o service diz que não há pendências.
         pode_finalizar = (
             can_finalizar
             and chamado.status != Chamado.Status.FINALIZADO
