@@ -1306,4 +1306,7 @@ RF-09 — Histórico da Loja
 
 
 ---
+<<<<<<< HEAD
 
+=======
+>>>>>>> 2016452 (docs: REQUIREMENTS.md e ARCHITECTURE.md)

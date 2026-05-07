@@ -487,4 +487,8 @@ execucao/ registra no log (quem, quando, o quê)
 Fonte:
 - Estrutura real em `web/`
 - Testes automatizados
+<<<<<<< HEAD
 - ADRs em `DECISIONS/` (especialmente ADR-058, ADR-059)
+=======
+- ADRs em `DECISIONS/` (especialmente ADR-058, ADR-059)
+>>>>>>> 2016452 (docs: REQUIREMENTS.md e ARCHITECTURE.md)
