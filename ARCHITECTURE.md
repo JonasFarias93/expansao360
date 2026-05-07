@@ -490,5 +490,3 @@ Fonte:
 <<<<<<< HEAD
 - ADRs em `DECISIONS/` (especialmente ADR-058, ADR-059)
 =======
-- ADRs em `DECISIONS/` (especialmente ADR-058, ADR-059)
->>>>>>> 2016452 (docs: REQUIREMENTS.md e ARCHITECTURE.md)
