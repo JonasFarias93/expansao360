@@ -54,3 +54,34 @@
     }
   });
 })();
+
+
+// =====================================
+// TAB behavior — leitor de código de barras
+// serie -> próximo ativo
+// =====================================
+(function () {
+  const items = Array.from(document.querySelectorAll("[data-item-root]"));
+
+  items.forEach((itemEl, idx) => {
+    const id = itemEl.getAttribute("data-item-id");
+    const serieInput = itemEl.querySelector(`[name="serie_${id}"]`);
+    if (!serieInput) return;
+
+    serieInput.addEventListener("keydown", (e) => {
+      if (e.key !== "Tab" || e.shiftKey) return;
+
+      // próximo item com campo ativo
+      for (let i = idx + 1; i < items.length; i++) {
+        const nextId = items[i].getAttribute("data-item-id");
+        const nextAtivo = items[i].querySelector(`[name="ativo_${nextId}"]`);
+        if (nextAtivo) {
+          e.preventDefault();
+          nextAtivo.focus();
+          return;
+        }
+      }
+      // se não tem próximo, deixa TAB natural
+    });
+  });
+})();

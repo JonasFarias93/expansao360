@@ -36,13 +36,26 @@
         {# Coluna lateral (resumo / ações rápidas / lembretes) #}
         <div class="lg:col-span-4 space-y-6">
           <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
-            <div class="text-sm font-semibold text-slate-900">Dicas rápidas</div>
-            <ul class="mt-2 text-sm text-slate-600 list-disc pl-5 space-y-1">
-              <li>Atualize evidências conforme executa os itens.</li>
-              <li>Use “Finalizar” apenas após checklist completo.</li>
-              <li>Se faltar NF/Coleta, ajuste o status corretamente.</li>
-            </ul>
-          </div>
+          <div class="text-sm font-semibold text-slate-900 mb-3">Resumo do chamado</div>
+          <ul class="space-y-1">
+            {% regroup itens by equipamento.nome as grupos %}
+            {% for grupo in grupos %}
+              <li class="flex items-center justify-between text-sm">
+                <span class="text-slate-700">{{ grupo.grouper }}</span>
+                <span class="font-semibold text-slate-900 ml-2">{{ grupo.list|length }}x</span>
+              </li>
+            {% endfor %}
+          </ul>
+        </div>
+
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+          <div class="text-sm font-semibold text-slate-900">Dicas rápidas</div>
+          <ul class="mt-2 text-sm text-slate-600 list-disc pl-5 space-y-1">
+            <li>Atualize evidências conforme executa os itens.</li>
+            <li>Use "Finalizar" apenas após checklist completo.</li>
+            <li>Se faltar NF/Coleta, ajuste o status corretamente.</li>
+          </ul>
+        </div>
         </div>
       </div>
     </div>
