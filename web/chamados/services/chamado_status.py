@@ -6,7 +6,6 @@ from execucao.models import Chamado
 _STATUS_ORDER = (
     "ABERTO",
     "EM_EXECUCAO",
-    "EM_CONFIGURACAO",
     "AGUARDANDO_NF",
     "AGUARDANDO_COLETA",
     "FINALIZADO",
@@ -47,9 +46,6 @@ def recalcular_status(chamado: Chamado) -> Chamado.Status:
     if atual == "ABERTO":
         novo = _promote(novo, "EM_EXECUCAO")
 
-    #  existe item configurado => EM_CONFIGURACAO (sem regressão)
-    if chamado.itens.filter(configurado_em__isnull=False).exists():
-        novo = _promote(novo, "EM_CONFIGURACAO")
 
     #  NF Saída preenchida => AGUARDANDO_COLETA (maior precedência)
     if bool((chamado.nf_saida_numero or "").strip()):

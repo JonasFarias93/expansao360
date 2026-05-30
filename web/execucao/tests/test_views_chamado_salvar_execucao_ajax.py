@@ -174,7 +174,7 @@ class TestChamadoSalvarExecucaoAjaxView(WebAuthBaseTestCase):
 
         self.assertIsNone(get_active_session(chamado=chamado))
 
-    def test_quando_item_configurado_entao_promove_em_configuracao_e_encerra_sessao(
+    def test_quando_item_configurado_entao_permanece_em_execucao_e_encerra_sessao(
         self,
     ) -> None:
         kit = self._setup_kit_com_itens_gate_nf()
@@ -206,7 +206,7 @@ class TestChamadoSalvarExecucaoAjaxView(WebAuthBaseTestCase):
         self.assertEqual(resp2.status_code, 200)
 
         chamado.refresh_from_db()
-        self.assertEqual(str(chamado.status), str(Chamado.Status.EM_CONFIGURACAO))
+        self.assertEqual(str(chamado.status), str(Chamado.Status.EM_EXECUCAO))
 
         self.assertIsNone(get_active_session(chamado=chamado))
 

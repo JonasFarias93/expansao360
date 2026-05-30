@@ -100,7 +100,7 @@ class TestRecalcularStatusService(ChamadoBaseTestCase):
             str(recalcular_status(self.chamado)), str(Chamado.Status.EM_EXECUCAO)
         )
 
-    def test_quando_item_configurado_e_status_em_execucao_entao_promove_para_em_configuracao(
+    def test_quando_item_configurado_e_status_em_execucao_entao_permanece_em_execucao(
         self,
     ) -> None:
         self.chamado.status = Chamado.Status.EM_EXECUCAO
@@ -109,10 +109,10 @@ class TestRecalcularStatusService(ChamadoBaseTestCase):
         self._marcar_um_item_configurado()
 
         self.assertEqual(
-            str(recalcular_status(self.chamado)), str(Chamado.Status.EM_CONFIGURACAO)
+            str(recalcular_status(self.chamado)), str(Chamado.Status.EM_EXECUCAO)
         )
 
-    def test_quando_item_configurado_e_status_aberto_entao_promove_para_em_configuracao(
+    def test_quando_item_configurado_e_status_aberto_entao_promove_para_em_execucao(
         self,
     ) -> None:
         self.chamado.status = Chamado.Status.ABERTO
@@ -121,7 +121,7 @@ class TestRecalcularStatusService(ChamadoBaseTestCase):
         self._marcar_um_item_configurado()
 
         self.assertEqual(
-            str(recalcular_status(self.chamado)), str(Chamado.Status.EM_CONFIGURACAO)
+            str(recalcular_status(self.chamado)), str(Chamado.Status.EM_EXECUCAO)
         )
 
     def test_quando_aguardando_nf_entao_nao_regride_mesmo_com_item_configurado(
@@ -201,3 +201,24 @@ class TestRecalcularStatusService(ChamadoBaseTestCase):
         s2 = str(recalcular_status(self.chamado))
 
         self.assertEqual(s1, s2)
+    def test_configurar_item_nao_remove_chamado_da_fila(self) -> None:
+        """
+        Configurar item NÃO deve mover chamado para fora da fila operacional.
+        Fila inclui: ABERTO, EM_EXECUCAO, AGUARDANDO_NF, AGUARDANDO_COLETA.
+        """
+        from execucao.models import Chamado as ChamadoModel
+
+        STATUS_FILA = {
+            ChamadoModel.Status.ABERTO,
+            ChamadoModel.Status.EM_EXECUCAO,
+            ChamadoModel.Status.AGUARDANDO_NF,
+            ChamadoModel.Status.AGUARDANDO_COLETA,
+        }
+
+        self.chamado.status = Chamado.Status.EM_EXECUCAO
+        self.chamado.save(update_fields=["status"])
+
+        self._marcar_um_item_configurado()
+
+        novo = recalcular_status(self.chamado)
+        self.assertIn(novo, STATUS_FILA)
