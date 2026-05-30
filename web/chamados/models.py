@@ -194,6 +194,7 @@ class Chamado(models.Model):
                         quantidade=1,
                         tem_ativo=True,
                         requer_configuracao=item_kit.requer_configuracao,
+                        deve_configurar=item_kit.requer_configuracao,
                     )
             else:
                 InstalacaoItem.objects.create(
@@ -203,6 +204,7 @@ class Chamado(models.Model):
                     quantidade=item_kit.quantidade,
                     tem_ativo=False,
                     requer_configuracao=item_kit.requer_configuracao,
+                    deve_configurar=item_kit.requer_configuracao,
                 )
 
     def pode_liberar_nf(self) -> bool:

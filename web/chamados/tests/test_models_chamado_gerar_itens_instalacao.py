@@ -85,3 +85,47 @@ class TestChamadoGerarItensDeInstalacao(ChamadoBaseTestCase):
 
         hub_item.refresh_from_db()
         self.assertTrue(hub_item.confirmado)
+
+
+    def test_quando_item_kit_requer_configuracao_entao_snapshot_deve_configurar_true(
+        self,
+    ) -> None:
+        """
+        requer_configuracao=True no Kit deve propagar deve_configurar=True no snapshot.
+        """
+        self.micro.configuravel = True
+        self.micro.save(update_fields=["configuravel"])
+
+        ItemKit.objects.filter(kit=self.kit, equipamento=self.micro).update(
+            requer_configuracao=True
+        )
+
+        chamado = Chamado.objects.create(
+            loja=self.loja,
+            projeto=self.projeto,
+            subprojeto=self.sub,
+            kit=self.kit,
+        )
+        chamado.gerar_itens_de_instalacao()
+
+        item = InstalacaoItem.objects.get(chamado=chamado, equipamento=self.micro)
+        self.assertTrue(item.deve_configurar)
+        self.assertTrue(item.requer_configuracao)
+
+
+    def test_quando_item_kit_nao_requer_configuracao_entao_deve_configurar_false(
+        self,
+    ) -> None:
+        """
+        requer_configuracao=False no Kit não deve setar deve_configurar=True.
+        """
+        chamado = Chamado.objects.create(
+            loja=self.loja,
+            projeto=self.projeto,
+            subprojeto=self.sub,
+            kit=self.kit,
+        )
+        chamado.gerar_itens_de_instalacao()
+
+        for item in InstalacaoItem.objects.filter(chamado=chamado):
+            self.assertFalse(item.deve_configurar)
