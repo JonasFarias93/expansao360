@@ -62,7 +62,7 @@
           <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div class="min-w-0">
               <div class="font-medium flex items-center gap-2">
-                <span class="truncate">{{ ev.descricao|default:ev.nome_arquivo }}</span>
+                <span class="truncate">{{ ev.descricao|default:"Sem descrição" }}</span>
                 {% if ev.tipo %}
                   <span class="inline-flex items-center px-2 py-0.5 text-[10px] font-bold uppercase rounded bg-gray-100 text-gray-600 border border-gray-200">
                     {{ ev.tipo }}

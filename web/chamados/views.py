@@ -482,6 +482,7 @@ class HistoricoView(CapabilityRequiredMixin, TemplateView):
 # ================
 # sessao:chamado_execucao
 # ================
+@method_decorator(ensure_csrf_cookie, name="dispatch")
 class ChamadoExecucaoView(CapabilityRequiredMixin, TemplateView):
     template_name = "execucao/chamado_execucao.html"
     required_capability = "execucao.chamado.visualizar"
