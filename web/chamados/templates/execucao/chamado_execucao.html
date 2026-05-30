@@ -24,7 +24,7 @@
         {# Coluna principal #}
         <div class="lg:col-span-8 space-y-6">
           {# Itens do chamado — execução-only #}
-          {% include "execucao/components/_itens_chamado_execucao.html" with chamado=chamado itens=itens only %}
+          {% include "execucao/components/_itens_chamado_execucao.html" with chamado=chamado itens=itens %}
 
 
           {% include "execucao/components/_salvar_execucao_bar.html" with chamado=chamado sessao_do_usuario=can_edit_dados_fiscais %}

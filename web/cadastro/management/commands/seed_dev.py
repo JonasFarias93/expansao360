@@ -31,6 +31,7 @@ CAPABILITIES = [
     "execucao.chamado.finalizar",
     "execucao.evidencia.upload",
     "cadastro.loja.view",
+    "execucao.chamado_editar",
 ]
 
 LOJAS = [
