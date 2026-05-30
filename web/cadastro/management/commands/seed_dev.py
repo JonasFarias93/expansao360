@@ -88,7 +88,7 @@ class Command(BaseCommand):
     def _seed_equipamento(self, categoria):
         eqp, created = Equipamento.objects.get_or_create(
             nome="Micro",
-            defaults={"categoria": categoria, "tem_ativo": True},
+            defaults={"categoria": categoria, "tem_ativo": True, "configuravel": True},
         )
         self._log(created, "Equipamento", eqp.nome)
         return eqp
@@ -153,11 +153,32 @@ class Command(BaseCommand):
 
     def _reset(self):
         self.stdout.write(self.style.WARNING("⚠️  resetando dados de seed..."))
+        from chamados.models import Chamado as ChamadoModel
+        from cadastro.models import ItemKit as ItemKitModel
+
+        # apaga todos os chamados que referenciam dados de seed
+        loja_codigos = [l["codigo"] for l in LOJAS]
+        ChamadoModel.objects.filter(
+            kit__nome="Kit Dev"
+        ).delete()
+        ChamadoModel.objects.filter(
+            subprojeto__nome="Subprojeto Dev"
+        ).delete()
+        ChamadoModel.objects.filter(
+            loja__codigo__in=loja_codigos
+        ).delete()
+
+        
         ItemKit.objects.filter(kit__nome="Kit Dev").delete()
         Kit.objects.filter(nome="Kit Dev").delete()
+        ItemKitModel.objects.filter(equipamento__nome="Micro").delete()
+        Equipamento.objects.filter(nome="Micro").delete()
+        Equipamento.objects.filter(nome="Micro").delete()
+        TipoEquipamento.objects.filter(nome="Padrão").delete()
+        Categoria.objects.filter(nome="Informática").delete()
         Subprojeto.objects.filter(nome="Subprojeto Dev").delete()
         Projeto.objects.filter(nome="Projeto Dev").delete()
-        Loja.objects.filter(codigo__in=[l["codigo"] for l in LOJAS]).delete()
+        Loja.objects.filter(codigo__in=loja_codigos).delete()
         User.objects.filter(username="dev").delete()
 
     def _log(self, created: bool, model: str, label: str):
