@@ -96,6 +96,15 @@ deps-check:
 		--ignore DEP002:python-dotenv \
 		--ignore DEP002:psycopg
 
+
+
+seed-dev:
+	python web/manage.py seed_dev
+
+seed-dev-reset:
+	python web/manage.py seed_dev --reset
+
+	
 # =========================
 # Qualidade / Testes
 # =========================

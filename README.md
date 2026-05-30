@@ -192,6 +192,17 @@ python web/manage.py migrate
 
 ---
 
+### 4) Popular dados de dev
+
+```bash
+make seed-dev
+```
+
+> Cria dados mínimos para testar o fluxo completo.
+> Idempotente — pode rodar múltiplas vezes.
+> User criado: `dev` / senha: `dev123`
+
+
 ## ▶️ Rodar servidor
 
 ```bash
