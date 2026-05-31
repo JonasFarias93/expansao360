@@ -2,7 +2,8 @@ SHELL := bash
 
 .PHONY: help fmt lint test test-py test-js check hooks \
         env-create deps-install deps-install-dev rebuild-clean \
-        deps-snapshot deps-check cli demo ptw ptw-fast
+        deps-snapshot deps-check cli demo ptw ptw-fast \
+        seed-dev seed-dev-reset setup-dev setup-capabilities
 
 ENV_NAME ?= expansao360
 PYTHON   ?= python
@@ -27,21 +28,25 @@ ci-debug:
 help:
 	@echo ""
 	@echo "Comandos disponíveis:"
-	@echo "  make env-create        -> Criar/atualizar ambiente Conda (environment.yml)"
-	@echo "  make deps-install      -> Instalar deps Python (web+test) via pyproject (pip -e .[web,test])"
-	@echo "  make deps-install-dev  -> Instalar deps Python (dev+web+test) via pyproject (pip -e .[dev,web,test])"
-	@echo "  make rebuild-clean     -> Remover env e fazer rebuild limpo + check (dev+web+test)"
-	@echo "  make deps-snapshot     -> Gerar snapshots em docs/deps/"
-	@echo "  make deps-check        -> Auditoria deps Python (deptry) no pacote expansao360/"
-	@echo "  make fmt               -> Formatar código (ruff + black)"
-	@echo "  make lint              -> Analisar código (ruff)"
-	@echo "  make test              -> Rodar testes (pytest + jest)"
-	@echo "  make test-py           -> Rodar testes (pytest)"
-	@echo "  make test-js           -> Rodar testes (jest)"
-	@echo "  make check             -> Lint + deps-check + testes"
-	@echo "  make hooks             -> Instalar hooks do pre-commit"
-	@echo "  make ptw               -> pytest-watch (python -m pytest_watch)"
-	@echo "  make ptw-fast          -> ptw com -c e pytest -q"
+	@echo "  make env-create         -> Criar/atualizar ambiente Conda (environment.yml)"
+	@echo "  make deps-install       -> Instalar deps Python (web+test) via pyproject (pip -e .[web,test])"
+	@echo "  make deps-install-dev   -> Instalar deps Python (dev+web+test) via pyproject (pip -e .[dev,web,test])"
+	@echo "  make rebuild-clean      -> Remover env e fazer rebuild limpo + check (dev+web+test)"
+	@echo "  make deps-snapshot      -> Gerar snapshots em docs/deps/"
+	@echo "  make deps-check         -> Auditoria deps Python (deptry) no pacote expansao360/"
+	@echo "  make fmt                -> Formatar código (ruff + black)"
+	@echo "  make lint               -> Analisar código (ruff)"
+	@echo "  make test               -> Rodar testes (pytest + jest)"
+	@echo "  make test-py            -> Rodar testes (pytest)"
+	@echo "  make test-js            -> Rodar testes (jest)"
+	@echo "  make check              -> Lint + deps-check + testes"
+	@echo "  make hooks              -> Instalar hooks do pre-commit"
+	@echo "  make ptw                -> pytest-watch (python -m pytest_watch)"
+	@echo "  make ptw-fast           -> ptw com -c e pytest -q"
+	@echo "  make setup-dev          -> migrate + setup_capabilities + seed_dev"
+	@echo "  make setup-capabilities -> Cria/atualiza capabilities e grupos padrao"
+	@echo "  make seed-dev           -> Popular dados de dev"
+	@echo "  make seed-dev-reset     -> Reset e recriar dados de dev"
 	@echo ""
 
 # =========================
@@ -104,6 +109,13 @@ seed-dev:
 seed-dev-reset:
 	python web/manage.py seed_dev --reset
 
+setup-dev:
+	python web/manage.py migrate
+	python web/manage.py setup_capabilities
+	python web/manage.py seed_dev
+
+setup-capabilities:
+	python web/manage.py setup_capabilities
 	
 # =========================
 # Qualidade / Testes
