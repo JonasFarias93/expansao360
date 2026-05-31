@@ -4,6 +4,7 @@ CAP_EXECUCAO_CHAMADO_VER = "execucao.chamado_ver"
 CAP_EXECUCAO_CHAMADO_EDITAR = "execucao.chamado_editar"
 CAP_EXECUCAO_CHAMADO_FINALIZAR = "execucao.chamado_finalizar"
 CAP_EXECUCAO_SESSAO_TOMAR = "execucao.sessao_tomar"
+CAP_EXECUCAO_CHAMADO_CANCELAR = "execucao.chamado.cancelar"
 
 EXECUCAO_CAPABILITIES: list[str] = [
     CAP_EXECUCAO_CHAMADO_VER,

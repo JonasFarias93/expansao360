@@ -99,6 +99,11 @@ urlpatterns = [
         chamados_views.ItemMarcarConfiguradoView.as_view(),
         name="item_configurar",
     ),
+    path(
+    "chamados/<int:chamado_id>/cancelar/",
+    chamados_views.ChamadoCancelarView.as_view(),
+    name="chamado_cancelar",
+),
     # ======================
     # EVIDÊNCIAS
     # ======================

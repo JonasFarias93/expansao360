@@ -126,5 +126,36 @@
       </div>
     {% endif %}
   </div>
-
+    {# Cancelar chamado #}
+    {% if can_cancelar %}
+      <div class="border-t pt-4" data-skip-readonly>
+        <form
+          method="post"
+          action="{% url 'execucao:chamado_cancelar' chamado.id %}"
+          onsubmit="return confirm('Tem certeza que deseja cancelar este chamado? Esta ação não pode ser desfeita.')"
+          id="form-cancelar-{{ chamado.id }}"
+        >
+          {% csrf_token %}
+          <div class="space-y-2">
+            <div class="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+              Cancelar chamado
+            </div>
+            <textarea
+              name="motivo"
+              rows="2"
+              required
+              placeholder="Informe o motivo do cancelamento..."
+              class="w-full border rounded px-3 py-2 text-sm resize-none"
+            ></textarea>
+            <button
+              type="submit"
+              class="px-4 py-2 rounded border border-red-300 bg-red-50 text-red-700 text-sm font-medium hover:bg-red-100"
+            >
+              Cancelar chamado
+            </button>
+          </div>
+        </form>
+      </div>
+    {% endif %}
+  
 </div>

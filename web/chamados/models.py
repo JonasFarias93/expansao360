@@ -38,6 +38,7 @@ class Chamado(models.Model):
         AGUARDANDO_NF = "AGUARDANDO_NF", "Aguardando NF"
         AGUARDANDO_COLETA = "AGUARDANDO_COLETA", "Aguardando coleta"
         FINALIZADO = "FINALIZADO", "Finalizado"
+        CANCELADO = "CANCELADO", "Cancelado"
 
     class Tipo(models.TextChoices):
         ENVIO = "ENVIO", "Envio (Matriz → Loja)"
@@ -81,6 +82,15 @@ class Chamado(models.Model):
 
     criado_em = models.DateTimeField(auto_now_add=True)
     finalizado_em = models.DateTimeField(null=True, blank=True)
+    cancelado_em = models.DateTimeField(null=True, blank=True)
+    motivo_cancelamento = models.TextField(blank=True, default="")
+    cancelado_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="chamados_cancelados",
+    )
     protocolo = models.CharField(max_length=32, unique=True, editable=False)
 
     # =========================
