@@ -5,6 +5,76 @@ O versionamento segue o padrão **SemVer**.
 
 ---
 
+## [v0.6.1] — 2026-05-31
+
+### Grupos, Capabilities e Sistema de Login
+
+Esta release consolida o sistema de identidade operacional com grupos de permissões,
+fluxo de autenticação completo e onboarding automatizado.
+
+---
+
+### ✨ Features
+
+#### Sistema de Login
+* Página de login customizada (`/login/`) com layout escuro da marca
+* Redirecionamento automático para login quando não autenticado
+* Página 403 amigável para usuários sem permissão
+* `LOGIN_URL`, `LOGIN_REDIRECT_URL`, `LOGOUT_REDIRECT_URL` configurados
+* `CapabilityRequiredMixin` redireciona não autenticados para login (antes lançava 403)
+
+#### Grupos de Capabilities
+* `GroupCapability` — nova model que associa capabilities a grupos Django
+* Dois grupos padrão criados:
+  * `tecnico` — acesso operacional completo (fila, chamados, execução, evidências)
+  * `administrador` — tecnico + cadastro + histórico + gestão de usuários
+* Signal `m2m_changed` — ao adicionar usuário a um grupo, capabilities são concedidas automaticamente
+* Ao remover do grupo, capabilities exclusivas são revogadas
+
+#### Capabilities Novas
+* `execucao.sessao_tomar` — tomar sessão ativa de outro usuário
+* `cadastro.admin` — acesso completo ao cadastro mestre
+* `historico.visualizar` — ver histórico e auditoria
+* `users.admin` — gerenciar usuários e capabilities
+* Todas as capabilities agora possuem `description` preenchida
+
+#### setup_capabilities
+* Novo management command `python web/manage.py setup_capabilities`
+* Cria/atualiza todas as capabilities com descrição
+* Cria/atualiza grupos `tecnico` e `administrador` com capabilities associadas
+* Idempotente — pode rodar múltiplas vezes
+
+#### UserCreateView
+* Ao criar usuário, grupo é atribuído automaticamente pelo perfil:
+  * `TECNICO`, `COORDENADOR`, `LOGISTICA` → grupo `tecnico`
+  * `AUDITOR`, `ADMINISTRADOR` → grupo `administrador`
+
+#### seed_dev
+* Usuário `dev` adicionado ao grupo `tecnico` automaticamente
+* Aviso se grupo não existir (rode `setup_capabilities` primeiro)
+
+#### Makefile
+* `make setup-dev` → migrate + setup_capabilities + seed_dev (onboarding completo)
+* `make setup-capabilities` → cria capabilities e grupos padrão
+
+---
+
+### 🔄 Changed
+
+* `iam/mixins.py` — não autenticados são redirecionados para login (antes: 403)
+* `iam/models.py` — adicionado `GroupCapability`
+* `iam/apps.py` — registra signal de sincronização de capabilities
+* `seed_dev` — capabilities com descrição, grupo tecnico atribuído
+
+---
+
+### 🧪 Quality
+
+* 189 testes passando
+* Sem regressões
+
+---
+
 ## [v0.6.0] — 2026-05-31
 
 ### Sprint Operacional — Correções, Novos Apps e UX

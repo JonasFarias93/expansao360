@@ -13,13 +13,13 @@ Fonte de verdade:
 
 # 📦 Release Atual
 
-## v0.6.0
+## v0.6.1
 
 Data: 31/05/2026
 
 ### Resumo
 
-Sprint operacional completa com correções críticas, novos apps de domínio e melhorias de UX.
+Grupos de capabilities, sistema de login e onboarding automatizado.
 
 ### Bug Fixes
 

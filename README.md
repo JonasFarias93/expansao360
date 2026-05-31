@@ -8,7 +8,7 @@ garantindo **rastreabilidade, histórico e governança de ponta a ponta**.
 
 ## 🚀 Release Atual
 
-**v0.6.0 — Sprint Operacional: Correções, Novos Apps e UX**
+**v0.6.1 — Sprint Operacional: Correções, Novos Apps e UX**
 
 Veja detalhes em `CHANGELOG.md`.
 
