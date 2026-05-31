@@ -64,6 +64,7 @@ INSTALLED_APPS = [
     "redes",
     "chamados",
     "historico",
+    "users",
 ]
 
 MIDDLEWARE = [
@@ -96,6 +97,9 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "config.wsgi.application"
 
+AUTHENTICATION_BACKENDS = [
+    "users.backends.OperationalAuthBackend",
+]
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
