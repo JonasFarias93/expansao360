@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Histórico — Loja {{ loja_codigo }}{% endblock %}
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 py-6 space-y-6">
+
+  <h1 class="text-xl font-bold text-slate-900">
+    Loja {{ loja_codigo }}{% if loja_nome %} — {{ loja_nome }}{% endif %}
+  </h1>
+
+  <div class="bg-white rounded-xl border border-slate-200 shadow-sm divide-y">
+    {% for h in historicos %}
+    <div class="p-4 flex items-center justify-between hover:bg-slate-50">
+      <div class="space-y-1">
+        <div class="font-medium text-sm">{{ h.protocolo }}</div>
+        <div class="text-xs text-slate-500">
+          {{ h.projeto_nome }} / {{ h.subprojeto_nome }}
+          — {{ h.tipo }}
+        </div>
+        {% if h.finalizado_em %}
+        <div class="text-xs text-slate-400">{{ h.finalizado_em|date:"d/m/Y H:i" }}</div>
+        {% endif %}
+      </div>
+      <div class="flex items-center gap-3">
+        <span class="text-xs px-2 py-0.5 rounded bg-slate-100 text-slate-700">{{ h.status_final }}</span>
+        <a href="{% url 'historico:execucao_detalhe' h.chamado_id %}" class="text-xs text-blue-600 hover:underline">
+          Ver →
+        </a>
+      </div>
+    </div>
+    {% empty %}
+    <div class="p-4 text-sm text-slate-500">Nenhum histórico encontrado para esta loja.</div>
+    {% endfor %}
+  </div>
+
+</div>
+{% endblock %}

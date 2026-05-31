@@ -22,6 +22,8 @@ urlpatterns = [
     # IAM
     path("iam/", include(("iam.urls", "iam"), namespace="iam")),
     path("redes/", include(("redes.urls", "redes"), namespace="redes")),
+    # Historico
+    path("historico/", include(("historico.urls", "historico"), namespace="historico")),
 ]
 
 

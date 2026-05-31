@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Timeline — Ativo {{ ativo }}{% endblock %}
+{% block content %}
+<div class="max-w-3xl mx-auto px-4 py-6 space-y-6">
+
+  <h1 class="text-xl font-bold text-slate-900">Ativo: {{ ativo }}</h1>
+
+  <div class="space-y-3">
+    {% for evento in timeline %}
+    <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4 text-sm space-y-1">
+      <div class="flex items-center justify-between">
+        <span class="font-medium">{{ evento.tipo_evento }}</span>
+        <span class="text-xs text-slate-500">{{ evento.ocorrido_em|date:"d/m/Y H:i" }}</span>
+      </div>
+      <div class="text-slate-600">
+        {{ evento.loja_codigo }} — {{ evento.loja_nome }}
+      </div>
+      <div class="text-xs text-slate-500">
+        {{ evento.equipamento_nome }}
+        {% if evento.tipo_equipamento %} / {{ evento.tipo_equipamento }}{% endif %}
+        — Chamado: <a href="{% url 'historico:execucao_detalhe' evento.chamado_id %}" class="text-blue-600 hover:underline">{{ evento.protocolo }}</a>
+      </div>
+      {% if evento.numero_serie %}
+      <div class="text-xs text-slate-400">S/N: {{ evento.numero_serie }}</div>
+      {% endif %}
+    </div>
+    {% empty %}
+    <div class="text-sm text-slate-500">Nenhum evento registrado para este ativo.</div>
+    {% endfor %}
+  </div>
+
+</div>
+{% endblock %}

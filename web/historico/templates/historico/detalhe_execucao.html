@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}Histórico — {{ historico.protocolo }}{% endblock %}
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 py-6 space-y-6">
+
+  <div class="flex items-center justify-between">
+    <h1 class="text-xl font-bold text-slate-900">{{ historico.protocolo }}</h1>
+    <span class="text-sm px-2 py-1 rounded bg-slate-100 text-slate-700">{{ historico.status_final }}</span>
+  </div>
+
+  <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5 space-y-2 text-sm">
+    <div><span class="text-slate-500">Loja:</span> <span class="font-medium">{{ historico.loja_codigo }} — {{ historico.loja_nome }}</span></div>
+    <div><span class="text-slate-500">Projeto:</span> <span class="font-medium">{{ historico.projeto_nome }}</span></div>
+    <div><span class="text-slate-500">Subprojeto:</span> <span class="font-medium">{{ historico.subprojeto_nome }}</span></div>
+    <div><span class="text-slate-500">Kit:</span> <span class="font-medium">{{ historico.kit_nome }}</span></div>
+    <div><span class="text-slate-500">Tipo:</span> <span class="font-medium">{{ historico.tipo }}</span></div>
+    {% if historico.finalizado_em %}
+    <div><span class="text-slate-500">Finalizado em:</span> <span class="font-medium">{{ historico.finalizado_em|date:"d/m/Y H:i" }}</span></div>
+    {% endif %}
+    {% if historico.nf_saida_numero %}
+    <div><span class="text-slate-500">NF Saída:</span> <span class="font-medium">{{ historico.nf_saida_numero }}</span></div>
+    {% endif %}
+  </div>
+
+  <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
+    <h2 class="font-semibold text-slate-900 mb-3">Itens</h2>
+    <div class="space-y-2">
+      {% for item in historico.itens_snapshot %}
+      <div class="flex items-center justify-between text-sm border-b pb-2">
+        <div>
+          <span class="font-medium">{{ item.equipamento }}</span>
+          <span class="text-slate-500 ml-1">{{ item.tipo }}</span>
+          {% if item.ativo %}<span class="ml-2 text-xs text-slate-600">Ativo: {{ item.ativo }}</span>{% endif %}
+          {% if item.numero_serie %}<span class="ml-2 text-xs text-slate-600">S/N: {{ item.numero_serie }}</span>{% endif %}
+          {% if item.ip %}<span class="ml-2 text-xs text-violet-700">IP: {{ item.ip }}</span>{% endif %}
+        </div>
+        <span class="text-xs text-slate-500">Qtd: {{ item.quantidade }}</span>
+      </div>
+      {% empty %}
+      <p class="text-sm text-slate-500">Nenhum item registrado.</p>
+      {% endfor %}
+    </div>
+  </div>
+
+  {% if historico.evidencias_snapshot %}
+  <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
+    <h2 class="font-semibold text-slate-900 mb-3">Evidências</h2>
+    <div class="space-y-2">
+      {% for ev in historico.evidencias_snapshot %}
+      <div class="text-sm">
+        <span class="font-medium">{{ ev.tipo }}</span>
+        {% if ev.descricao %} — {{ ev.descricao }}{% endif %}
+        <span class="text-xs text-slate-500 ml-2">{{ ev.criado_em }}</span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="flex gap-3">
+    <a href="{% url 'historico:loja' historico.loja_codigo %}" class="text-sm text-slate-600 hover:underline">
+      Ver histórico da loja →
+    </a>
+  </div>
+
+</div>
+{% endblock %}
