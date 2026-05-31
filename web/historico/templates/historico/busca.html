@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}Histórico & Auditoria{% endblock %}
+{% block content %}
+<div class="max-w-5xl mx-auto px-4 py-6 space-y-6">
+
+  <h1 class="text-xl font-bold text-slate-900">Histórico & Auditoria</h1>
+
+  <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
+    <form method="get" class="grid grid-cols-1 md:grid-cols-3 gap-3">
+      <div>
+        <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Protocolo / Loja / Projeto</label>
+        <input name="q" value="{{ q }}" placeholder="Busca livre..." class="w-full border rounded px-3 py-2 text-sm"/>
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Código da Loja</label>
+        <input name="loja" value="{{ loja }}" placeholder="ex: 001" class="w-full border rounded px-3 py-2 text-sm"/>
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Ativo</label>
+        <input name="ativo" value="{{ ativo }}" placeholder="ex: ATV-001" class="w-full border rounded px-3 py-2 text-sm"/>
+      </div>
+      <div class="md:col-span-3 flex justify-end">
+        <button type="submit" class="px-4 py-2 bg-slate-900 text-white text-sm rounded hover:bg-slate-700">
+          Buscar
+        </button>
+      </div>
+    </form>
+  </div>
+
+  {% if timeline is not None %}
+  <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
+    <h2 class="font-semibold text-slate-900 mb-3">Timeline do Ativo: {{ ativo }}</h2>
+    <div class="space-y-2">
+      {% for evento in timeline %}
+      <div class="flex items-center justify-between text-sm border-b pb-2">
+        <div>
+          <span class="font-medium">{{ evento.tipo_evento }}</span>
+          <span class="text-slate-500 ml-2">{{ evento.loja_codigo }} — {{ evento.loja_nome }}</span>
+          <span class="text-xs text-slate-400 ml-2">{{ evento.equipamento_nome }}</span>
+        </div>
+        <div class="flex items-center gap-3">
+          <span class="text-xs text-slate-400">{{ evento.ocorrido_em|date:"d/m/Y H:i" }}</span>
+          <a href="{% url 'historico:execucao_detalhe' evento.chamado_id %}" class="text-xs text-blue-600 hover:underline">{{ evento.protocolo }}</a>
+        </div>
+      </div>
+      {% empty %}
+      <p class="text-sm text-slate-500">Nenhum evento encontrado para este ativo.</p>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="bg-white rounded-xl border border-slate-200 shadow-sm divide-y">
+    {% for h in historicos %}
+    <div class="p-4 flex items-center justify-between hover:bg-slate-50">
+      <div class="space-y-1">
+        <div class="font-medium text-sm">{{ h.protocolo }}</div>
+        <div class="text-xs text-slate-500">
+          {{ h.loja_codigo }} — {{ h.loja_nome }}
+          · {{ h.projeto_nome }}
+          · {{ h.tipo }}
+        </div>
+        {% if h.finalizado_em %}
+        <div class="text-xs text-slate-400">{{ h.finalizado_em|date:"d/m/Y H:i" }}</div>
+        {% endif %}
+      </div>
+      <div class="flex items-center gap-3">
+        <span class="text-xs px-2 py-0.5 rounded bg-slate-100 text-slate-700">{{ h.status_final }}</span>
+        <a href="{% url 'historico:execucao_detalhe' h.chamado_id %}" class="text-xs text-blue-600 hover:underline">Ver →</a>
+        <a href="{% url 'historico:loja' h.loja_codigo %}" class="text-xs text-slate-500 hover:underline">Loja →</a>
+      </div>
+    </div>
+    {% empty %}
+    <div class="p-4 text-sm text-slate-500">Nenhum histórico encontrado.</div>
+    {% endfor %}
+  </div>
+
+</div>
+{% endblock %}

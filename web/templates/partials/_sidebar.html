@@ -41,6 +41,19 @@
           <span class="text-sm">Histórico de Chamados</span>
         </a>
 
+         <a href="{% url 'historico:busca' %}"
+          class="group flex items-center gap-2 px-3 py-2 rounded-xl transition
+                hover:bg-slate-800
+                {% if request.resolver_match.namespace == 'historico' %}bg-slate-800 ring-1 ring-slate-700{% endif %}"/>
+        >
+          <svg class="h-4 w-4 text-slate-300 group-hover:text-white" viewBox="0 0 24 24" fill="none">
+            <path d="M9 17H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <circle cx="17" cy="17" r="4" stroke="currentColor" stroke-width="2"/>
+            <path d="m21 21-2-2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          <span class="text-sm">Histórico & Auditoria</span>
+        </a>
+
         <a
           href="{% url 'execucao:chamado_create' %}"
           class="group flex items-center gap-2 px-3 py-2 rounded-xl transition

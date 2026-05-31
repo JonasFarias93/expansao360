@@ -52,3 +52,42 @@ class HistoricoAtivoTimelineView(CapabilityRequiredMixin, TemplateView):
         ctx["ativo"] = ativo
         ctx["timeline"] = timeline
         return ctx
+
+
+class HistoricoBuscaView(CapabilityRequiredMixin, TemplateView):
+    template_name = "historico/busca.html"
+    required_capability = "execucao.chamado.visualizar"
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+
+        q = (self.request.GET.get("q") or "").strip()
+        loja = (self.request.GET.get("loja") or "").strip()
+        ativo = (self.request.GET.get("ativo") or "").strip()
+
+        historicos = HistoricoExecucao.objects.order_by("-finalizado_em", "-criado_em")
+
+        if loja:
+            historicos = historicos.filter(loja_codigo__icontains=loja)
+        if q:
+            historicos = historicos.filter(
+                protocolo__icontains=q
+            ) | HistoricoExecucao.objects.filter(
+                loja_nome__icontains=q
+            ) | HistoricoExecucao.objects.filter(
+                projeto_nome__icontains=q
+            )
+            historicos = historicos.distinct().order_by("-finalizado_em")
+
+        timeline = None
+        if ativo:
+            timeline = HistoricoAtivoTimeline.objects.filter(
+                ativo__icontains=ativo
+            ).order_by("-ocorrido_em")
+
+        ctx["q"] = q
+        ctx["loja"] = loja
+        ctx["ativo"] = ativo
+        ctx["historicos"] = historicos[:100]
+        ctx["timeline"] = timeline
+        return ctx

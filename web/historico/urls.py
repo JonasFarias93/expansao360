@@ -20,4 +20,9 @@ urlpatterns = [
         views.HistoricoAtivoTimelineView.as_view(),
         name="ativo_timeline",
     ),
+    path(
+    "",
+    views.HistoricoBuscaView.as_view(),
+    name="busca",
+),
 ]
