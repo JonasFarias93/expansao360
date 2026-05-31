@@ -190,6 +190,28 @@
         </a>
       </div>
     </div>
+
+    {# ========================= Users ========================= #}
+    <div>
+      <div class="text-[11px] uppercase tracking-wider text-slate-400 mb-2">
+        Usuários
+      </div>
+      <div class="space-y-1">
+        
+          <a href="{% url 'users:user_list' %}"
+          class="group flex items-center gap-2 px-3 py-2 rounded-xl transition
+                hover:bg-slate-800
+                {% if request.resolver_match.namespace == 'users' %}bg-slate-800 ring-1 ring-slate-700{% endif %}"/>
+        >
+          <svg class="h-4 w-4 text-slate-300 group-hover:text-white" viewBox="0 0 24 24" fill="none">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <circle cx="9" cy="7" r="4" stroke="currentColor" stroke-width="2"/>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          <span class="text-sm">Usuários</span>
+        </a>
+      </div>
+    </div>
   </nav>
 
   <div class="mt-auto px-4 py-3 text-xs text-slate-400 border-t border-slate-800">

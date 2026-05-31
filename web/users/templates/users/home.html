@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Usuários{% endblock %}
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 py-6 space-y-6">
+  <div class="flex items-center justify-between">
+    <h1 class="text-xl font-bold text-slate-900">Gestão de Usuários</h1>
+    <a href="{% url 'users:user_create' %}" class="px-4 py-2 bg-slate-900 text-white text-sm rounded hover:bg-slate-700">
+      + Novo Usuário
+    </a>
+  </div>
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <a href="{% url 'users:user_list' %}" class="bg-white rounded-xl border border-slate-200 shadow-sm p-5 hover:bg-slate-50">
+      <div class="font-semibold text-slate-900">Lista de Usuários</div>
+      <div class="text-sm text-slate-500 mt-1">Ver todos os usuários e seus perfis</div>
+    </a>
+    <a href="{% url 'users:user_create' %}" class="bg-white rounded-xl border border-slate-200 shadow-sm p-5 hover:bg-slate-50">
+      <div class="font-semibold text-slate-900">Novo Usuário</div>
+      <div class="text-sm text-slate-500 mt-1">Criar usuário e definir perfil operacional</div>
+    </a>
+  </div>
+</div>
+{% endblock %}

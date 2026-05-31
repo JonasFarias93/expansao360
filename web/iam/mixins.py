@@ -1,7 +1,5 @@
 from __future__ import annotations
-
 from django.core.exceptions import PermissionDenied
-
 from iam.decorators import user_has_capability
 
 
@@ -17,6 +15,7 @@ class CapabilityRequiredMixin:
 
     def dispatch(self, request, *args, **kwargs):
         cap = self.required_capability
-        if cap and not user_has_capability(request.user, cap):
-            raise PermissionDenied
+        if cap:
+            if not request.user.is_superuser and not user_has_capability(request.user, cap):
+                raise PermissionDenied
         return super().dispatch(request, *args, **kwargs)

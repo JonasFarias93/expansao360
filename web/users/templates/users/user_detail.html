@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Usuário — {{ u.username }}{% endblock %}
+{% block content %}
+<div class="max-w-3xl mx-auto px-4 py-6 space-y-6">
+  <div class="flex items-center justify-between">
+    <h1 class="text-xl font-bold text-slate-900">{{ u.username }}</h1>
+    <a href="{% url 'users:user_edit' u.pk %}" class="px-4 py-2 border rounded text-sm text-slate-700 hover:bg-slate-50">
+      Editar perfil
+    </a>
+  </div>
+
+  <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5 space-y-2 text-sm">
+    <div><span class="text-slate-500">Nome:</span> <span class="font-medium">{{ u.get_full_name|default:"-" }}</span></div>
+    <div><span class="text-slate-500">Email:</span> <span class="font-medium">{{ u.email|default:"-" }}</span></div>
+    {% if u.profile %}
+    <div><span class="text-slate-500">Perfil:</span> <span class="font-medium">{{ u.profile.get_perfil_display }}</span></div>
+    <div><span class="text-slate-500">Status:</span> <span class="font-medium">{{ u.profile.get_status_display }}</span></div>
+    {% if u.profile.equipe %}<div><span class="text-slate-500">Equipe:</span> <span class="font-medium">{{ u.profile.equipe }}</span></div>{% endif %}
+    {% if u.profile.observacoes %}<div><span class="text-slate-500">Obs:</span> <span class="font-medium">{{ u.profile.observacoes }}</span></div>{% endif %}
+    {% endif %}
+    <div><span class="text-slate-500">Último acesso:</span> <span class="font-medium">{{ u.last_login|date:"d/m/Y H:i"|default:"Nunca" }}</span></div>
+  </div>
+
+  <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
+    <h2 class="font-semibold text-slate-900 mb-3">Capabilities</h2>
+    <form method="post" action="{% url 'users:user_capabilities' u.pk %}">
+      {% csrf_token %}
+      <div class="space-y-2 mb-4">
+        {% for cap in all_capabilities %}
+        <label class="flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            name="capabilities"
+            value="{{ cap.pk }}"
+            {% if cap.pk in capability_ids %}checked{% endif %}
+            class="rounded border-gray-300"
+          />
+          <span class="font-mono text-xs">{{ cap.code }}</span>
+          {% if cap.description %}<span class="text-slate-500">— {{ cap.description }}</span>{% endif %}
+        </label>
+        {% empty %}
+        <p class="text-sm text-slate-500">Nenhuma capability cadastrada.</p>
+        {% endfor %}
+      </div>
+      {% if all_capabilities %}
+      <button type="submit" class="px-4 py-2 bg-slate-900 text-white text-sm rounded hover:bg-slate-700">
+        Salvar capabilities
+      </button>
+      {% endif %}
+    </form>
+  </div>
+</div>
+{% endblock %}

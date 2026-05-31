@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Usuários{% endblock %}
+{% block content %}
+<div class="max-w-5xl mx-auto px-4 py-6 space-y-6">
+  <div class="flex items-center justify-between">
+    <h1 class="text-xl font-bold text-slate-900">Usuários</h1>
+    <a href="{% url 'users:user_create' %}" class="px-4 py-2 bg-slate-900 text-white text-sm rounded hover:bg-slate-700">
+      + Novo
+    </a>
+  </div>
+  <div class="bg-white rounded-xl border border-slate-200 shadow-sm divide-y">
+    {% for u in users %}
+    <div class="p-4 flex items-center justify-between hover:bg-slate-50">
+      <div class="space-y-0.5">
+        <div class="font-medium text-sm">{{ u.username }}
+          {% if u.get_full_name %}<span class="text-slate-500 font-normal">— {{ u.get_full_name }}</span>{% endif %}
+        </div>
+        <div class="text-xs text-slate-500">
+          {% if u.profile %}
+            {{ u.profile.get_perfil_display }}
+            · {{ u.profile.get_status_display }}
+            {% if u.profile.equipe %}· {{ u.profile.equipe }}{% endif %}
+          {% else %}
+            Sem perfil
+          {% endif %}
+        </div>
+      </div>
+      <div class="flex items-center gap-3">
+        {% if u.profile %}
+          {% if u.profile.status == 'ATIVO' %}
+            <span class="text-xs px-2 py-0.5 rounded bg-green-100 text-green-700">Ativo</span>
+          {% else %}
+            <span class="text-xs px-2 py-0.5 rounded bg-red-100 text-red-700">{{ u.profile.get_status_display }}</span>
+          {% endif %}
+        {% endif %}
+        <a href="{% url 'users:user_detail' u.pk %}" class="text-xs text-blue-600 hover:underline">Ver →</a>
+      </div>
+    </div>
+    {% empty %}
+    <div class="p-4 text-sm text-slate-500">Nenhum usuário encontrado.</div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

@@ -24,6 +24,8 @@ urlpatterns = [
     path("redes/", include(("redes.urls", "redes"), namespace="redes")),
     # Historico
     path("historico/", include(("historico.urls", "historico"), namespace="historico")),
+    #Users
+    path("users/", include(("users.urls", "users"), namespace="users")),
 ]
 
 

@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Editar — {{ u.username }}{% endblock %}
+{% block content %}
+<div class="max-w-2xl mx-auto px-4 py-6 space-y-6">
+  <h1 class="text-xl font-bold text-slate-900">Editar perfil — {{ u.username }}</h1>
+  <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+    <form method="post" class="space-y-4">
+      {% csrf_token %}
+      {% for field in form %}
+      <div>
+        <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">{{ field.label }}</label>
+        {{ field }}
+        {% if field.errors %}
+          <p class="text-xs text-red-600 mt-1">{{ field.errors.0 }}</p>
+        {% endif %}
+      </div>
+      {% endfor %}
+      <div class="flex justify-end gap-3 pt-2">
+        <a href="{% url 'users:user_detail' u.pk %}" class="px-4 py-2 border rounded text-sm text-slate-700 hover:bg-slate-50">Cancelar</a>
+        <button type="submit" class="px-4 py-2 bg-slate-900 text-white text-sm rounded hover:bg-slate-700">Salvar</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
