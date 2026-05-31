@@ -63,6 +63,7 @@ INSTALLED_APPS = [
     "iam",
     "redes",
     "chamados",
+    "historico",
 ]
 
 MIDDLEWARE = [
