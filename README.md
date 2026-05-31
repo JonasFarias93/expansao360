@@ -8,11 +8,11 @@ garantindo **rastreabilidade, histórico e governança de ponta a ponta**.
 
 ## 🚀 Release Atual
 
-**v0.4.0 — PostgreSQL como banco padrão (Dev/CI)**
+**v0.6.0 — Sprint Operacional: Correções, Novos Apps e UX**
 
 Veja detalhes em `CHANGELOG.md`.
 
-Sprint atual: **Sprint 4 — UX Operacional & Views**
+Sprint atual: **Sprint 5 — Domínio & Governança**
 
 Status detalhado em `STATUS.md`.
 
@@ -35,7 +35,7 @@ O sistema evita:
 
 ## 🧱 Conceito Central
 
-### Registry (Cadastro Mestre)
+### Registro (Cadastro Mestre)
 
 Define **o que existe** e **como deve ser padronizado**.
 
@@ -55,7 +55,7 @@ Características:
 
 ---
 
-### Operation (Execução)
+### Operação  (Execução)
 
 Registra **o que foi executado**, **quando**, **por quem** e **com quais evidências**.
 
@@ -81,6 +81,7 @@ Unidade central da execução operacional.
 * Representa evento real
 * Possui ciclo de vida explícito
 * Finalizado = imutável
+* Cancelado = encerrado com motivo registrado
 * Correções geram novo Chamado
 
 Estados principais:
@@ -89,8 +90,10 @@ Estados principais:
 2. `ABERTO` (entra na fila)
 3. `EM_EXECUCAO` / `AGUARDANDO_*`
 4. `FINALIZADO`
+5. `CANCELADO`
 
 Chamados em `EM_ABERTURA` **não aparecem na fila operacional**.
+Chamados `FINALIZADO` ou `CANCELADO` são imutáveis.
 
 ---
 
@@ -100,6 +103,7 @@ Avanço de status protegido por regras:
 
 * Liberação de NF exige itens rastreáveis bipados e contáveis confirmados
 * Finalização exige NF (quando aplicável) + coleta + evidências mínimas
+* Cancelamento exige motivo obrigatório e capability específica
 
 Regras implementadas no backend e cobertas por testes.
 
@@ -190,8 +194,6 @@ Aguarde o serviço `db` ficar `healthy`.
 python web/manage.py migrate
 ```
 
----
-
 ### 4) Popular dados de dev
 
 ```bash
@@ -202,6 +204,7 @@ make seed-dev
 > Idempotente — pode rodar múltiplas vezes.
 > User criado: `dev` / senha: `dev123`
 
+---
 
 ## ▶️ Rodar servidor
 
@@ -219,6 +222,7 @@ Remove volume e recria do zero:
 docker compose down -v
 docker compose up -d
 python web/manage.py migrate
+make seed-dev
 ```
 
 ---
@@ -227,7 +231,7 @@ python web/manage.py migrate
 
 * **Conexão falhando logo após `up -d`**: aguarde `healthy` e rode novamente `migrate`.
 * **Porta 5432 ocupada**: altere `DB_PORT` no `.env` e suba novamente.
-* **Banco “sujo” ou migrations quebradas**: use o reset do banco (`down -v`).
+* **Banco "sujo" ou migrations quebradas**: use o reset do banco (`down -v`).
 
 ---
 
@@ -260,10 +264,12 @@ web/cadastro/static/cadastro/js/__tests__/
 
 Apps principais:
 
-* `cadastro` → Registry
-* `execucao` → Operation
-* `chamados` → Workflow/fluxo do Chamado (boundary)
-* `iam` → Capabilities
+* `cadastro` → Registry (lojas, projetos, equipamentos, kits)
+* `chamados` → Domínio do Chamado (workflow, ciclo de vida, snapshot)
+* `execucao` → Sessão operacional (fila, locking, estado de execução)
+* `iam` → Identidade e autorização por capabilities
+* `historico` → Memória auditável (snapshot imutável, timeline de ativos)
+* `users` → Identidade operacional (perfil, status, gerenciamento de capabilities)
 * `redes` → Regras de validação de IP (MVP)
 
 A Web atua como **adapter**, não como domínio.
@@ -328,5 +334,5 @@ Eles **não devem** ser editados manualmente.
 
 ---
 
-**Última revisão:** 2026-02-13
+**Última revisão:** 2026-05-31
 **Fonte:** Código real em `web/` + `CHANGELOG.md` + `STATUS.md`
