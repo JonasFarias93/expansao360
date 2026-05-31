@@ -4,77 +4,145 @@ Todas as mudanças relevantes do projeto são documentadas neste arquivo.
 O versionamento segue o padrão **SemVer**.
 
 ---
-## v0.4.1 - 2026-02-14
 
-### Changed
-- Reset estrutural de migrations após split definitivo
-- Remoção de duplicidade de templatetags
-- Alinhamento de admin ao boundary de domínio
+## [v0.6.0] — 2026-05-31
 
-### Internal
-- Boundary final: chamados = domínio / execucao = sessão/fila
-- pytest 160 passed / 1 skipped
-- manage.py check limpo
----
+### Sprint Operacional — Correções, Novos Apps e UX
 
-## [v0.4.0] — 2026-02-13
-
-### Infra consolidada — Postgres como padrão
-
-Este release consolida a base de infraestrutura do projeto, oficializando
-**PostgreSQL como banco padrão** e garantindo reprodutibilidade via
-docker-compose e CI.
+Esta release consolida um ciclo completo de melhorias incrementais sobre a base v0.5.0,
+com foco em correção de bugs críticos de rastreabilidade, novos apps de domínio
+e melhorias de experiência operacional.
 
 ---
 
-### 🐘 Database
+### 🐛 Bug Fixes
 
-* PostgreSQL definido como banco oficial do projeto
-* Configuração baseada em variáveis de ambiente (`DB_ENGINE`, `DB_*`)
-* `.env.example` atualizado com contrato mínimo obrigatório
-* docker-compose validado com healthcheck de Postgres
+#### Fila Operacional
+* Corrigido bug onde chamados desapareciam da fila após configuração de itens
+* `EM_CONFIGURACAO` removido do `recalcular_status` — configuração é estado de item, não de chamado
+* Testes de regressão adicionados para garantir que chamados permanecem na fila durante todo o ciclo
+
+#### Snapshot Operacional
+* Corrigida propagação de `requer_configuracao` → `deve_configurar` no snapshot do chamado
+* Itens configuráveis do Kit agora chegam corretamente na fila operacional com `deve_configurar=True`
+
+#### Evidências
+* Corrigido erro 403 (CSRF) ao enviar evidências no chamado
+* Adicionado `ensure_csrf_cookie` na `ChamadoExecucaoView`
+* Removido `only` do include que bloqueava o token CSRF
+
+#### Template
+* Corrigido `ev.nome_arquivo` inexistente — substituído por `ev.descricao`
 
 ---
 
-### ⚙️ Infra / Dev Experience
+### ✨ Features
 
-* Novo target `make compose-smoke`
-  - Sobe Postgres
-  - Aguarda healthcheck
-  - Executa migrations
-  - Executa pytest
-* Padronização do fluxo local via `.env`
-* Pipeline CI ajustado para usar Postgres de forma obrigatória
+#### seed_dev — Dados de Desenvolvimento
+* Novo management command `python web/manage.py seed_dev`
+* Popula dados mínimos para testar o fluxo completo (loja, projeto, kit, equipamento, usuário)
+* Idempotente — pode rodar múltiplas vezes sem duplicar dados
+* Suporte a `--reset` para limpar e recriar tudo
+* Usuário `dev` criado com capabilities básicas
+* Disponível via `make seed-dev` e `make seed-dev-reset`
+
+#### Cancelamento de Chamado
+* Novo status `CANCELADO` no ciclo de vida do chamado
+* Campos auditáveis: `cancelado_em`, `cancelado_por`, `motivo_cancelamento`
+* Botão de cancelar na tela de execução (protegido por `data-skip-readonly`)
+* Motivo obrigatório — não é possível cancelar sem justificativa
+* Capability `execucao.chamado.cancelar` protege a ação
+* Service `cancelar_chamado` com regras explícitas e 7 testes
+
+#### UX Operacional
+* Botão "Editar IP" protegido por `can_edit` (requer sessão ativa)
+* Botão "Salvar IP" adicionado no modo edição — sem precisar salvar todos os itens
+* Removidos botões de status de configuração (`Aguardando`, `Em execução`, `Configurado`)
+* Mantido apenas o botão "Marcar configurado"
+* Resumo de equipamentos na sidebar do chamado (agrupado por nome)
+* TAB behavior para leitura de código de barras — após série, vai direto para o próximo ativo
 
 ---
 
-### 🧪 Quality Gate
+### 🏗️ Novos Apps
 
-* Teste PG-01: CI falha se banco não for Postgres
-* Garantia de conexão real com vendor `postgresql`
-* Pipeline validando instalação limpa + testes verdes
+#### `historico/` — Memória Auditável
+* `HistoricoExecucao` — snapshot imutável consolidado de cada chamado finalizado/cancelado
+* `HistoricoAtivoTimeline` — linha do tempo de ativos rastreáveis
+* Signal automático: ao finalizar ou cancelar chamado, projeção é gerada
+* Service `gerar_historico_execucao` idempotente
+* Views: detalhe do chamado, histórico da loja, timeline do ativo
+* Página de busca centralizada com filtros por protocolo, loja e ativo
+* Link "Histórico & Auditoria" no menu lateral
+* 6 testes cobrindo projeção, idempotência e timeline
+
+#### `users/` — Identidade Operacional
+* `UserProfile` — contexto operacional do usuário (perfil, status, equipe, supervisor)
+* Status operacional: `ATIVO`, `AFASTADO`, `BLOQUEADO`, `DESLIGADO`
+* Perfis: `TECNICO`, `COORDENADOR`, `LOGISTICA`, `AUDITOR`, `ADMINISTRADOR`
+* `OperationalAuthBackend` — bloqueia login de usuários inativos
+* UI completa: lista, detalhe, criação, edição de perfil
+* Gerenciamento de capabilities por usuário via interface web
+* Link "Usuários" no menu lateral
+* `iam/mixins.py` atualizado com bypass para superuser
+* 9 testes cobrindo profile e autenticação operacional
 
 ---
 
 ### 🔄 Changed
 
-* Postgres deixa de ser “fase futura” e passa a ser padrão oficial
-* Removido fallback implícito para SQLite no ambiente principal
+* `views.py` de chamados reorganizado por seção lógica (abertura → fila → execução → workflow → itens → configuração → finalização → cancelamento → evidências)
+* `iam/mixins.py` — superuser bypassa verificação de capability
+* `seed_dev` — equipamento criado com `configuravel=True`
+* `seed_dev --reset` — ordem correta de deleção respeitando FKs protegidas
 
 ---
 
-### ⛔ Não incluso nesta versão
+### 🧪 Quality
 
-* Refatoração final de templatetags duplicadas (warnings W003)
-* Split estrutural definitivo no banco (FKs → chamados.Chamado)
+* 189 testes passando (era 160 na v0.5.0)
+* TDD respeitado em todas as features críticas
+* Nenhuma regressão conhecida
 
 ---
 
-### Próximo passo
+## [v0.5.0] — 2026-02-14
 
-* Limpeza de duplicidade de templatetags
-* Ajustes finais do split
-* Preparação estrutural para v1.0.0
+### Consolidação Arquitetural
+
+* Split definitivo de domínios: `chamados`, `execucao`, `redes`, `iam`
+* State Manager centralizado com contrato `data-*`
+* Fluxo Salvar → Encerrar Sessão consistente
+* Suíte de testes padronizada e organizada por domínio
+* 160 testes passando
+
+---
+
+## [v0.4.1] — 2026-02-14
+
+### Changed
+
+* Reset estrutural de migrations após split definitivo
+* Remoção de duplicidade de templatetags
+* Alinhamento de admin ao boundary de domínio
+
+### Internal
+
+* Boundary final: chamados = domínio / execucao = sessão/fila
+* pytest 160 passed / 1 skipped
+* manage.py check limpo
+
+---
+
+## [v0.4.0] — 2026-02-13
+
+### PostgreSQL como banco padrão
+
+* PostgreSQL definido como banco oficial
+* Configuração via variáveis de ambiente
+* docker-compose com healthcheck
+* CI ajustado para Postgres obrigatório
+* Novo target `make compose-smoke`
 
 ---
 
@@ -82,34 +150,10 @@ docker-compose e CI.
 
 ### Lookup de Loja por Código (Java)
 
-Este release evolui o fluxo de abertura de Chamado, substituindo a seleção por
-`<select>` massivo por um modelo baseado em lookup assíncrono.
-
-### ✨ Added
-
-* Endpoint de lookup de Loja por código ("Java")
-* Novo input **"Loja (Java)"** no Abrir Chamado
-* Feedback visual para sucesso/erro na validação
-
-### 🔄 Changed
-
-* Seleção de loja não depende mais de `<select>` gigante
-* `<select>` mantido como fallback técnico (preenchido via JS)
-
-### 🔐 Security / Integrity
-
-* Validação server-side garante loja válida
-* Proteção contra ID inválido/injetado
-
-### 🧪 Tests
-
-Cobertura para o endpoint de lookup:
-
-* 200 — sucesso
-* 404 — loja inexistente
-* 400 — código inválido
-
-Ajustes nos testes do form conforme novo contrato de validação.
+* Endpoint de lookup assíncrono de loja
+* Novo input "Loja (Java)" no Abrir Chamado
+* Validação server-side + proteção contra ID inválido
+* Testes: 200, 404, 400
 
 ---
 
@@ -117,30 +161,11 @@ Ajustes nos testes do form conforme novo contrato de validação.
 
 ### Execução operacional mais clara
 
-Consolida a separação explícita entre setup e execução operacional, reforçando contratos arquiteturais sem quebra de compatibilidade.
-
-### ✨ Execução
-
-* Reativação do bloco de Evidências na execução
-* Separação clara entre setup e execução operacional
-* Novo componente `_card_operacional_chamado_full.html`
-
-### 🎨 UI / UX
-
-* Projetos com cor definida no cadastro
-* Identificação visual por projeto na fila
-* Header e cards mais informativos
-
-### 🛠 Arquitetura
-
+* Separação explícita entre setup e execução
+* Reativação de evidências
+* Projetos com cor definida
+* Cards-resumo na fila operacional
 * Introdução de templatetags (`execucao_ui`)
-* Refatoração incremental de templates
-
-### 🧪 Qualidade
-
-* Testes para views de execução
-* Testes para template tags
-* Ruff / Black / Pre-commit ativos
 
 ---
 
@@ -148,32 +173,9 @@ Consolida a separação explícita entre setup e execução operacional, reforç
 
 ### Consolidação funcional (Cadastro + Execução + IAM)
 
-### ✨ Destaques
-
 * Registry, Operation e IAM estabilizados
 * UI normalizada
 * Cobertura de testes ampliada
-
-### 🔄 Registry
-
-* Ajustes em models, forms, views
-* Melhorias em formsets
-* Migração incluída
-
-### 🔄 Execução
-
-* Consolidação de regras operacionais
-* Validações para fechamento de Chamados
-
-### 🎨 UI
-
-* Remoção de JS inline
-* Normalização de templates
-
-### 🧪 Testes
-
-* Novos testes para AJAX e formsets
-* Configuração pytest consolidada
 
 ---
 
@@ -185,15 +187,6 @@ Consolida a separação explícita entre setup e execução operacional, reforç
 * Ativar/inativar tipos sem apagar histórico
 * `ItemKit.tipo` migra de texto livre para FK
 
-### 🎨 UI
-
-* Edição inline de tipos (formset)
-
-### 🧪 Testes
-
-* Cobertura de unicidade
-* Ajustes por migração de schema
-
 ---
 
 ## [v0.3.1] — 2026-02-02
@@ -203,10 +196,6 @@ Consolida a separação explícita entre setup e execução operacional, reforç
 * Import idempotente
 * Normalização automática (UF, logomarca)
 * UX aprimorada na listagem
-
-### 🧪 Testes
-
-* Cobertura para normalização e idempotência
 
 ---
 
@@ -218,7 +207,6 @@ Consolida a separação explícita entre setup e execução operacional, reforç
 * Regras completas de finalização
 * Evidências associadas
 * IAM mínimo por capability
-* Testes cobrindo regras críticas
 
 ---
 
@@ -232,9 +220,8 @@ Consolida a separação explícita entre setup e execução operacional, reforç
 * Chamado com protocolo automático
 * Snapshot operacional de itens
 * Workflow básico
-* UI inicial (histórico/detalhe)
 
 ---
 
-Última revisão: 2026-02-11
+Última revisão: 2026-05-31
 Fonte: Tags Git + código versionado

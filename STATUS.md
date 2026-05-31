@@ -13,90 +13,88 @@ Fonte de verdade:
 
 # 📦 Release Atual
 
-## v0.3.6
+## v0.6.0
 
-Data: 08/02/2026
-Tag: `0fb9f9d`
+Data: 31/05/2026
 
-### Added
+### Resumo
 
-* Lookup API de loja por código (Java) para uso no fluxo de chamados
-* Novo input "Loja (Java)" no Abrir Chamado com validação e feedback ao usuário
+Sprint operacional completa com correções críticas, novos apps de domínio e melhorias de UX.
 
-### Changed
+### Bug Fixes
 
-* Seleção de loja no Abrir Chamado deixa de depender de `<select>` grande
-* `<select>` mantido apenas como fallback técnico (preenchido via JS)
+* Chamados sumindo da fila após configuração de itens (`EM_CONFIGURACAO` removido do recalcular_status)
+* Snapshot operacional não propagava `deve_configurar` do kit
+* Erro 403 (CSRF) ao enviar evidências
 
-### Security / Integrity
+### Features
 
-* Validação server-side impede criação de chamado sem loja válida
-* Proteção contra ID inválido ou injetado no backend
+* `seed_dev` — comando para popular dados de desenvolvimento
+* Cancelamento de chamado com motivo obrigatório e auditoria
+* UX operacional: editar IP, salvar IP, TAB behavior para leitura de código de barras
+* Resumo de equipamentos na sidebar do chamado
 
-### Tests
+### Novos Apps
 
-Cobertura para o endpoint de lookup de loja:
+* `historico/` — snapshot imutável, timeline de ativos, busca auditável
+* `users/` — identidade operacional, perfil, status, gerenciamento de capabilities
 
-* 200 (sucesso)
-* 404 (loja inexistente)
-* 400 (código inválido)
+### Qualidade
 
-Ajustes nos testes do form conforme novo contrato de validação.
+* 189 testes passando
+* TDD respeitado em todas as features críticas
 
 ---
 
 # 🟡 Sprint Atual
 
-## Sprint 4 — UX Operacional & Views
+## Sprint 5 — Domínio & Governança
 
 Status: Em andamento
-Releases associados: v0.3.1 → v0.3.6
 
 ### Objetivo
 
-Evoluir a experiência operacional sem alterar o core de domínio.
+Evoluir o domínio com foco em:
 
-Foco em:
-
-* Clareza visual
-* Redução de atrito
-* Contratos de templates
-* Feedback operacional
+* Documentação atualizada e precisa
+* Governança do fluxo operacional
+* Gate de finalização completo
+* Estabilização dos novos apps
 
 ---
 
-## Entregas Consolidadas (Sprint 4)
+## Entregas Consolidadas (Sprint 5)
 
-### Registry
+### Documentação
+* CHANGELOG atualizado com v0.6.0
+* STATUS atualizado
+* ARCHITECTURE pendente de atualização
 
-* Importação idempotente de Lojas (CSV/XLSX)
-* Normalização automática de campos críticos
-* UX aprimorada na listagem de Lojas
-
-### Execução
-
-* Separação explícita entre `EM_ABERTURA` e `ABERTO`
-* Reativação de evidências na execução
-* Consolidação da fila operacional
-
-### UI
-
-* Projetos com cor definida
-* Cards-resumo na fila operacional
-* Preview inline de Chamado
-* Componente `_card_operacional_chamado_full.html`
-
-### Arquitetura
-
-* Introdução de templatetags de UI (`execucao_ui`)
-* Refatoração incremental de templates
+### Domínio
+* App `historico/` — snapshot + timeline + busca
+* App `users/` — identidade operacional + capabilities UI
+* Cancelamento de chamado com auditoria
 
 ### Qualidade
+* 189 testes passando
+* Regressão da fila operacional coberta por testes
 
-* Testes para views de execução
-* Testes para templatetags
-* Stack ativa: Ruff, Black, Pre-commit
-* Testes JS (Jest + jsdom)
+---
+
+# ✅ Sprint 4 — UX Operacional & Views
+
+Releases: v0.3.1 → v0.5.0
+Status: Concluída
+
+### Entregas
+
+* Importação idempotente de Lojas (CSV/XLSX)
+* Separação explícita entre `EM_ABERTURA` e `ABERTO`
+* Evidências na execução
+* Fila operacional consolidada
+* PostgreSQL como banco padrão
+* Split definitivo de domínios
+* State Manager centralizado
 
 ---
 
@@ -131,9 +129,11 @@ Status: Concluída
 
 # 📌 Próximos Passos Técnicos
 
-* Refinamento visual da fila
-* Ajuste de microcopy
-* Avaliação de filtros avançados
+* Gate de finalização completo (`pode_finalizar` ainda hardcoded como `False`)
+* Atualizar `ARCHITECTURE.md` com apps `historico/` e `users/`
+* Teste manual ponta a ponta do fluxo completo (abertura → execução → finalização)
+* Validar `MT-06` — teste manual da fila operacional pós-fix
+* Fechar issue `#131` após validação manual
 
 ---
 
@@ -146,5 +146,5 @@ Status: Concluída
 
 ---
 
-Última revisão: 2026-02-11
+Última revisão: 2026-05-31
 Fonte: Tags Git + CHANGELOG.md + código real em `web/`
