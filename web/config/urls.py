@@ -3,8 +3,9 @@
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
-from django.shortcuts import redirect
+from django.shortcuts import redirect, render
 from django.urls import include, path
+from django.contrib.auth import views as auth_views
 
 
 def root_redirect(request):
@@ -12,6 +13,9 @@ def root_redirect(request):
 
 
 urlpatterns = [
+    
+    path("login/", auth_views.LoginView.as_view(template_name="auth/login.html"), name="login"),
+    path("logout/", auth_views.LogoutView.as_view(), name="logout"),
     path("admin/", admin.site.urls),
     path("", root_redirect),
     # Operation
@@ -31,3 +35,11 @@ urlpatterns = [
 
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+
+
+
+def handler403(request, exception=None):
+    return render(request, "403.html", status=403)
+
+handler403 = handler403

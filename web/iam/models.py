@@ -1,8 +1,8 @@
 # Create your models here.
 from __future__ import annotations
-
 from django.conf import settings
 from django.db import models
+from django.contrib.auth.models import Group
 
 
 class Capability(models.Model):
@@ -47,3 +47,28 @@ class UserCapability(models.Model):
 
     def __str__(self) -> str:  # pragma: no cover
         return f"{self.user} -> {self.capability.code}"
+
+
+class GroupCapability(models.Model):
+    """
+    Capabilities associadas a um Group Django.
+    Ao adicionar usuário ao grupo, suas capabilities são concedidas automaticamente.
+    """
+    group = models.ForeignKey(
+        Group,
+        on_delete=models.CASCADE,
+        related_name="capabilities",
+    )
+    capability = models.ForeignKey(
+        Capability,
+        on_delete=models.CASCADE,
+        related_name="grupos",
+    )
+
+    class Meta:
+        unique_together = [("group", "capability")]
+        verbose_name = "Capability do Grupo"
+        verbose_name_plural = "Capabilities dos Grupos"
+
+    def __str__(self) -> str:
+        return f"{self.group.name} → {self.capability.code}"

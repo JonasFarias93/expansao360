@@ -95,6 +95,12 @@ TEMPLATES = [
     },
 ]
 
+
+LOGIN_URL = "/login/"
+LOGIN_REDIRECT_URL = "/execucao/"
+LOGOUT_REDIRECT_URL = "/login/"
+
+
 WSGI_APPLICATION = "config.wsgi.application"
 
 AUTHENTICATION_BACKENDS = [

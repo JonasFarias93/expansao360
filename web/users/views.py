@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from django.contrib import messages
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Group
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
 from django.shortcuts import get_object_or_404, redirect, render
@@ -64,6 +65,22 @@ class UserCreateView(CapabilityRequiredMixin, View):
             perfil=form.cleaned_data["perfil"],
             equipe=form.cleaned_data.get("equipe", ""),
         )
+
+        perfil_nome = form.cleaned_data["perfil"].lower()
+        grupo_map = {
+            "tecnico": "tecnico",
+            "coordenador": "tecnico",
+            "logistica": "tecnico",
+            "auditor": "administrador",
+            "administrador": "administrador",
+        }
+        grupo_nome = grupo_map.get(perfil_nome, "tecnico")
+        try:
+            grupo = Group.objects.get(name=grupo_nome)
+            user.groups.add(grupo)
+        except Group.DoesNotExist:
+            pass
+
         messages.success(request, f"Usuário {user.username} criado com sucesso.")
         return redirect("users:user_detail", user_id=user.pk)
 

@@ -8,6 +8,7 @@ Uso:
     python web/manage.py seed_dev --reset   # apaga e recria tudo
 """
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Group
 from django.core.management.base import BaseCommand
 from django.db import transaction
 
@@ -32,8 +33,12 @@ CAPABILITIES = [
     "execucao.evidencia.upload",
     "cadastro.loja.view",
     "execucao.chamado_editar",
-    "cadastro.can_cancelar",
+    "execucao.chamado.cancelar",
+    "execucao.chamado.visualizar",
+    "execucao.chamado.criar",
+    "execucao.chamado.editar_itens", 
 ]
+
 
 LOJAS = [
     {"codigo": "001", "nome": "Loja Centro", "cidade": "São Paulo", "uf": "SP"},
@@ -150,6 +155,17 @@ class Command(BaseCommand):
                 user=user, capability=cap
             )
             self._log(created, "Capability", code)
+
+        # adiciona ao grupo tecnico
+        try:
+            grupo = Group.objects.get(name="tecnico")
+            if not user.groups.filter(pk=grupo.pk).exists():
+                user.groups.add(grupo)
+                self._log(True, "Group", "tecnico → dev")
+            else:
+                self._log(False, "Group", "tecnico → dev")
+        except Group.DoesNotExist:
+            self.stdout.write(self.style.WARNING("  ⚠ Grupo 'tecnico' não encontrado — rode setup_capabilities primeiro"))
 
     # ------------------------------------------------------------------ #
 
