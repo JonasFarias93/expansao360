@@ -19,9 +19,20 @@ urlpatterns = [
     # Abertura
     path(
         "chamados/novo/",
-        chamados_views.ChamadoCreateView.as_view(),
-        name="chamado_create",
+        chamados_views.ChamadoSelecaoView.as_view(),
+        name="chamado_selecao",
     ),
+    path(
+        "chamados/novo/projeto/",
+        chamados_views.ChamadoCreateView.as_view(),
+        name="chamado_create_projeto",
+    ),
+    path(
+        "chamados/novo/avulso/",
+        chamados_views.ChamadoCreateAvulsoView.as_view(),
+        name="chamado_create_avulso",
+    ),
+    
     # Setup (planejamento) — status ABERTO
     path(
         "chamados/<int:chamado_id>/setup/",

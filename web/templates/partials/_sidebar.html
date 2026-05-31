@@ -55,10 +55,10 @@
         </a>
 
         <a
-          href="{% url 'execucao:chamado_create' %}"
+          href="{% url 'execucao:chamado_selecao' %}"
           class="group flex items-center gap-2 px-3 py-2 rounded-xl transition
                  hover:bg-slate-800
-                 {% if request.resolver_match.namespace == 'execucao' and request.resolver_match.url_name == 'chamado_create' %}bg-slate-800 ring-1 ring-slate-700{% endif %}"
+                 {% if request.resolver_match.namespace == 'execucao' and request.resolver_match.url_name in 'chamado_selecao chamado_create_projeto chamado_create_avulso' %}bg-slate-800 ring-1 ring-slate-700{% endif %}"
         >
           <svg class="h-4 w-4 text-slate-300 group-hover:text-white" viewBox="0 0 24 24" fill="none">
             <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>

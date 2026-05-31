@@ -60,6 +60,20 @@ from .models import (
 )
 
 
+
+class ChamadoCreateAvulsoView(CapabilityRequiredMixin, TemplateView):
+    required_capability = "execucao.chamado.criar"
+    template_name = "execucao/chamado_abertura_avulso.html"
+
+    
+# ================
+# sessao:chamado_selecao
+# ================
+class ChamadoSelecaoView(CapabilityRequiredMixin, TemplateView):
+    required_capability = "execucao.chamado.criar"
+    template_name = "execucao/chamado_selecao.html"
+
+
 # ================
 # sessao:utilitarios_internos
 # ================
