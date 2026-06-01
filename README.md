@@ -6,6 +6,10 @@ garantindo **rastreabilidade, histórico e governança de ponta a ponta**.
 
 ---
 
+![Preview](assets/img/expansao360.png)
+
+---
+
 ## 🚀 Release Atual
 
 **v0.6.1 — Sprint Operacional: Correções, Novos Apps e UX**
