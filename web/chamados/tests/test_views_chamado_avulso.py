@@ -31,7 +31,7 @@ class TestChamadoCreateAvulsoView(WebAuthBaseTestCase):
         chamado = Chamado.objects.get(is_avulso=True)
         self.assertIsNone(chamado.projeto)
         self.assertIsNone(chamado.kit)
-        self.assertEqual(chamado.status, Chamado.Status.ABERTO)
+        self.assertEqual(chamado.status, Chamado.Status.EM_ABERTURA)
 
     def test_post_sem_loja_retorna_form_com_erro(self):
         resp = self.client.post(self._url(), {

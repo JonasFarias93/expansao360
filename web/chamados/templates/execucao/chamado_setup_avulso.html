@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% block title %}Setup Avulso — {{ chamado.protocolo }}{% endblock %}
+{% block content %}
+<div class="max-w-3xl mx-auto px-4 py-6 space-y-6">
+
+  <div class="flex items-center justify-between">
+    <div>
+      <h1 class="text-xl font-bold text-slate-900">{{ chamado.protocolo }}</h1>
+      <div class="text-sm text-slate-500">Chamado avulso — {{ chamado.loja }}</div>
+    </div>
+    <span class="text-xs px-2 py-1 rounded bg-amber-100 text-amber-800 font-medium">Avulso</span>
+  </div>
+
+  {# Adicionar item #}
+  <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
+    <h2 class="font-semibold text-slate-900 mb-4">Adicionar item</h2>
+    <form method="post" class="space-y-3">
+      {% csrf_token %}
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div>
+          <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Equipamento</label>
+          <select name="equipamento" required
+            class="w-full border rounded px-3 py-2 text-sm bg-white">
+            <option value="">Selecione...</option>
+            {% for eq in equipamentos %}
+              <option value="{{ eq.pk }}">{{ eq.nome }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Tipo</label>
+          <select name="tipo" required
+            class="w-full border rounded px-3 py-2 text-sm bg-white">
+            <option value="">Selecione...</option>
+            {% for t in tipos %}
+              <option value="{{ t.pk }}">{{ t.nome }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Quantidade</label>
+          <input type="number" name="quantidade" value="1" min="1"
+            class="w-full border rounded px-3 py-2 text-sm"/>
+        </div>
+      </div>
+      <div class="flex justify-end">
+        <button type="submit"
+          class="px-4 py-2 bg-slate-900 text-white text-sm rounded hover:bg-slate-700">
+          + Adicionar
+        </button>
+      </div>
+    </form>
+  </div>
+
+  {# Itens adicionados #}
+  <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
+    <h2 class="font-semibold text-slate-900 mb-3">Itens ({{ itens|length }})</h2>
+    {% if itens %}
+    <div class="space-y-2">
+      {% for item in itens %}
+      <div class="flex items-center justify-between text-sm border-b pb-2">
+        <div>
+          <span class="font-medium">{{ item.equipamento.nome }}</span>
+          <span class="text-slate-500 ml-1">{{ item.tipo }}</span>
+          {% if item.equipamento.configuravel %}
+            <span class="ml-2 text-xs px-1.5 py-0.5 rounded bg-violet-100 text-violet-700">Configurável</span>
+          {% endif %}
+        </div>
+        <span class="text-slate-500">Qtd: {{ item.quantidade }}</span>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <p class="text-sm text-slate-500">Nenhum item adicionado ainda.</p>
+    {% endif %}
+  </div>
+
+  {# Ações #}
+  <div class="flex justify-between">
+    <a href="{% url 'execucao:chamado_selecao' %}"
+      class="px-4 py-2 border rounded text-sm text-slate-700 hover:bg-slate-50">
+      Cancelar
+    </a>
+    <form method="post">
+      {% csrf_token %}
+      <input type="hidden" name="acao" value="salvar">
+      <button type="submit"
+        class="px-4 py-2 bg-green-700 text-white text-sm rounded hover:bg-green-800"
+        {% if not itens %}disabled title="Adicione ao menos um item"{% endif %}>
+        Enviar para fila →
+      </button>
+    </form>
+  </div>
+
+</div>
+{% endblock %}

@@ -32,6 +32,11 @@ urlpatterns = [
         chamados_views.ChamadoCreateAvulsoView.as_view(),
         name="chamado_create_avulso",
     ),
+    path(
+    "chamados/<int:chamado_id>/setup-avulso/",
+    chamados_views.ChamadoSetupAvulsoView.as_view(),
+    name="chamado_setup_avulso",
+    ),
     
     # Setup (planejamento) — status ABERTO
     path(

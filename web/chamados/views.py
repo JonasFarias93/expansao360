@@ -83,13 +83,13 @@ class ChamadoCreateAvulsoView(CapabilityRequiredMixin, View):
             subprojeto=None,
             kit=None,
             is_avulso=True,
-            status=Chamado.Status.ABERTO,
+            status=Chamado.Status.EM_ABERTURA,
             tipo=Chamado.Tipo.ENVIO,
             prioridade=prioridade,
         )
         chamado.save()
         messages.success(request, f"Chamado avulso {chamado.protocolo} criado.")
-        return redirect("execucao:chamado_detalhe", chamado_id=chamado.id)
+        return redirect("execucao:chamado_setup_avulso", chamado_id=chamado.id)
 
     
 # ================
@@ -188,11 +188,10 @@ class ChamadoSetupView(CapabilityRequiredMixin, View):
 
     def get(self, request: HttpRequest, chamado_id: int) -> HttpResponse:
         chamado = get_object_or_404(
-            Chamado.objects.select_for_update(of=("self",)).select_related(
-                "loja", "projeto", "subprojeto", "kit"),
-                
+            Chamado.objects.select_related("loja", "projeto", "subprojeto", "kit"),
             pk=chamado_id,
         )
+                
         if chamado.status != Chamado.Status.EM_ABERTURA:
             return redirect("execucao:chamado_detalhe", chamado_id=chamado.id)
 
@@ -1002,3 +1001,77 @@ class EvidenciaRemoverView(CapabilityRequiredMixin, View):
         ev.delete()
         messages.success(request, "Evidência removida.")
         return redirect("execucao:chamado_detalhe", chamado_id=chamado.id)
+
+
+
+# ================
+# sessao:chamado_setup_avulso
+# ================
+class ChamadoSetupAvulsoView(CapabilityRequiredMixin, View):
+    required_capability = "execucao.chamado.criar"
+    template_name = "execucao/chamado_setup_avulso.html"
+
+    def get(self, request: HttpRequest, chamado_id: int) -> HttpResponse:
+        from cadastro.models import Equipamento, TipoEquipamento
+        chamado = get_object_or_404(Chamado, pk=chamado_id, is_avulso=True)
+        if chamado.status != Chamado.Status.EM_ABERTURA:
+            return redirect("execucao:chamado_detalhe", chamado_id=chamado.id)
+        return render(request, self.template_name, {
+            "chamado": chamado,
+            "itens": chamado.itens.select_related("equipamento").all().order_by("id"),
+            "equipamentos": Equipamento.objects.order_by("nome"),
+            "tipos": TipoEquipamento.objects.select_related("categoria").order_by("nome"),
+        })
+
+    @transaction.atomic
+    def post(self, request: HttpRequest, chamado_id: int) -> HttpResponse:
+        from cadastro.models import Equipamento, TipoEquipamento
+        chamado = get_object_or_404(Chamado, pk=chamado_id, is_avulso=True)
+
+        if chamado.status != Chamado.Status.EM_ABERTURA:
+            return redirect("execucao:chamado_detalhe", chamado_id=chamado.id)
+
+        # salvar → promove para ABERTO
+        if request.POST.get("acao") == "salvar":
+            chamado.status = Chamado.Status.ABERTO
+            chamado.save(update_fields=["status"])
+            messages.success(request, f"Chamado {chamado.protocolo} enviado para a fila.")
+            return redirect("execucao:fila")
+
+        # adicionar item
+        eq_id = request.POST.get("equipamento")
+        tipo_id = request.POST.get("tipo")
+        quantidade = request.POST.get("quantidade", 1)
+
+        try:
+            equipamento = Equipamento.objects.get(pk=eq_id)
+            tipo = TipoEquipamento.objects.get(pk=tipo_id)
+            quantidade = int(quantidade)
+            if quantidade < 1:
+                raise ValueError
+        except (Equipamento.DoesNotExist, TipoEquipamento.DoesNotExist, ValueError, TypeError):
+            messages.error(request, "Equipamento, tipo ou quantidade inválidos.")
+            return redirect("execucao:chamado_setup_avulso", chamado_id=chamado.id)
+
+        if equipamento.tem_ativo:
+            for _ in range(quantidade):
+                InstalacaoItem.objects.create(
+                    chamado=chamado,
+                    equipamento=equipamento,
+                    tipo=str(tipo),
+                    quantidade=1,
+                    tem_ativo=True,
+                    deve_configurar=equipamento.configuravel,
+                    requer_configuracao=equipamento.configuravel,
+                )
+        else:
+            InstalacaoItem.objects.create(
+                chamado=chamado,
+                equipamento=equipamento,
+                tipo=str(tipo),
+                quantidade=quantidade,
+                tem_ativo=False,
+            )
+
+        messages.success(request, f"Item '{equipamento.nome}' adicionado.")
+        return redirect("execucao:chamado_setup_avulso", chamado_id=chamado.id)
