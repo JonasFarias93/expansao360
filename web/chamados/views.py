@@ -162,7 +162,9 @@ class ChamadoSetupView(CapabilityRequiredMixin, View):
 
     def get(self, request: HttpRequest, chamado_id: int) -> HttpResponse:
         chamado = get_object_or_404(
-            Chamado.objects.select_related("loja", "projeto", "subprojeto", "kit"),
+            Chamado.objects.select_for_update(of=("self",)).select_related(
+                "loja", "projeto", "subprojeto", "kit"),
+                
             pk=chamado_id,
         )
         if chamado.status != Chamado.Status.EM_ABERTURA:
@@ -576,10 +578,9 @@ class ChamadoConfirmarColetaView(CapabilityRequiredMixin, View):
 
     @transaction.atomic
     def post(self, request: HttpRequest, chamado_id: int, *args, **kwargs) -> HttpResponse:
-        chamado = (
-            Chamado.objects.select_for_update()
-            .select_related("loja", "projeto", "subprojeto", "kit")
-            .get(pk=chamado_id)
+        chamado = get_object_or_404(
+            Chamado.objects.select_for_update(of=("self",)),
+            pk=chamado_id,
         )
 
         if chamado.status == Chamado.Status.FINALIZADO:
@@ -861,7 +862,7 @@ class ChamadoFinalizarView(CapabilityRequiredMixin, View):
     @transaction.atomic
     def post(self, request: HttpRequest, chamado_id: int, *args, **kwargs) -> HttpResponse:
         chamado = get_object_or_404(
-            Chamado.objects.select_for_update().select_related("loja", "projeto", "subprojeto", "kit"),
+            Chamado.objects.select_for_update(of=("self",)),
             pk=chamado_id,
         )
 
@@ -922,7 +923,7 @@ class ChamadoCancelarView(CapabilityRequiredMixin, View):
 
     @transaction.atomic
     def post(self, request: HttpRequest, chamado_id: int, *args, **kwargs) -> HttpResponse:
-        chamado = get_object_or_404(Chamado.objects.select_for_update(), pk=chamado_id)
+        chamado = get_object_or_404(Chamado.objects.select_for_update(of=("self",)), pk=chamado_id)
         motivo = (request.POST.get("motivo") or "").strip()
 
         try:

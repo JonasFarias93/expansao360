@@ -52,9 +52,10 @@ class Chamado(models.Model):
         CRITICA = "CRITICA", "Crítica"
 
     loja = models.ForeignKey(Loja, on_delete=models.PROTECT)
-    projeto = models.ForeignKey(Projeto, on_delete=models.PROTECT)
-    subprojeto = models.ForeignKey(Subprojeto, on_delete=models.PROTECT)
-    kit = models.ForeignKey(Kit, on_delete=models.PROTECT)
+    projeto = models.ForeignKey(Projeto, on_delete=models.PROTECT, null=True, blank=True)
+    subprojeto = models.ForeignKey(Subprojeto, on_delete=models.PROTECT, null=True, blank=True)
+    kit = models.ForeignKey(Kit, on_delete=models.PROTECT, null=True, blank=True)
+    is_avulso = models.BooleanField(default=False)
 
     tipo = models.CharField(max_length=20, choices=Tipo.choices, default=Tipo.ENVIO)
 
@@ -126,6 +127,14 @@ class Chamado(models.Model):
 
     def clean(self) -> None:
         super().clean()
+        
+        if not self.is_avulso:
+            if not self.projeto_id:
+                raise ValidationError({"projeto": "Chamado com projeto exige projeto."})
+            if not self.subprojeto_id:
+                raise ValidationError({"subprojeto": "Chamado com projeto exige subprojeto."})
+            if not self.kit_id:
+                raise ValidationError({"kit": "Chamado com projeto exige kit."})
         # =========================
         # Contabilidade + NF Saída (MVP)
         # =========================
