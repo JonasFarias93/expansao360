@@ -198,6 +198,8 @@ class Chamado(models.Model):
 
         Deve ser idempotente: se já existem itens, não cria novamente.
         """
+        if self.kit is None:
+            return
         if self.itens.exists():
             return
 

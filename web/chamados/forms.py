@@ -196,3 +196,34 @@ class ChamadoColetaConfirmacaoForm(forms.ModelForm):
             chamado.save()
             self.save_m2m()
         return chamado
+
+
+class ChamadoAvulsoCreateForm(forms.Form):
+    loja = forms.ModelChoiceField(
+        queryset=Loja.objects.order_by("codigo"),
+        required=True,
+        label="Loja",
+        error_messages={
+            "required": "Informe um código de loja válido.",
+            "invalid_choice": "Loja não encontrada.",
+        },
+    )
+    prioridade = forms.ChoiceField(
+        required=False,
+        choices=Chamado.Prioridade.choices,
+        label="Prioridade",
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        base = (
+            "w-full rounded-lg border border-slate-300 px-3 py-2 "
+            "focus:outline-none focus:ring-2 focus:ring-slate-900"
+        )
+        for _name, field in self.fields.items():
+            current = (field.widget.attrs.get("class") or "").strip()
+            field.widget.attrs["class"] = f"{current} {base}".strip() if current else base
+
+        self.fields["loja"].widget.attrs.update({
+            "data-lookup-url": "/execucao/api/lojas/lookup/",
+        })

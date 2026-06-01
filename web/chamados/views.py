@@ -61,9 +61,35 @@ from .models import (
 
 
 
-class ChamadoCreateAvulsoView(CapabilityRequiredMixin, TemplateView):
+class ChamadoCreateAvulsoView(CapabilityRequiredMixin, View):
     required_capability = "execucao.chamado.criar"
     template_name = "execucao/chamado_abertura_avulso.html"
+
+    def get(self, request: HttpRequest) -> HttpResponse:
+        from chamados.forms import ChamadoAvulsoCreateForm
+        return render(request, self.template_name, {"form": ChamadoAvulsoCreateForm()})
+
+    @transaction.atomic
+    def post(self, request: HttpRequest) -> HttpResponse:
+        from chamados.forms import ChamadoAvulsoCreateForm
+        form = ChamadoAvulsoCreateForm(request.POST)
+        if not form.is_valid():
+            return render(request, self.template_name, {"form": form})
+
+        prioridade = form.cleaned_data.get("prioridade") or Chamado.Prioridade.PADRAO
+        chamado = Chamado(
+            loja=form.cleaned_data["loja"],
+            projeto=None,
+            subprojeto=None,
+            kit=None,
+            is_avulso=True,
+            status=Chamado.Status.ABERTO,
+            tipo=Chamado.Tipo.ENVIO,
+            prioridade=prioridade,
+        )
+        chamado.save()
+        messages.success(request, f"Chamado avulso {chamado.protocolo} criado.")
+        return redirect("execucao:chamado_detalhe", chamado_id=chamado.id)
 
     
 # ================
