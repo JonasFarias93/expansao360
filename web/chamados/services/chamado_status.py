@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from execucao.models import Chamado
+from chamados.models import Chamado
 
 # Ordem de progressão (nunca regride)
 _STATUS_ORDER = (
