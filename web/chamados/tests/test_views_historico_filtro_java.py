@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from django.urls import reverse
 from execucao.models import Chamado
-from execucao.tests._base import WebAuthBaseTestCase, grant_cap
+from chamados.tests._base import WebAuthBaseTestCase, grant_cap
 
 
 class TestHistoricoFiltroJavaView(WebAuthBaseTestCase):

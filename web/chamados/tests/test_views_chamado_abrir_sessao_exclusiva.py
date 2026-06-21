@@ -8,7 +8,7 @@ from iam.execucao_capabilities import CAP_EXECUCAO_CHAMADO_EDITAR
 from iam.models import Capability, UserCapability
 
 from execucao.models import Chamado, ExecutionSession
-from execucao.tests._base import WebAuthBaseTestCase
+from chamados.tests._base import WebAuthBaseTestCase
 
 
 class TestChamadoAbrirSessaoExclusiva(WebAuthBaseTestCase):

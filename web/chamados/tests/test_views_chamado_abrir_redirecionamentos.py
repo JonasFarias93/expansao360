@@ -4,7 +4,7 @@ from django.contrib.auth import get_user_model
 from django.urls import reverse
 
 from execucao.models import Chamado, ExecutionSession
-from execucao.tests._base import WebAuthBaseTestCase
+from chamados.tests._base import WebAuthBaseTestCase
 
 
 class TestChamadoAbrirRedirecionamentos(WebAuthBaseTestCase):

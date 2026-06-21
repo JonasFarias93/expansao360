@@ -4,7 +4,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.urls import reverse
 from execucao.models import Chamado
 
-from ._base import WebAuthBaseTestCase
+from chamados.tests._base import WebAuthBaseTestCase
 
 
 class TestChamadoAdicionarEvidenciaPostView(WebAuthBaseTestCase):
