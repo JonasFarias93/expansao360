@@ -1,0 +1,28 @@
+layout {
+    tab name="expansao360" {
+        pane size=1 borderless=true {
+            plugin location="zellij:tab-bar"
+        }
+        pane split_direction="horizontal" {
+            pane split_direction="vertical" {
+                pane name="✏️  Editor" focus=true command="bash" {
+                    args "-c" "cd ~/projects/expansao360 && exec zsh -i -c 'conda activate expansao360; exec zsh'"
+                }
+                pane name="🧪 pytest-watch" command="bash" {
+                    args "-c" "source ~/miniforge3/etc/profile.d/conda.sh && conda activate expansao360 && cd ~/projects/expansao360 && exec ptw"
+                }
+            }
+            pane split_direction="vertical" {
+                pane name="🚀 runserver" command="bash" {
+                    args "-c" "source ~/miniforge3/etc/profile.d/conda.sh && conda activate expansao360 && cd ~/projects/expansao360/web && exec python manage.py runserver"
+                }
+                pane name="🔧 Testes manuais" command="bash" {
+                    args "-c" "cd ~/projects/expansao360 && exec zsh -i -c 'conda activate expansao360; exec zsh'"
+                }
+            }
+        }
+        pane size=2 borderless=true {
+            plugin location="zellij:status-bar"
+        }
+    }
+}
