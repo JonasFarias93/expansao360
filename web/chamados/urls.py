@@ -11,7 +11,7 @@ urlpatterns = [
     # ======================
     # FILA / HISTÓRICO
     # ======================
-    path("", chamados_views.ChamadoFilaView.as_view(), name="fila"),
+    path("", execucao_views.ChamadoFilaView.as_view(), name="fila"),
     path("historico/", chamados_views.HistoricoView.as_view(), name="historico"),
     # ======================
     # CHAMADO
